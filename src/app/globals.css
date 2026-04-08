@@ -1,26 +1,138 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #f5f5f5;
   --foreground: #171717;
+  --accent-color: #3b82f6;
+  --card-bg: #ffffff;
+  --card-border: #e5e7eb;
+  --input-bg: #f9fafb;
+  --input-border: #d1d5db;
+  --muted: #6b7280;
+  --muted-light: #9ca3af;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --card-bg: #18181b;
+  --card-border: #27272a;
+  --input-bg: #27272a;
+  --input-border: #3f3f46;
+  --muted: #a1a1aa;
+  --muted-light: #71717a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-accent: var(--accent-color);
+  --color-card-bg: var(--card-bg);
+  --color-card-border: var(--card-border);
+  --color-input-bg: var(--input-bg);
+  --color-input-border: var(--input-border);
+  --color-muted: var(--muted);
+  --color-muted-light: var(--muted-light);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Custom animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(1rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* Spotify equalizer bars */
+@keyframes eq-bar1 {
+  from { height: 30%; }
+  to { height: 100%; }
+}
+@keyframes eq-bar2 {
+  from { height: 50%; }
+  to { height: 80%; }
+}
+@keyframes eq-bar3 {
+  from { height: 20%; }
+  to { height: 90%; }
+}
+
+/* Mapbox popup overrides for dark theme */
+.mapboxgl-popup-content {
+  background: #1f2937 !important;
+  color: #f3f4f6 !important;
+  border-radius: 0.75rem !important;
+  padding: 0 !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid #374151 !important;
+}
+
+.mapboxgl-popup-close-button {
+  color: #9ca3af !important;
+  font-size: 1.2rem !important;
+  padding: 0.25rem 0.5rem !important;
+}
+
+.mapboxgl-popup-close-button:hover {
+  color: #f3f4f6 !important;
+  background: transparent !important;
+}
+
+.mapboxgl-popup-tip {
+  border-top-color: #1f2937 !important;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
+
+/* Hide scrollbar for horizontal lists */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

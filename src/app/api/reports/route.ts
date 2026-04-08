@@ -1,0 +1,157 @@
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import prisma from "@/lib/prisma";
+import { ReportType } from "@prisma/client";
+
+const REPORT_EXPIRY_HOURS = 2;
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const lat = parseFloat(searchParams.get("lat") || "");
+    const lng = parseFloat(searchParams.get("lng") || "");
+    const radius = parseFloat(searchParams.get("radius") || "10");
+
+    if (isNaN(lat) || isNaN(lng)) {
+      return NextResponse.json(
+        { error: "lat and lng query parameters are required" },
+        { status: 400 }
+      );
+    }
+
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return NextResponse.json(
+        { error: "Invalid latitude or longitude values" },
+        { status: 400 }
+      );
+    }
+
+    const expiryDate = new Date(
+      Date.now() - REPORT_EXPIRY_HOURS * 60 * 60 * 1000
+    );
+
+    // Calculate bounding box for rough filtering (radius in km)
+    const latDelta = radius / 111.32;
+    const lngDelta = radius / (111.32 * Math.cos((lat * Math.PI) / 180));
+
+    const reports = await prisma.report.findMany({
+      where: {
+        createdAt: { gte: expiryDate },
+        latitude: { gte: lat - latDelta, lte: lat + latDelta },
+        longitude: { gte: lng - lngDelta, lte: lng + lngDelta },
+      },
+      include: {
+        user: {
+          select: { id: true, name: true, image: true },
+        },
+        votes: {
+          select: { isUpvote: true, userId: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Precise distance filtering using Haversine formula
+    const filteredReports = reports.filter((report) => {
+      const dLat = ((report.latitude - lat) * Math.PI) / 180;
+      const dLng = ((report.longitude - lng) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((lat * Math.PI) / 180) *
+          Math.cos((report.latitude * Math.PI) / 180) *
+          Math.sin(dLng / 2) *
+          Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distance = 6371 * c; // Earth radius in km
+      return distance <= radius;
+    });
+
+    const currentUserId = session.user.id;
+    const reportsWithCounts = filteredReports.map((r) => {
+      const upvotes = r.votes.filter((v) => v.isUpvote).length;
+      const downvotes = r.votes.filter((v) => !v.isUpvote).length;
+      const myVote = r.votes.find((v) => v.userId === currentUserId);
+      const userVote = myVote ? myVote.isUpvote : null;
+      const isOwner = r.userId === currentUserId;
+      const { votes: _votes, ...rest } = r;
+      return { ...rest, upvotes, downvotes, userVote, isOwner };
+    });
+
+    return NextResponse.json(reportsWithCounts);
+  } catch (error) {
+    console.error("Get reports error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { type, latitude, longitude, description } = body;
+
+    const validTypes = Object.values(ReportType);
+    if (!type || !validTypes.includes(type as ReportType)) {
+      return NextResponse.json(
+        { error: `type must be one of: ${validTypes.join(", ")}` },
+        { status: 400 }
+      );
+    }
+
+    if (typeof latitude !== "number" || typeof longitude !== "number") {
+      return NextResponse.json(
+        { error: "Valid latitude and longitude are required" },
+        { status: 400 }
+      );
+    }
+
+    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+      return NextResponse.json(
+        { error: "Invalid latitude or longitude values" },
+        { status: 400 }
+      );
+    }
+
+    const expiresAt = new Date(
+      Date.now() + REPORT_EXPIRY_HOURS * 60 * 60 * 1000
+    );
+
+    const report = await prisma.report.create({
+      data: {
+        type: type as ReportType,
+        latitude,
+        longitude,
+        description: description || null,
+        expiresAt,
+        userId: session.user.id,
+      },
+      include: {
+        user: {
+          select: { id: true, name: true, image: true },
+        },
+      },
+    });
+
+    return NextResponse.json(report, { status: 201 });
+  } catch (error) {
+    console.error("Create report error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum ConvoyRole {
+  OWNER
+  MEMBER
+}
+
+enum ReportType {
+  POLICE
+  UNMARKED_POLICE
+  SPEED_TRAP
+  ACCIDENT
+  OBSTACLE
+  SPEED_CAMERA
+}
+
+enum FuelType {
+  PETROL_95
+  PETROL_98
+  DIESEL
+  LPG
+}
+
+model User {
+  id                 String          @id @default(cuid())
+  email              String          @unique
+  name               String
+  password           String
+  image              String?
+  latitude           Float?
+  longitude          Float?
+  lastLocationUpdate DateTime?
+  spotifyAccessToken  String?
+  spotifyRefreshToken String?
+  spotifyExpiresAt    DateTime?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  sentRequests     Friendship[]    @relation("FriendshipRequester")
+  receivedRequests Friendship[]    @relation("FriendshipAddressee")
+  convoyMembers    ConvoyMember[]
+  ownedConvoys     Convoy[]
+  reports          Report[]
+  fuelPrices       FuelPrice[]
+  routes           Route[]
+  reportVotes      ReportVote[]
+
+  @@map("users")
+}
+
+model Friendship {
+  id          String           @id @default(cuid())
+  requesterId String
+  addresseeId String
+  status      FriendshipStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+
+  requester User @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId])
+  @@map("friendships")
+}
+
+model Convoy {
+  id        String         @id @default(cuid())
+  name      String
+  ownerId   String
+  createdAt DateTime       @default(now())
+
+  owner   User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  members ConvoyMember[]
+  routes  Route[]
+
+  @@map("convoys")
+}
+
+model ConvoyMember {
+  id       String     @id @default(cuid())
+  convoyId String
+  userId   String
+  role     ConvoyRole @default(MEMBER)
+  joinedAt DateTime   @default(now())
+
+  convoy Convoy @relation(fields: [convoyId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([convoyId, userId])
+  @@map("convoy_members")
+}
+
+model Report {
+  id          String     @id @default(cuid())
+  type        ReportType
+  latitude    Float
+  longitude   Float
+  description String?
+  createdAt   DateTime   @default(now())
+  expiresAt   DateTime
+  confirmedAt DateTime?
+  userId      String
+
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  votes ReportVote[]
+
+  @@index([latitude, longitude])
+  @@index([expiresAt])
+  @@map("reports")
+}
+
+model ReportVote {
+  id        String   @id @default(cuid())
+  reportId  String
+  userId    String
+  isUpvote  Boolean
+  createdAt DateTime @default(now())
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, userId])
+  @@map("report_votes")
+}
+
+model FuelStation {
+  id        String      @id @default(cuid())
+  name      String
+  brand     String?
+  address   String?
+  latitude  Float
+  longitude Float
+
+  prices FuelPrice[]
+
+  @@index([latitude, longitude])
+  @@map("fuel_stations")
+}
+
+model FuelPrice {
+  id        String   @id @default(cuid())
+  stationId String
+  fuelType  FuelType
+  price     Float
+  updatedAt DateTime @default(now())
+  userId    String
+
+  station FuelStation @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([stationId, fuelType])
+  @@map("fuel_prices")
+}
+
+model Route {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  waypoints   Json
+  createdAt   DateTime @default(now())
+  userId      String
+  convoyId    String?
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  convoy Convoy? @relation(fields: [convoyId], references: [id], onDelete: SetNull)
+
+  @@map("routes")
+}

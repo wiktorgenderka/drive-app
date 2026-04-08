@@ -1,0 +1,129 @@
+'use client';
+
+import { useEffect, useRef, useCallback } from 'react';
+import { useGeolocation } from './useGeolocation';
+import { useSocket } from './useSocket';
+import { useAuthStore } from '@/stores/useAuthStore';
+
+interface UseRealTimeLocationOptions {
+  /** Minimum distance in meters before broadcasting a new position */
+  distanceThreshold?: number;
+  /** Minimum interval in ms between broadcasts */
+  broadcastInterval?: number;
+  /** Geolocation high accuracy mode */
+  enableHighAccuracy?: boolean;
+}
+
+const DEFAULT_DISTANCE_THRESHOLD = 5; // meters
+const DEFAULT_BROADCAST_INTERVAL = 2000; // ms
+
+function haversineDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371000; // Earth radius in meters
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+export function useRealTimeLocation(
+  convoyId: string | null,
+  options: UseRealTimeLocationOptions = {}
+) {
+  const {
+    distanceThreshold = DEFAULT_DISTANCE_THRESHOLD,
+    broadcastInterval = DEFAULT_BROADCAST_INTERVAL,
+    enableHighAccuracy = true,
+  } = options;
+
+  const geo = useGeolocation({ enableHighAccuracy, autoStart: !!convoyId });
+  const { emit, isConnected } = useSocket({ autoConnect: !!convoyId });
+  const user = useAuthStore((s) => s.user);
+  const updateLocation = useAuthStore((s) => s.updateLocation);
+
+  const lastBroadcastRef = useRef<{
+    latitude: number;
+    longitude: number;
+    timestamp: number;
+  } | null>(null);
+
+  const broadcast = useCallback(
+    (latitude: number, longitude: number, heading: number | null, speed: number | null) => {
+      if (!convoyId || !user || !isConnected) return;
+
+      const now = Date.now();
+      const last = lastBroadcastRef.current;
+
+      // Throttle: skip if too soon and position hasn't changed significantly
+      if (last) {
+        const timeDelta = now - last.timestamp;
+        const distance = haversineDistance(
+          last.latitude,
+          last.longitude,
+          latitude,
+          longitude
+        );
+
+        if (timeDelta < broadcastInterval && distance < distanceThreshold) {
+          return;
+        }
+      }
+
+      emit('location-update', {
+        convoyId,
+        memberId: user.id,
+        name: user.name,
+        avatarUrl: user.avatarUrl,
+        latitude,
+        longitude,
+        heading,
+        speed,
+        timestamp: now,
+      });
+
+      updateLocation(latitude, longitude);
+
+      lastBroadcastRef.current = { latitude, longitude, timestamp: now };
+    },
+    [convoyId, user, isConnected, emit, updateLocation, broadcastInterval, distanceThreshold]
+  );
+
+  // Broadcast whenever geolocation updates
+  useEffect(() => {
+    if (geo.latitude !== null && geo.longitude !== null) {
+      broadcast(geo.latitude, geo.longitude, geo.heading, geo.speed);
+    }
+  }, [geo.latitude, geo.longitude, geo.heading, geo.speed, broadcast]);
+
+  // Join/leave convoy room
+  useEffect(() => {
+    if (!convoyId || !isConnected) return;
+
+    emit('join-convoy', { convoyId, userId: user?.id });
+
+    return () => {
+      emit('leave-convoy', { convoyId, userId: user?.id });
+      lastBroadcastRef.current = null;
+    };
+  }, [convoyId, isConnected, emit, user?.id]);
+
+  return {
+    latitude: geo.latitude,
+    longitude: geo.longitude,
+    accuracy: geo.accuracy,
+    heading: geo.heading,
+    speed: geo.speed,
+    error: geo.error,
+    isTracking: geo.isTracking,
+    isConnected,
+    startTracking: geo.startTracking,
+    stopTracking: geo.stopTracking,
+  };
+}

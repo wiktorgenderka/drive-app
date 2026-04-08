@@ -1,0 +1,253 @@
+import { create } from 'zustand';
+
+export interface ViewState {
+  longitude: number;
+  latitude: number;
+  zoom: number;
+  pitch?: number;
+  bearing?: number;
+}
+
+export interface UserLocation {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+  heading?: number | null;
+  speed?: number | null;
+  timestamp: number;
+}
+
+export interface ConvoyMember {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+  latitude: number;
+  longitude: number;
+  heading?: number | null;
+  speed?: number | null;
+  lastUpdated: number;
+}
+
+export interface Report {
+  id: string;
+  type: 'police' | 'accident' | 'hazard' | 'traffic' | 'closure' | 'other' | string;
+  latitude: number;
+  longitude: number;
+  description?: string;
+  createdBy: string;
+  createdAt: string | number;
+  expiresAt: string | number;
+  upvotes: number;
+  downvotes: number;
+  userVote?: boolean | null; // true = upvoted, false = downvoted, null = not voted
+  isOwner?: boolean;
+  confirmedAt?: string | number | null;
+}
+
+export interface FuelStation {
+  id: string;
+  name: string;
+  brand?: string;
+  address?: string;
+  latitude: number;
+  longitude: number;
+  prices: FuelPrice[];
+  lastUpdated: number;
+}
+
+export interface FuelPrice {
+  id: string;
+  fuelType: string;
+  price: number;
+  currency?: string;
+  updatedAt: number;
+}
+
+export interface RouteWaypoint {
+  longitude: number;
+  latitude: number;
+  label?: string;
+}
+
+export interface Route {
+  id: string;
+  name?: string;
+  coordinates: [number, number][];
+  waypoints?: RouteWaypoint[];
+  distance: number;
+  duration: number;
+  isActive: boolean;
+}
+
+export interface NavigationRoute {
+  id: string;
+  name: string;
+  waypoints: { latitude: number; longitude: number; label?: string }[];
+}
+
+interface MapState {
+  viewState: ViewState;
+  userLocation: UserLocation | null;
+  convoyMembers: ConvoyMember[];
+  reports: Report[];
+  fuelStations: FuelStation[];
+  routes: Route[];
+  selectedReport: Report | null;
+  selectedStation: FuelStation | null;
+  showReports: boolean;
+  showFuelStations: boolean;
+  showConvoyMembers: boolean;
+  mapFlyTarget: { longitude: number; latitude: number; zoom: number } | null;
+  navigationRoute: NavigationRoute | null;
+}
+
+interface MapActions {
+  setViewState: (viewState: Partial<ViewState>) => void;
+  setUserLocation: (location: UserLocation) => void;
+  addReport: (report: Report) => void;
+  removeReport: (reportId: string) => void;
+  updateReportVotes: (reportId: string, upvotes: number, downvotes: number, userVote?: boolean | null) => void;
+  setReports: (reports: Report[]) => void;
+  updateConvoyMember: (member: ConvoyMember) => void;
+  removeConvoyMember: (memberId: string) => void;
+  setConvoyMembers: (members: ConvoyMember[]) => void;
+  setFuelStations: (stations: FuelStation[]) => void;
+  updateFuelStation: (station: FuelStation) => void;
+  addRoute: (route: Route) => void;
+  removeRoute: (routeId: string) => void;
+  setActiveRoute: (routeId: string) => void;
+  setRoutes: (routes: Route[]) => void;
+  setSelectedReport: (report: Report | null) => void;
+  setSelectedStation: (station: FuelStation | null) => void;
+  toggleLayer: (layer: 'showReports' | 'showFuelStations' | 'showConvoyMembers') => void;
+  setMapFlyTarget: (target: { longitude: number; latitude: number; zoom: number } | null) => void;
+  setNavigationRoute: (route: NavigationRoute | null) => void;
+  clearAll: () => void;
+}
+
+type MapStore = MapState & MapActions;
+
+const DEFAULT_VIEW_STATE: ViewState = {
+  longitude: 19.9449,
+  latitude: 50.0647,
+  zoom: 12,
+  pitch: 0,
+  bearing: 0,
+};
+
+export const useMapStore = create<MapStore>()((set) => ({
+  viewState: DEFAULT_VIEW_STATE,
+  userLocation: null,
+  convoyMembers: [],
+  reports: [],
+  fuelStations: [],
+  routes: [],
+  selectedReport: null,
+  selectedStation: null,
+  showReports: true,
+  showFuelStations: true,
+  showConvoyMembers: true,
+  mapFlyTarget: null,
+  navigationRoute: null,
+
+  setViewState: (viewState) =>
+    set((state) => ({
+      viewState: { ...state.viewState, ...viewState },
+    })),
+
+  setUserLocation: (location) =>
+    set({ userLocation: location }),
+
+  addReport: (report) =>
+    set((state) => ({
+      reports: [...state.reports.filter((r) => r.id !== report.id), report],
+    })),
+
+  removeReport: (reportId) =>
+    set((state) => ({
+      reports: state.reports.filter((r) => r.id !== reportId),
+      selectedReport:
+        state.selectedReport?.id === reportId ? null : state.selectedReport,
+    })),
+
+  updateReportVotes: (reportId, upvotes, downvotes, userVote) =>
+    set((state) => ({
+      reports: state.reports.map((r) =>
+        r.id === reportId ? { ...r, upvotes, downvotes, userVote: userVote ?? r.userVote } : r
+      ),
+      selectedReport:
+        state.selectedReport?.id === reportId
+          ? { ...state.selectedReport, upvotes, downvotes, userVote: userVote ?? state.selectedReport.userVote }
+          : state.selectedReport,
+    })),
+
+  setReports: (reports) => set({ reports }),
+
+  updateConvoyMember: (member) =>
+    set((state) => ({
+      convoyMembers: state.convoyMembers.some((m) => m.id === member.id)
+        ? state.convoyMembers.map((m) => (m.id === member.id ? member : m))
+        : [...state.convoyMembers, member],
+    })),
+
+  removeConvoyMember: (memberId) =>
+    set((state) => ({
+      convoyMembers: state.convoyMembers.filter((m) => m.id !== memberId),
+    })),
+
+  setConvoyMembers: (members) => set({ convoyMembers: members }),
+
+  setFuelStations: (stations) => set({ fuelStations: stations }),
+
+  updateFuelStation: (station) =>
+    set((state) => ({
+      fuelStations: state.fuelStations.some((s) => s.id === station.id)
+        ? state.fuelStations.map((s) => (s.id === station.id ? station : s))
+        : [...state.fuelStations, station],
+      selectedStation:
+        state.selectedStation?.id === station.id ? station : state.selectedStation,
+    })),
+
+  addRoute: (route) =>
+    set((state) => ({
+      routes: [...state.routes, route],
+    })),
+
+  removeRoute: (routeId) =>
+    set((state) => ({
+      routes: state.routes.filter((r) => r.id !== routeId),
+    })),
+
+  setActiveRoute: (routeId) =>
+    set((state) => ({
+      routes: state.routes.map((r) => ({
+        ...r,
+        isActive: r.id === routeId,
+      })),
+    })),
+
+  setRoutes: (routes) => set({ routes }),
+
+  setSelectedReport: (report) => set({ selectedReport: report }),
+
+  setSelectedStation: (station) => set({ selectedStation: station }),
+
+  toggleLayer: (layer) =>
+    set((state) => ({
+      [layer]: !state[layer],
+    })),
+
+  setMapFlyTarget: (target) => set({ mapFlyTarget: target }),
+
+  setNavigationRoute: (route) => set({ navigationRoute: route }),
+
+  clearAll: () =>
+    set({
+      convoyMembers: [],
+      reports: [],
+      fuelStations: [],
+      routes: [],
+      selectedReport: null,
+      selectedStation: null,
+    }),
+}));
