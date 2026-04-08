@@ -273,51 +273,6 @@ export default function HomeScreen({
           </button>
         </div>
 
-        {/* Quick actions */}
-        <div className="mx-5 mt-4 grid grid-cols-3 gap-3">
-          <button
-            onClick={onNavigateToMap}
-            className="flex flex-col items-center gap-2 rounded-2xl border border-card-border bg-card-bg p-4 transition hover:border-blue-500/50 hover:bg-blue-500/5"
-          >
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600/15 text-blue-500">
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z" />
-                <path d="M8 2v16M16 6v16" />
-              </svg>
-            </div>
-            <span className="text-xs font-medium text-foreground">Mapa</span>
-          </button>
-
-          <button
-            onClick={onNavigateToConvoy}
-            className="flex flex-col items-center gap-2 rounded-2xl border border-card-border bg-card-bg p-4 transition hover:border-emerald-500/50 hover:bg-emerald-500/5"
-          >
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-600/15 text-emerald-500">
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <rect x="1" y="3" width="15" height="13" rx="2" />
-                <path d="M16 8h4l3 3v5a1 1 0 01-1 1h-2" />
-                <circle cx="5.5" cy="18.5" r="2.5" />
-                <circle cx="18.5" cy="18.5" r="2.5" />
-              </svg>
-            </div>
-            <span className="text-xs font-medium text-foreground">Konwój</span>
-          </button>
-
-          <button
-            onClick={onNavigateToFriends}
-            className="flex flex-col items-center gap-2 rounded-2xl border border-card-border bg-card-bg p-4 transition hover:border-pink-500/50 hover:bg-pink-500/5"
-          >
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-pink-600/15 text-pink-500">
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
-              </svg>
-            </div>
-            <span className="text-xs font-medium text-foreground">Znajomi</span>
-          </button>
-        </div>
-
         {/* Active convoy banner */}
         {stats?.activeConvoy && (
           <button
