@@ -123,7 +123,7 @@ function ToggleRow({
         type="button"
         onClick={() => onChange(!value)}
         className="relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors"
-        style={{ backgroundColor: value ? accent : 'rgba(255,255,255,0.1)' }}
+        style={{ backgroundColor: value ? accent : 'var(--input-border)' }}
       >
         <span className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${value ? 'translate-x-6' : 'translate-x-1'}`} />
       </button>
@@ -402,11 +402,12 @@ export default function SettingsPanel() {
                 }`}
                 style={{ background: `linear-gradient(160deg, ${p.from}, ${p.to})` }}
               >
-                {/* Accent stripe at top */}
-                <div className="h-1 w-full" style={{ backgroundColor: p.accent }} />
-                <div className="px-3 py-2.5">
-                  <p className="text-left text-[11px] font-semibold text-white/90">{p.name}</p>
-                  <p className="mt-0.5 text-left text-[10px] text-white/40">
+                <div className="px-3 py-3">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <div className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: p.accent }} />
+                    <p className="text-left text-[11px] font-semibold text-white/90 leading-none">{p.name}</p>
+                  </div>
+                  <p className="text-left text-[10px] text-white/40 pl-4">
                     {p.mode === 'dark' ? 'Ciemny' : 'Jasny'}
                   </p>
                 </div>
@@ -482,9 +483,8 @@ export default function SettingsPanel() {
               <button
                 key={t.value}
                 onClick={() => setMapTheme(t.value)}
-                className={`flex flex-col items-center gap-1.5 rounded-xl border-2 px-2 py-2.5 transition ${
-                  mapTheme === t.value ? 'border-white' : 'border-card-border hover:border-white/30'
-                }`}
+                className="flex flex-col items-center gap-1.5 rounded-xl border-2 px-2 py-2.5 transition border-card-border hover:border-foreground/30"
+                style={mapTheme === t.value ? { borderColor: accentColor } : {}}
               >
                 {/* Mini map SVG */}
                 <svg width="40" height="28" viewBox="0 0 40 28" className="rounded-md">

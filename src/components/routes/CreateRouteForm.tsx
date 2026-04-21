@@ -32,7 +32,7 @@ export default function CreateRouteForm({
     setError('');
 
     if (waypoints.length < 2) {
-      setError('Add at least 2 waypoints by clicking on the map.');
+      setError('Dodaj co najmniej 2 punkty trasy.');
       return;
     }
 
@@ -46,8 +46,8 @@ export default function CreateRouteForm({
           name,
           description,
           waypoints: waypoints.map((wp) => ({
-            lat: wp.lat,
-            lng: wp.lng,
+            latitude: wp.lat,
+            longitude: wp.lng,
             label: wp.label,
           })),
         }),

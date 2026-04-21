@@ -53,6 +53,7 @@ export interface FuelStation {
   longitude: number;
   prices: FuelPrice[];
   lastUpdated: number;
+  isMapbox?: boolean;
 }
 
 export interface FuelPrice {

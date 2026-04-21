@@ -5,7 +5,7 @@ export interface ConvoyMemberInfo {
   userId: string;
   name: string;
   avatarUrl?: string;
-  role: 'leader' | 'member';
+  role: 'OWNER' | 'MEMBER';
   latitude: number;
   longitude: number;
   heading?: number | null;
@@ -18,14 +18,8 @@ export interface ConvoyMemberInfo {
 export interface Convoy {
   id: string;
   name: string;
-  code: string;
-  leaderId: string;
-  createdAt: number;
-  destination?: {
-    latitude: number;
-    longitude: number;
-    name?: string;
-  };
+  ownerId: string;
+  createdAt: string;
 }
 
 export interface ConvoyInvitation {
@@ -48,7 +42,7 @@ interface ConvoyState {
 }
 
 interface ConvoyActions {
-  createConvoy: (name: string, destination?: Convoy['destination']) => void;
+  createConvoy: (name: string) => void;
   setActiveConvoy: (convoy: Convoy | null) => void;
   joinConvoy: (code: string) => void;
   leaveConvoy: () => void;
@@ -86,7 +80,7 @@ const initialState: ConvoyState = {
 export const useConvoyStore = create<ConvoyStore>()((set) => ({
   ...initialState,
 
-  createConvoy: (_name, _destination) =>
+  createConvoy: (_name) =>
     set({
       isCreating: true,
       error: null,

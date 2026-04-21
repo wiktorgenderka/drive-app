@@ -106,7 +106,7 @@ export function useRealTimeLocation(
   useEffect(() => {
     if (!convoyId || !isConnected) return;
 
-    emit('join-convoy', { convoyId, userId: user?.id });
+    emit('join-convoy', { convoyId, userId: user?.id, name: user?.name, avatarUrl: user?.avatarUrl });
 
     return () => {
       emit('leave-convoy', { convoyId, userId: user?.id });

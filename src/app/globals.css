@@ -85,29 +85,29 @@ body {
   to { height: 90%; }
 }
 
-/* Mapbox popup overrides for dark theme */
+/* Mapbox popup overrides — respects dark/light mode */
 .mapboxgl-popup-content {
-  background: #1f2937 !important;
-  color: #f3f4f6 !important;
+  background: var(--card-bg) !important;
+  color: var(--foreground) !important;
   border-radius: 0.75rem !important;
   padding: 0 !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
-  border: 1px solid #374151 !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid var(--card-border) !important;
 }
 
 .mapboxgl-popup-close-button {
-  color: #9ca3af !important;
+  color: var(--muted) !important;
   font-size: 1.2rem !important;
   padding: 0.25rem 0.5rem !important;
 }
 
 .mapboxgl-popup-close-button:hover {
-  color: #f3f4f6 !important;
+  color: var(--foreground) !important;
   background: transparent !important;
 }
 
 .mapboxgl-popup-tip {
-  border-top-color: #1f2937 !important;
+  border-top-color: var(--card-bg) !important;
 }
 
 /* Scrollbar styling */

@@ -18,29 +18,55 @@ export function getSocketServer(httpServer?: HTTPServer): SocketIOServer {
     console.log('Client connected:', socket.id);
 
     // Join convoy room
-    socket.on('join-convoy', (convoyId: string) => {
+    socket.on('join-convoy', (data: { convoyId: string; userId: string; name?: string; avatarUrl?: string }) => {
+      const { convoyId, userId, name, avatarUrl } = data;
       socket.join(`convoy:${convoyId}`);
-      socket.to(`convoy:${convoyId}`).emit('member-joined', {
-        socketId: socket.id,
-        convoyId,
+      socket.to(`convoy:${convoyId}`).emit('convoy-update', {
+        type: 'member-joined',
+        member: {
+          id: userId,
+          userId,
+          name: name ?? 'Unknown',
+          avatarUrl,
+          role: 'MEMBER',
+          latitude: 0,
+          longitude: 0,
+          joinedAt: Date.now(),
+          lastUpdated: Date.now(),
+          isOnline: true,
+        },
       });
     });
 
     // Leave convoy room
-    socket.on('leave-convoy', (convoyId: string) => {
+    socket.on('leave-convoy', (data: { convoyId: string; userId: string }) => {
+      const { convoyId, userId } = data;
       socket.leave(`convoy:${convoyId}`);
-      socket.to(`convoy:${convoyId}`).emit('member-left', {
-        socketId: socket.id,
-        convoyId,
+      socket.to(`convoy:${convoyId}`).emit('convoy-update', {
+        type: 'member-left',
+        memberId: userId,
       });
     });
 
     // Location update broadcast to convoy
-    socket.on('location-update', (data: { convoyId: string; userId: string; latitude: number; longitude: number }) => {
+    socket.on('location-update', (data: {
+      convoyId: string;
+      memberId: string;
+      latitude: number;
+      longitude: number;
+      heading?: number | null;
+      speed?: number | null;
+      name?: string;
+      avatarUrl?: string;
+    }) => {
       socket.to(`convoy:${data.convoyId}`).emit('location-update', {
-        userId: data.userId,
+        memberId: data.memberId,
         latitude: data.latitude,
         longitude: data.longitude,
+        heading: data.heading ?? null,
+        speed: data.speed ?? null,
+        name: data.name,
+        avatarUrl: data.avatarUrl,
         timestamp: new Date().toISOString(),
       });
     });

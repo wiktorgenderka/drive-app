@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
+import { calculateDistance, formatDistance } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import AuthGuard from '@/components/auth/AuthGuard';
 import { useMapStore } from '@/stores/useMapStore';
@@ -104,6 +105,17 @@ export default function DashboardPage() {
   const [showAddReport, setShowAddReport] = useState(false);
   const [showAddFriend, setShowAddFriend] = useState(false);
   const userLocation = useMapStore((s) => s.userLocation);
+  const fuelStations = useMapStore((s) => s.fuelStations);
+
+  const nearestStationDist = useMemo(() => {
+    if (!userLocation || fuelStations.length === 0) return null;
+    let min = Infinity;
+    for (const s of fuelStations) {
+      const d = calculateDistance(userLocation.latitude, userLocation.longitude, s.latitude, s.longitude);
+      if (d < min) min = d;
+    }
+    return min === Infinity ? null : min;
+  }, [userLocation, fuelStations]);
 
   const submitReport = useCallback(async (type: string) => {
     if (!userLocation) return;
@@ -163,16 +175,28 @@ export default function DashboardPage() {
             <MapView />
 
             {/* Top bar */}
-            <div className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between px-4 pt-4">
-              <button
-                onClick={() => setActiveTab('home')}
-                className="flex items-center gap-2 rounded-xl bg-card-bg/90 px-3 py-2 shadow-lg backdrop-blur-md border border-card-border transition hover:bg-card-bg"
-              >
-                <svg className="h-5 w-5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                  <path d="M19 12H5M12 19l-7-7 7-7" />
-                </svg>
-                <span className="text-sm font-semibold text-foreground">Mapa</span>
-              </button>
+            <div className="absolute left-0 right-0 top-0 z-20 flex items-start justify-between px-4 pt-4">
+              <div className="flex flex-col items-start gap-1.5">
+                <button
+                  onClick={() => setActiveTab('home')}
+                  className="flex items-center gap-2 rounded-xl bg-card-bg/90 px-3 py-2 shadow-lg backdrop-blur-md border border-card-border transition hover:bg-card-bg"
+                >
+                  <svg className="h-5 w-5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                  </svg>
+                  <span className="text-sm font-semibold text-foreground">Mapa</span>
+                </button>
+
+                {nearestStationDist !== null && (
+                  <div className="flex flex-col items-center rounded-xl bg-card-bg/90 px-3 py-2 shadow-lg backdrop-blur-md border border-card-border">
+                    <svg className="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
+                    </svg>
+                    <span className="text-xs font-bold text-foreground leading-tight">{formatDistance(nearestStationDist)}</span>
+                    <span className="text-[10px] text-muted leading-tight">do stacji</span>
+                  </div>
+                )}
+              </div>
 
               <div className="flex items-center gap-2">
                 {/* Layer toggle */}

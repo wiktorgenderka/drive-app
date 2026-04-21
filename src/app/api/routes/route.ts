@@ -71,15 +71,12 @@ export async function POST(request: NextRequest) {
       data: {
         name: name.trim(),
         description: description || null,
-        waypoints: JSON.stringify(waypoints),
+        waypoints,
         userId: session.user.id,
       },
     });
 
-    return NextResponse.json(
-      { ...route, waypoints: JSON.parse(route.waypoints as string) },
-      { status: 201 }
-    );
+    return NextResponse.json(route, { status: 201 });
   } catch (error) {
     console.error("Create route error:", error);
     return NextResponse.json(

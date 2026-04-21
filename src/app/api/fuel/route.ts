@@ -2,6 +2,59 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+
+interface MapboxFeature {
+  type: string;
+  geometry: { type: string; coordinates: [number, number] };
+  properties: {
+    mapbox_id?: string;
+    name?: string;
+    full_address?: string;
+    address?: string;
+    brand?: string;
+    brand_id?: string;
+    [key: string]: unknown;
+  };
+}
+
+async function fetchMapboxStations(lat: number, lng: number, radius: number) {
+  if (!MAPBOX_TOKEN) return [];
+
+  // Mapbox Search Box API – category search for gas stations
+  // radius param is in km, max 10
+  const radiusKm = Math.min(radius, 10);
+  const url =
+    `https://api.mapbox.com/search/searchbox/v1/category/gas_station` +
+    `?proximity=${lng},${lat}` +
+    `&radius=${radiusKm}` +
+    `&limit=10` +
+    `&language=pl` +
+    `&access_token=${MAPBOX_TOKEN}`;
+
+  const res = await fetch(url, { next: { revalidate: 300 } });
+  if (!res.ok) return [];
+
+  const data = await res.json();
+  const features: MapboxFeature[] = data.features ?? [];
+
+  return features.map((f) => {
+    const [fLng, fLat] = f.geometry.coordinates;
+    const p = f.properties;
+    return {
+      id: p.mapbox_id ?? `mbx-${fLng}-${fLat}`,
+      name: p.name ?? "Stacja paliw",
+      brand: p.brand ?? undefined,
+      address: p.full_address ?? p.address ?? undefined,
+      latitude: fLat,
+      longitude: fLng,
+      prices: [],
+      lastUpdated: Date.now(),
+      isMapbox: true,
+    };
+  });
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -29,47 +82,60 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Calculate bounding box (radius in km)
-    const latDelta = radius / 111.32;
-    const lngDelta = radius / (111.32 * Math.cos((lat * Math.PI) / 180));
-
-    const stations = await prisma.fuelStation.findMany({
-      where: {
-        latitude: { gte: lat - latDelta, lte: lat + latDelta },
-        longitude: { gte: lng - lngDelta, lte: lng + lngDelta },
-      },
-      include: {
-        prices: {
-          orderBy: { updatedAt: "desc" },
-          take: 5,
+    // Fetch from Mapbox and database in parallel
+    const [mapboxStations, dbStations] = await Promise.all([
+      fetchMapboxStations(lat, lng, radius),
+      (async () => {
+        const latDelta = radius / 111.32;
+        const lngDelta = radius / (111.32 * Math.cos((lat * Math.PI) / 180));
+        const stations = await prisma.fuelStation.findMany({
+          where: {
+            latitude: { gte: lat - latDelta, lte: lat + latDelta },
+            longitude: { gte: lng - lngDelta, lte: lng + lngDelta },
+          },
           include: {
-            user: {
-              select: { id: true, name: true },
+            prices: {
+              orderBy: { updatedAt: "desc" },
+              take: 5,
+              include: { user: { select: { id: true, name: true } } },
             },
           },
-        },
-      },
-    });
+        });
+        return stations.map((s) => ({
+          id: s.id,
+          name: s.name,
+          brand: s.brand ?? undefined,
+          address: s.address ?? undefined,
+          latitude: s.latitude,
+          longitude: s.longitude,
+          prices: s.prices,
+          lastUpdated: Date.now(),
+          isMapbox: false,
+        }));
+      })(),
+    ]);
 
-    // Precise Haversine distance filtering
-    const filteredStations = stations
-      .map((station) => {
-        const dLat = ((station.latitude - lat) * Math.PI) / 180;
-        const dLng = ((station.longitude - lng) * Math.PI) / 180;
-        const a =
-          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-          Math.cos((lat * Math.PI) / 180) *
-            Math.cos((station.latitude * Math.PI) / 180) *
-            Math.sin(dLng / 2) *
-            Math.sin(dLng / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const distance = 6371 * c;
-        return { ...station, distance: Math.round(distance * 100) / 100 };
-      })
-      .filter((station) => station.distance <= radius)
-      .sort((a, b) => a.distance - b.distance);
+    // Merge: DB stations override Mapbox ones (have price data)
+    // Match by proximity (within 100m) to avoid duplicates
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const merged: any[] = [...mapboxStations];
+    for (const db of dbStations) {
+      const duplicate = merged.findIndex((m) => {
+        const dLat = (m.latitude - db.latitude) * 111320;
+        const dLng =
+          (m.longitude - db.longitude) *
+          111320 *
+          Math.cos((db.latitude * Math.PI) / 180);
+        return Math.sqrt(dLat * dLat + dLng * dLng) < 100;
+      });
+      if (duplicate >= 0) {
+        merged[duplicate] = db; // replace with DB version (has prices)
+      } else {
+        merged.push(db);
+      }
+    }
 
-    return NextResponse.json(filteredStations);
+    return NextResponse.json(merged);
   } catch (error) {
     console.error("Get fuel stations error:", error);
     return NextResponse.json(
@@ -109,6 +175,20 @@ export async function POST(request: NextRequest) {
         { error: "Invalid latitude or longitude values" },
         { status: 400 }
       );
+    }
+
+    // Find existing station within 100m to avoid duplicates
+    const latDelta = 0.001; // ~111m
+    const lngDelta = 0.001;
+    const nearby = await prisma.fuelStation.findFirst({
+      where: {
+        latitude: { gte: latitude - latDelta, lte: latitude + latDelta },
+        longitude: { gte: longitude - lngDelta, lte: longitude + lngDelta },
+      },
+    });
+
+    if (nearby) {
+      return NextResponse.json(nearby, { status: 200 });
     }
 
     const station = await prisma.fuelStation.create({

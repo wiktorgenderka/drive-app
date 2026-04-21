@@ -82,6 +82,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(convoy, { status: 201 });
   } catch (error) {
     console.error("Create convoy error:", error);
+    if (
+      error != null &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "P2003"
+    ) {
+      return NextResponse.json(
+        { error: "User not found. Please log out and log back in." },
+        { status: 401 }
+      );
+    }
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -148,11 +148,14 @@ export default function RoutePanel({ onShowOnMap }: RoutePanelProps = {}) {
           })),
         }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? `HTTP ${res.status}`);
+      }
       await fetchRoutes();
       setActiveSection('saved');
-    } catch {
-      setError('Nie udało się zapisać trasy.');
+    } catch (err) {
+      setError(`Nie udało się zapisać trasy. ${err instanceof Error ? err.message : ''}`);
     } finally {
       setSavingId(null);
     }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, useRef } from 'react';
-import Map, { NavigationControl, Marker, Source, Layer } from 'react-map-gl/mapbox';
+import Map, { Marker, Source, Layer } from 'react-map-gl/mapbox';
 import type { MapRef } from 'react-map-gl/mapbox';
 import { useMapStore } from '@/stores/useMapStore';
 import { useThemeStore } from '@/stores/useThemeStore';
@@ -16,6 +16,7 @@ import RouteLayer from './RouteLayer';
 import NearbyReportAlert from './NearbyReportAlert';
 import ReportProximityPrompt from './ReportProximityPrompt';
 import SpeedCameraAlert from './SpeedCameraAlert';
+import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -203,12 +204,70 @@ export default function MapView() {
     map.addImage('route-arrow', { width: size, height: size, data: imgData.data }, { sdf: true });
   }, []);
 
+  const add3DLayers = useCallback((map: mapboxgl.Map) => {
+    if (!map.getSource('mapbox-dem')) {
+      map.addSource('mapbox-dem', {
+        type: 'raster-dem',
+        url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+        tileSize: 512,
+        maxzoom: 14,
+      });
+    }
+    if (!map.getLayer('sky')) {
+      map.addLayer({
+        id: 'sky',
+        type: 'sky',
+        paint: {
+          'sky-type': 'atmosphere',
+          'sky-atmosphere-sun': [0.0, 90.0],
+          'sky-atmosphere-sun-intensity': 15,
+          'sky-atmosphere-color': 'rgba(85,151,210,1)',
+          'sky-atmosphere-halo-color': 'rgba(135,196,240,0.5)',
+        },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+    }
+    if (!map.getLayer('3d-buildings')) {
+      map.addLayer({
+        id: '3d-buildings',
+        source: 'composite',
+        'source-layer': 'building',
+        filter: ['==', 'extrude', 'true'],
+        type: 'fill-extrusion',
+        minzoom: 14,
+        paint: {
+          'fill-extrusion-color': [
+            'interpolate', ['linear'], ['get', 'height'],
+            0, '#1e293b', 50, '#334155', 200, '#475569',
+          ],
+          'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 14, 0, 14.5, ['get', 'height']],
+          'fill-extrusion-base': ['interpolate', ['linear'], ['zoom'], 14, 0, 14.5, ['get', 'min_height']],
+          'fill-extrusion-opacity': 0.85,
+        },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+    }
+    map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+  }, []);
+
+  const remove3DLayers = useCallback((map: mapboxgl.Map) => {
+    map.setTerrain(null);
+    if (map.getLayer('sky')) map.removeLayer('sky');
+    if (map.getLayer('3d-buildings')) map.removeLayer('3d-buildings');
+    if (map.getSource('mapbox-dem')) map.removeSource('mapbox-dem');
+  }, []);
+
   const handleMapLoad = useCallback(() => {
     addRouteArrowImage();
-    // Re-add on every style reload (dark/light switch clears custom images)
     const map = mapRef.current?.getMap();
-    map?.on('styledata', addRouteArrowImage);
-  }, [addRouteArrowImage]);
+    map?.on('styledata', () => {
+      addRouteArrowImage();
+      // Re-apply 3D after style reload
+      if (is3DRef.current) {
+        add3DLayers(map);
+      }
+    });
+  }, [addRouteArrowImage, add3DLayers]);
 
   // ── Basic nav state (single destination) ──
   const [navDestination, setNavDestination] = useState<{ lng: number; lat: number } | null>(null);
@@ -222,6 +281,8 @@ export default function MapView() {
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [isNavigating, setIsNavigating] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [is3D, setIs3D] = useState(false);
+  const is3DRef = useRef(false);
   const [navDestName, setNavDestName] = useState('');
   const [hasArrived, setHasArrived] = useState(false);
 
@@ -253,17 +314,18 @@ export default function MapView() {
   const [isSearching, setIsSearching] = useState(false);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleMove = useCallback(
-    (evt: { viewState: { longitude: number; latitude: number; zoom: number }; originalEvent?: unknown }) => {
-      const { longitude, latitude, zoom } = evt.viewState;
-      setViewState({ longitude, latitude, zoom });
-      // originalEvent present only on user-initiated drag/scroll/touch — not on easeTo/flyTo
-      if (evt.originalEvent) {
-        setIsFollowing(false);
-      }
+  // Only fires when movement fully stops — avoids 60fps Zustand updates
+  const handleMoveEnd = useCallback(
+    (evt: { viewState: { longitude: number; latitude: number; zoom: number; pitch?: number; bearing?: number } }) => {
+      const { longitude, latitude, zoom, pitch, bearing } = evt.viewState;
+      setViewState({ longitude, latitude, zoom, pitch: pitch ?? 0, bearing: bearing ?? 0 });
     },
     [setViewState]
   );
+
+  const handleDragStart = useCallback(() => {
+    setIsFollowing(false);
+  }, []);
 
   const setReports = useMapStore((s) => s.setReports);
   const setFuelStations = useMapStore((s) => s.setFuelStations);
@@ -297,7 +359,7 @@ export default function MapView() {
         })
         .catch(() => {});
 
-      fetch(`/api/fuel?lat=${lat}&lng=${lng}&radius=50`)
+      fetch(`/api/fuel?lat=${lat}&lng=${lng}&radius=5`)
         .then((res) => (res.ok ? res.json() : []))
         .then((data) => { if (Array.isArray(data)) setFuelStations(data); })
         .catch(() => {});
@@ -320,11 +382,14 @@ export default function MapView() {
     return () => clearInterval(interval);
   }, [userLocation, fetchMapData]);
 
-  // Initial center on user
+  // Initial center on user — use mapRef so no state update needed
   useEffect(() => {
-    if (userLocation) {
-      setViewState({ longitude: userLocation.longitude, latitude: userLocation.latitude });
-    }
+    if (!userLocation) return;
+    mapRef.current?.flyTo({
+      center: [userLocation.longitude, userLocation.latitude],
+      zoom: 14,
+      duration: 800,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLocation?.latitude ? 1 : 0]);
 
@@ -560,7 +625,6 @@ export default function MapView() {
           zoom: 15,
           duration: 1000,
         });
-        setViewState({ longitude: userLocation.longitude, latitude: userLocation.latitude, zoom: 15 });
       }
     }
   }
@@ -772,7 +836,7 @@ export default function MapView() {
         </>
       )}
 
-      {/* ── Normal bottom-left controls (not navigating) ── */}
+      {/* ── Bottom-left: speed + trip recorder ── */}
       {!isNavigating && (
         <div className="absolute bottom-6 left-4 z-10 flex flex-col items-center gap-3">
           {/* Speed — clickable to set limit */}
@@ -789,33 +853,6 @@ export default function MapView() {
             {speedLimit && (
               <span className="text-[8px] text-muted leading-none">/{speedLimit}</span>
             )}
-          </button>
-
-          {/* Locate me */}
-          <button
-            onClick={handleLocateUser}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-card-bg/90 border border-card-border shadow-lg backdrop-blur-md text-muted transition hover:text-foreground"
-            title="Moja lokalizacja"
-          >
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <circle cx="12" cy="12" r="4" />
-              <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
-            </svg>
-          </button>
-
-          {/* Navigate / Search toggle */}
-          <button
-            onClick={() => { setShowSearch(!showSearch); setIsPickingDestination(false); }}
-            className={`flex h-11 w-11 items-center justify-center rounded-full shadow-lg transition ${
-              showSearch || isPickingDestination
-                ? 'bg-blue-600 text-white'
-                : 'bg-card-bg/90 border border-card-border backdrop-blur-md text-muted hover:text-foreground'
-            }`}
-            title="Nawiguj"
-          >
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path d="M3 11l19-9-9 19-2-8-8-2z" />
-            </svg>
           </button>
 
           {/* Trip recorder */}
@@ -1060,10 +1097,9 @@ export default function MapView() {
       {/* ── Map ── */}
       <Map
         ref={mapRef}
-        longitude={viewState.longitude}
-        latitude={viewState.latitude}
-        zoom={viewState.zoom}
-        onMove={handleMove}
+        initialViewState={viewState}
+        onMoveEnd={handleMoveEnd}
+        onDragStart={handleDragStart}
         onClick={handleMapClick}
         onLoad={handleMapLoad}
         mapboxAccessToken={MAPBOX_TOKEN}
@@ -1072,7 +1108,75 @@ export default function MapView() {
         attributionControl={false}
         cursor={isPickingDestination ? 'crosshair' : undefined}
       >
-        {!isNavigating && <NavigationControl position="bottom-right" />}
+        {/* ── Bottom-right controls: nawiguj + lokalizacja + 3D ── */}
+        <div className="absolute bottom-8 right-2.5 z-10 flex flex-col items-center gap-2">
+
+          {/* Navigate / Search toggle */}
+          {!isNavigating && (
+            <button
+              onClick={() => { setShowSearch(!showSearch); setIsPickingDestination(false); }}
+              className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition-all ${
+                showSearch || isPickingDestination
+                  ? 'bg-blue-600 text-white'
+                  : 'text-muted hover:text-foreground'
+              }`}
+              style={!(showSearch || isPickingDestination) ? {
+                backgroundColor: 'rgba(24,24,27,0.9)',
+                border: '1px solid #3f3f46',
+                backdropFilter: 'blur(8px)',
+              } : {}}
+              title="Nawiguj"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path d="M3 11l19-9-9 19-2-8-8-2z" />
+              </svg>
+            </button>
+          )}
+
+          {/* Locate me */}
+          {!isNavigating && (
+            <button
+              onClick={handleLocateUser}
+              className="flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition-all text-muted hover:text-foreground"
+              style={{ backgroundColor: 'rgba(24,24,27,0.9)', border: '1px solid #3f3f46', backdropFilter: 'blur(8px)' }}
+              title="Moja lokalizacja"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+              </svg>
+            </button>
+          )}
+
+          {/* 3D toggle */}
+          <button
+            onClick={() => {
+              const next = !is3D;
+              const map = mapRef.current?.getMap();
+              if (!map) return;
+              if (next) {
+                add3DLayers(map);
+                map.easeTo({ pitch: 55, duration: 600 });
+              } else {
+                remove3DLayers(map);
+                map.easeTo({ pitch: 0, duration: 600 });
+              }
+              is3DRef.current = next;
+              setIs3D(next);
+            }}
+            className="flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition-all"
+            style={{
+              backgroundColor: is3D ? '#3b82f6' : 'rgba(24,24,27,0.9)',
+              border: `1px solid ${is3D ? '#60a5fa' : '#3f3f46'}`,
+              backdropFilter: 'blur(8px)',
+            }}
+            title="Tryb 3D"
+          >
+            <span className="text-xs font-black" style={{ color: is3D ? '#fff' : '#a1a1aa' }}>3D</span>
+          </button>
+        </div>
+
+        {/* 3D layers managed imperatively via add3DLayers / remove3DLayers */}
 
         {userLocation && (
           <UserMarker
