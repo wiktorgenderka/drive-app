@@ -47,6 +47,7 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
   const convoyRemoveMember = useConvoyStore((s) => s.removeMember);
   const convoyUpdateMemberLocation = useConvoyStore((s) => s.updateMemberLocation);
   const convoySetMemberOnlineStatus = useConvoyStore((s) => s.setMemberOnlineStatus);
+  const convoySetDestination = useConvoyStore((s) => s.setConvoyDestination);
 
   const setupEventHandlers = useCallback(
     (socket: Socket) => {
@@ -136,8 +137,13 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
       });
 
       // Fuel station price updates
-      socket.on('fuel-update', (station: FuelStation) => {
+      socket.on('fuel-price-update', (station: FuelStation) => {
         updateFuelStation(station);
+      });
+
+      // Convoy shared destination update
+      socket.on('convoy-destination-set', (data: { convoyId: string; destLat: number | null; destLng: number | null; destName: string | null }) => {
+        convoySetDestination(data.destLat, data.destLng, data.destName);
       });
     },
     [
@@ -151,6 +157,7 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
       convoyRemoveMember,
       convoyUpdateMemberLocation,
       convoySetMemberOnlineStatus,
+      convoySetDestination,
     ]
   );
 

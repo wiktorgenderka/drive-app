@@ -1,6 +1,9 @@
-/** Merge Tailwind class names */
-export function cn(...classes: (string | undefined | null | false)[]) {
-  return classes.filter(Boolean).join(' ');
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+/** Merge Tailwind class names — resolves conflicts (e.g. text-red-500 + text-blue-500 = text-blue-500) */
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
 }
 
 /** Format date to locale string */

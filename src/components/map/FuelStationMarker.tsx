@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Marker, Popup } from 'react-map-gl/mapbox';
 import type { FuelStation } from '@/stores/useMapStore';
 import { useMapStore } from '@/stores/useMapStore';
@@ -55,7 +55,7 @@ const PUMP_PATH =
 
 /* ─── Component ─────────────────────────────────────────────────── */
 
-export default function FuelStationMarker({ station }: { station: FuelStation }) {
+function FuelStationMarker({ station }: { station: FuelStation }) {
   const [showPopup, setShowPopup] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [activeFT, setActiveFT] = useState<FT>('PETROL_95');
@@ -320,3 +320,9 @@ export default function FuelStationMarker({ station }: { station: FuelStation })
     </>
   );
 }
+
+export default memo(FuelStationMarker, (prev, next) =>
+  prev.station.id === next.station.id &&
+  prev.station.prices.length === next.station.prices.length &&
+  prev.station.lastUpdated === next.station.lastUpdated
+);

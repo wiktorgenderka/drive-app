@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
-const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+// Używamy prywatnego tokenu server-side (nie NEXT_PUBLIC_) żeby nie eksponować klucza w bundlu JS
+const MAPBOX_TOKEN = process.env.MAPBOX_SERVER_TOKEN ?? process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
 interface MapboxFeature {
   type: string;

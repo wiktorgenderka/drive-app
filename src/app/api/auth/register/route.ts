@@ -1,32 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
+import { rateLimit } from "@/lib/rateLimit";
+import { RegisterSchema } from "@/lib/schemas";
 
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ?? '127.0.0.1';
+  if (!rateLimit(`register:${ip}`, 5, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   try {
-    const body = await request.json();
-    const { email, name, password } = body;
-
-    if (!email || !name || !password) {
-      return NextResponse.json(
-        { error: "Email, name, and password are required" },
-        { status: 400 }
-      );
+    const parsed = RegisterSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      const flat = parsed.error.flatten();
+      const msg =
+        flat.formErrors[0] ??
+        Object.values(flat.fieldErrors).flat()[0] ??
+        'Nieprawidłowe dane';
+      return NextResponse.json({ error: msg }, { status: 400 });
     }
-
-    if (typeof email !== "string" || !email.includes("@")) {
-      return NextResponse.json(
-        { error: "Invalid email address" },
-        { status: 400 }
-      );
-    }
-
-    if (typeof password !== "string" || password.length < 8) {
-      return NextResponse.json(
-        { error: "Password must be at least 8 characters" },
-        { status: 400 }
-      );
-    }
+    const { email, name, password } = parsed.data;
 
     const existingUser = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },

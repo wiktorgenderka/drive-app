@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Marker, Popup } from 'react-map-gl/mapbox';
 import type { Report } from '@/stores/useMapStore';
 import { useMapStore } from '@/stores/useMapStore';
@@ -62,7 +62,7 @@ const reportIcons: Record<string, string> = {
 // Show distance badge when closer than this (in meters)
 const DISTANCE_SHOW_THRESHOLD = 5000;
 
-export default function ReportMarker({ report }: ReportMarkerProps) {
+function ReportMarker({ report }: ReportMarkerProps) {
   const [showPopup, setShowPopup] = useState(false);
   const userLocation = useMapStore((s) => s.userLocation);
   const updateReportVotes = useMapStore((s) => s.updateReportVotes);
@@ -227,3 +227,10 @@ export default function ReportMarker({ report }: ReportMarkerProps) {
     </>
   );
 }
+
+export default memo(ReportMarker, (prev, next) =>
+  prev.report.id === next.report.id &&
+  prev.report.upvotes === next.report.upvotes &&
+  prev.report.downvotes === next.report.downvotes &&
+  prev.report.userVote === next.report.userVote
+);

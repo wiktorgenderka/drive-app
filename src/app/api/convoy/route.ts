@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { CreateConvoySchema } from "@/lib/schemas";
 
 export async function GET() {
   try {
@@ -47,15 +48,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { name } = body;
-
-    if (!name || typeof name !== "string" || name.trim().length === 0) {
-      return NextResponse.json(
-        { error: "Convoy name is required" },
-        { status: 400 }
-      );
+    const parsed = CreateConvoySchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
+    const { name } = parsed.data;
 
     const convoy = await prisma.convoy.create({
       data: {
@@ -219,12 +216,10 @@ export async function DELETE(request: NextRequest) {
     }
 
     if (convoy.ownerId === session.user.id) {
-      await prisma.convoyMember.deleteMany({
-        where: { convoyId },
-      });
-      await prisma.convoy.delete({
-        where: { id: convoyId },
-      });
+      await prisma.$transaction([
+        prisma.convoyMember.deleteMany({ where: { convoyId } }),
+        prisma.convoy.delete({ where: { id: convoyId } }),
+      ]);
       return NextResponse.json({ message: "Convoy deleted successfully" });
     }
 

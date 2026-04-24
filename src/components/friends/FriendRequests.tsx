@@ -24,7 +24,7 @@ export default function FriendRequests() {
       const res = await fetch('/api/friends/requests');
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setRequests(data.requests ?? data);
+      setRequests(Array.isArray(data) ? data : (data.requests ?? []));
     } catch {
       setError('Could not load friend requests.');
     } finally {

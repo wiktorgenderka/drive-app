@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { calculateDistance, formatDistance } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -12,6 +12,7 @@ import FriendsList from '@/components/friends/FriendsList';
 import FriendRequests from '@/components/friends/FriendRequests';
 import AddFriendModal from '@/components/friends/AddFriendModal';
 import ConvoyPanel from '@/components/convoy/ConvoyPanel';
+import ConvoyMapVoice from '@/components/convoy/ConvoyMapVoice';
 import RoutePanel from '@/components/routes/RoutePanel';
 
 const MapView = dynamic(() => import('@/components/map/MapView'), {
@@ -100,6 +101,37 @@ const SECTION_META: Record<Exclude<Tab, 'home' | 'map'>, { title: string; color:
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<Tab>('home');
+  const [mapVoiceEnabled, setMapVoiceEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('convoy_map_voice') !== 'false';
+    }
+    return true;
+  });
+  const [mapNotificationsEnabled, setMapNotificationsEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('convoy_map_notifications') !== 'false';
+    }
+    return true;
+  });
+  const [mapToast, setMapToast] = useState<{ name: string; type: 'text' | 'voice' } | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function toggleMapVoice(val: boolean) {
+    setMapVoiceEnabled(val);
+    localStorage.setItem('convoy_map_voice', String(val));
+  }
+
+  function toggleMapNotifications(val: boolean) {
+    setMapNotificationsEnabled(val);
+    localStorage.setItem('convoy_map_notifications', String(val));
+  }
+
+  const handleIncomingConvoyMessage = useCallback((msg: { name: string; type: 'text' | 'voice' }) => {
+    if (!mapNotificationsEnabled) return;
+    setMapToast(msg);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setMapToast(null), 3500);
+  }, [mapNotificationsEnabled]);
   const { showReports, showFuelStations, showConvoyMembers, toggleLayer } = useMapStore();
   const [showLayerMenu, setShowLayerMenu] = useState(false);
   const [showAddReport, setShowAddReport] = useState(false);
@@ -173,6 +205,32 @@ export default function DashboardPage() {
         {isMapMode && (
           <>
             <MapView />
+            {mapVoiceEnabled && <ConvoyMapVoice onIncomingMessage={handleIncomingConvoyMessage} />}
+
+            {/* Convoy message notification toast */}
+            {mapToast && (
+              <div className="absolute left-1/2 top-20 z-30 -translate-x-1/2 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="flex items-center gap-2 rounded-2xl border border-card-border bg-card-bg/95 px-4 py-2.5 shadow-xl backdrop-blur-md">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-600/20 text-emerald-400">
+                    {mapToast.type === 'voice' ? (
+                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                      </svg>
+                    ) : (
+                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs font-semibold text-foreground">{mapToast.name}</span>
+                    <span className="ml-1.5 text-xs text-muted">
+                      {mapToast.type === 'voice' ? 'wysłał głosówkę' : 'napisał wiadomość'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Top bar */}
             <div className="absolute left-0 right-0 top-0 z-20 flex items-start justify-between px-4 pt-4">
@@ -334,7 +392,16 @@ export default function DashboardPage() {
 
               {activeTab === 'car' && (
                 <div className="rounded-2xl border border-card-border bg-card-bg p-5">
-                  <ConvoyPanel />
+                  <ConvoyPanel
+                    mapVoiceEnabled={mapVoiceEnabled}
+                    onToggleMapVoice={toggleMapVoice}
+                    mapNotificationsEnabled={mapNotificationsEnabled}
+                    onToggleMapNotifications={toggleMapNotifications}
+                    onEnterDriveMode={() => {
+                      if (!mapVoiceEnabled) toggleMapVoice(true);
+                      setActiveTab('map');
+                    }}
+                  />
                 </div>
               )}
 

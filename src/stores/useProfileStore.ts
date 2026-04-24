@@ -66,7 +66,11 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
         set((s) => {
           const remaining = s.vehicles.filter((x) => x.id !== id);
           if (remaining.length > 0 && !remaining.some((x) => x.isActive)) {
-            remaining[0].isActive = true;
+            return {
+              vehicles: remaining.map((x, i) =>
+                i === 0 ? { ...x, isActive: true } : x
+              ),
+            };
           }
           return { vehicles: remaining };
         }),

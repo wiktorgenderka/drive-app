@@ -1,38 +1,54 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { rateLimit } from "@/lib/rateLimit";
+import { FriendshipStatus } from "@prisma/client";
+import { SendFriendRequestSchema, RespondFriendSchema } from "@/lib/schemas";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const friendships = await prisma.friendship.findMany({
-      where: {
-        OR: [
-          { requesterId: session.user.id, status: "ACCEPTED" },
-          { addresseeId: session.user.id, status: "ACCEPTED" },
-        ],
-      },
-      include: {
-        requester: {
-          select: { id: true, name: true, email: true, image: true },
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(0, parseInt(searchParams.get("page") ?? "0", 10) || 0);
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10) || 20));
+
+    const userId = session.user.id;
+
+    const [friendships, total] = await Promise.all([
+      prisma.friendship.findMany({
+        where: {
+          OR: [
+            { requesterId: userId, status: FriendshipStatus.ACCEPTED },
+            { addresseeId: userId, status: FriendshipStatus.ACCEPTED },
+          ],
         },
-        addressee: {
-          select: { id: true, name: true, email: true, image: true },
+        include: {
+          requester: { select: { id: true, name: true, email: true, image: true } },
+          addressee: { select: { id: true, name: true, email: true, image: true } },
         },
-      },
-    });
+        take: limit,
+        skip: page * limit,
+      }),
+      prisma.friendship.count({
+        where: {
+          OR: [
+            { requesterId: userId, status: FriendshipStatus.ACCEPTED },
+            { addresseeId: userId, status: FriendshipStatus.ACCEPTED },
+          ],
+        },
+      }),
+    ]);
 
     const friends = friendships.map((f) => {
-      const friendData =
-        f.requesterId === session.user!.id ? f.addressee : f.requester;
+      const friendData = f.requesterId === userId ? f.addressee : f.requester;
       return { friendshipId: f.id, ...friendData };
     });
 
-    return NextResponse.json(friends);
+    return NextResponse.json({ data: friends, total, page, limit });
   } catch (error) {
     console.error("Get friends error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -40,18 +56,22 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ?? '127.0.0.1';
+  if (!rateLimit(`friends:${ip}`, 10, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { email } = body;
-
-    if (!email || typeof email !== "string") {
-      return NextResponse.json({ error: "Email is required" }, { status: 400 });
+    const parsed = SendFriendRequestSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
+    const { email } = parsed.data;
 
     const targetUser = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
@@ -106,16 +126,11 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { friendshipId, action } = body;
-
-    if (!friendshipId || !action) {
-      return NextResponse.json({ error: "friendshipId and action are required" }, { status: 400 });
+    const parsed = RespondFriendSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
-
-    if (!["accept", "reject"].includes(action)) {
-      return NextResponse.json({ error: "Action must be 'accept' or 'reject'" }, { status: 400 });
-    }
+    const { friendshipId, action } = parsed.data;
 
     const friendship = await prisma.friendship.findUnique({
       where: { id: friendshipId },

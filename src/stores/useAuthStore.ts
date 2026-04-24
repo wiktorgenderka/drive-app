@@ -1,15 +1,7 @@
 import { create } from 'zustand';
+import type { User } from '@/types';
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  avatarUrl?: string;
-  location?: {
-    latitude: number;
-    longitude: number;
-  };
-}
+export type { User };
 
 interface AuthState {
   user: User | null;
@@ -48,12 +40,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
   updateLocation: (latitude, longitude) =>
     set((state) => {
       if (!state.user) return state;
-      return {
-        user: {
-          ...state.user,
-          location: { latitude, longitude },
-        },
-      };
+      return { user: { ...state.user, latitude, longitude } };
     }),
 
   setLoading: (isLoading) => set({ isLoading }),

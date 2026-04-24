@@ -16,12 +16,18 @@ export async function GET(request: NextRequest) {
     const tokens = await exchangeCode(code);
     const expiresAt = new Date(Date.now() + tokens.expires_in * 1000);
 
-    await prisma.user.update({
-      where: { id: state },
-      data: {
-        spotifyAccessToken: tokens.access_token,
-        spotifyRefreshToken: tokens.refresh_token,
-        spotifyExpiresAt: expiresAt,
+    await prisma.spotifyToken.upsert({
+      where: { userId: state },
+      create: {
+        userId: state,
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        expiresAt,
+      },
+      update: {
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        expiresAt,
       },
     });
 

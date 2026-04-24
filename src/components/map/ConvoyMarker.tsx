@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { Marker } from 'react-map-gl/mapbox';
 
 interface ConvoyMarkerProps {
@@ -8,7 +9,7 @@ interface ConvoyMarkerProps {
   name: string;
 }
 
-export default function ConvoyMarker({ latitude, longitude, name }: ConvoyMarkerProps) {
+function ConvoyMarker({ latitude, longitude, name }: ConvoyMarkerProps) {
   const initials = name
     .split(' ')
     .map((n) => n[0])
@@ -29,3 +30,9 @@ export default function ConvoyMarker({ latitude, longitude, name }: ConvoyMarker
     </Marker>
   );
 }
+
+export default memo(ConvoyMarker, (prev, next) =>
+  prev.latitude === next.latitude &&
+  prev.longitude === next.longitude &&
+  prev.name === next.name
+);

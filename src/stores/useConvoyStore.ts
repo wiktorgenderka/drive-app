@@ -20,6 +20,9 @@ export interface Convoy {
   name: string;
   ownerId: string;
   createdAt: string;
+  destLat?: number | null;
+  destLng?: number | null;
+  destName?: string | null;
 }
 
 export interface ConvoyInvitation {
@@ -60,6 +63,7 @@ interface ConvoyActions {
   addInvitation: (invitation: ConvoyInvitation) => void;
   removeInvitation: (invitationId: string) => void;
   setInvitations: (invitations: ConvoyInvitation[]) => void;
+  setConvoyDestination: (destLat: number | null, destLng: number | null, destName: string | null) => void;
   setCreating: (isCreating: boolean) => void;
   setJoining: (isJoining: boolean) => void;
   setError: (error: string | null) => void;
@@ -156,6 +160,11 @@ export const useConvoyStore = create<ConvoyStore>()((set) => ({
     })),
 
   setInvitations: (invitations) => set({ invitations }),
+
+  setConvoyDestination: (destLat, destLng, destName) =>
+    set((state) => ({
+      activeConvoy: state.activeConvoy ? { ...state.activeConvoy, destLat, destLng, destName } : null,
+    })),
 
   setCreating: (isCreating) => set({ isCreating }),
 

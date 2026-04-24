@@ -18,7 +18,7 @@ export async function GET() {
       todayReports,
       activeConvoy,
       pendingRequests,
-      nearbyReportsCount,
+      totalActiveReports,
     ] = await Promise.all([
       prisma.route.count({ where: { userId: session.user.id } }),
       prisma.report.count({ where: { userId: session.user.id } }),
@@ -58,7 +58,7 @@ export async function GET() {
           }
         : null,
       pendingRequests,
-      nearbyReportsCount,
+      totalActiveReports,
     });
   } catch (error) {
     console.error("Dashboard stats error:", error);

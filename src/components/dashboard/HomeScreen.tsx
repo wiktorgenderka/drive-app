@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
+import { io, Socket } from 'socket.io-client';
 import { useMapStore } from '@/stores/useMapStore';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { useStatsStore } from '@/stores/useStatsStore';
 import SpotifyWidget from '@/components/spotify/SpotifyWidget';
 import { useWeather } from '@/hooks/useWeather';
+import { timeAgo } from '@/lib/utils';
+import { REPORT_TYPE_LABELS } from '@/types';
 
 interface SpotifyNowPlaying {
   isPlaying: boolean;
@@ -36,7 +39,7 @@ interface DashboardStats {
     memberCount: number;
   } | null;
   pendingRequests: number;
-  nearbyReportsCount: number;
+  totalActiveReports: number;
 }
 
 interface RecentReport {
@@ -55,19 +58,23 @@ interface HomeScreenProps {
 }
 
 const REPORT_LABELS: Record<string, { label: string; color: string; icon: string }> = {
-  POLICE: { label: 'Policja', color: 'text-blue-400', icon: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' },
-  UNMARKED_POLICE: { label: 'Tajniaki', color: 'text-indigo-400', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
-  SPEED_TRAP: { label: 'Kontrola prędkości', color: 'text-yellow-400', icon: 'M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z' },
-  ACCIDENT: { label: 'Wypadek', color: 'text-red-400', icon: 'M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z' },
-  OBSTACLE: { label: 'Przeszkoda', color: 'text-orange-400', icon: 'M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-  SPEED_CAMERA: { label: 'Fotoradar', color: 'text-purple-400', icon: 'M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z' },
+  POLICE: { label: REPORT_TYPE_LABELS.POLICE, color: 'text-blue-400', icon: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' },
+  UNMARKED_POLICE: { label: REPORT_TYPE_LABELS.UNMARKED_POLICE, color: 'text-indigo-400', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
+  SPEED_TRAP: { label: REPORT_TYPE_LABELS.SPEED_TRAP, color: 'text-yellow-400', icon: 'M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z' },
+  ACCIDENT: { label: REPORT_TYPE_LABELS.ACCIDENT, color: 'text-red-400', icon: 'M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z' },
+  OBSTACLE: { label: REPORT_TYPE_LABELS.OBSTACLE, color: 'text-orange-400', icon: 'M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+  SPEED_CAMERA: { label: REPORT_TYPE_LABELS.SPEED_CAMERA, color: 'text-purple-400', icon: 'M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z' },
 };
 
 function WeatherIcon({ code, isDay }: { code: number; isDay: boolean }) {
-  // sunny / clear
-  if (code === 0) return (
+  // sunny / clear — show sun during day, moon at night
+  if (code === 0) return isDay ? (
     <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
       <circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+    </svg>
+  ) : (
+    <svg className="h-5 w-5 text-indigo-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
     </svg>
   );
   // partly cloudy / cloudy
@@ -101,8 +108,6 @@ function WeatherIcon({ code, isDay }: { code: number; isDay: boolean }) {
       <path d="M19 16.9A5 5 0 0018 7h-1.26a8 8 0 10-11.62 9" /><polyline points="13 11 9 17 15 17 11 23" />
     </svg>
   );
-  // unused but satisfies TS
-  void isDay;
 }
 
 function getGreeting(): string {
@@ -113,15 +118,6 @@ function getGreeting(): string {
   return 'Dobry wieczór';
 }
 
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const min = Math.floor(diff / 60000);
-  if (min < 1) return 'teraz';
-  if (min < 60) return `${min} min temu`;
-  const h = Math.floor(min / 60);
-  if (h < 24) return `${h} godz. temu`;
-  return `${Math.floor(h / 24)} dni temu`;
-}
 
 export default function HomeScreen({
   onNavigateToMap,
@@ -144,6 +140,23 @@ export default function HomeScreen({
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [reports, setReports] = useState<RecentReport[]>([]);
   const [loading, setLoading] = useState(true);
+  const socketRef = useRef<Socket | null>(null);
+  const userLocationRef = useRef(userLocation);
+  userLocationRef.current = userLocation;
+
+  const fetchReports = useCallback(async () => {
+    const loc = userLocationRef.current;
+    if (!loc) return;
+    try {
+      const res = await fetch(`/api/reports?lat=${loc.latitude}&lng=${loc.longitude}&radius=50`);
+      if (res.ok) {
+        const data = await res.json();
+        setReports(data.slice(0, 5));
+      }
+    } catch {
+      // silent
+    }
+  }, []);
 
   const fetchData = useCallback(async () => {
     try {
@@ -151,34 +164,39 @@ export default function HomeScreen({
         fetch('/api/friends/online'),
         fetch('/api/dashboard/stats'),
       ]);
-
       if (friendsRes.ok) setFriends(await friendsRes.json());
       if (statsRes.ok) setStats(await statsRes.json());
-
-      // Fetch nearby reports if we have location
-      if (userLocation) {
-        const reportsRes = await fetch(
-          `/api/reports?lat=${userLocation.latitude}&lng=${userLocation.longitude}&radius=50`
-        );
-        if (reportsRes.ok) {
-          const data = await reportsRes.json();
-          setReports(data.slice(0, 5));
-        }
-      }
+      await fetchReports();
     } catch {
       // silent
     } finally {
       setLoading(false);
     }
-  }, [userLocation]);
+  }, [fetchReports]);
 
+  // Initial fetch + socket subscription for real-time updates
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
-  }, [fetchData]);
 
-  const onlineFriends = friends.filter((f) => f.isOnline);
+    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || '', {
+      path: '/api/socketio',
+      transports: ['websocket', 'polling'],
+    });
+    socketRef.current = socket;
+
+    // Re-fetch nearby reports when a new report is broadcast
+    socket.on('new-report', () => { fetchReports(); });
+    // Re-fetch stats when a report vote changes
+    socket.on('report-vote', () => { fetchReports(); });
+
+    return () => {
+      socket.removeAllListeners();
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const firstName = session?.user?.name?.split(' ')[0] ?? 'Kierowco';
 
   const now = new Date();

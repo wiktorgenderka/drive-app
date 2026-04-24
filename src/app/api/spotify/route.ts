@@ -48,14 +48,7 @@ export async function DELETE() {
     }
 
     const prisma = (await import('@/lib/prisma')).default;
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: {
-        spotifyAccessToken: null,
-        spotifyRefreshToken: null,
-        spotifyExpiresAt: null,
-      },
-    });
+    await prisma.spotifyToken.delete({ where: { userId: session.user.id } }).catch(() => null);
 
     return NextResponse.json({ disconnected: true });
   } catch (error) {

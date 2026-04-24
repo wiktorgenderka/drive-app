@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useGeolocation } from './useGeolocation';
 import { useSocket } from './useSocket';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { haversineMeters } from '@/lib/geo';
 
 interface UseRealTimeLocationOptions {
   /** Minimum distance in meters before broadcasting a new position */
@@ -17,21 +18,6 @@ interface UseRealTimeLocationOptions {
 const DEFAULT_DISTANCE_THRESHOLD = 5; // meters
 const DEFAULT_BROADCAST_INTERVAL = 2000; // ms
 
-function haversineDistance(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
-  const R = 6371000; // Earth radius in meters
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 
 export function useRealTimeLocation(
   convoyId: string | null,
@@ -64,7 +50,7 @@ export function useRealTimeLocation(
       // Throttle: skip if too soon and position hasn't changed significantly
       if (last) {
         const timeDelta = now - last.timestamp;
-        const distance = haversineDistance(
+        const distance = haversineMeters(
           last.latitude,
           last.longitude,
           latitude,
@@ -80,7 +66,7 @@ export function useRealTimeLocation(
         convoyId,
         memberId: user.id,
         name: user.name,
-        avatarUrl: user.avatarUrl,
+        avatarUrl: user.image ?? undefined,
         latitude,
         longitude,
         heading,
@@ -106,7 +92,7 @@ export function useRealTimeLocation(
   useEffect(() => {
     if (!convoyId || !isConnected) return;
 
-    emit('join-convoy', { convoyId, userId: user?.id, name: user?.name, avatarUrl: user?.avatarUrl });
+    emit('join-convoy', { convoyId, userId: user?.id, name: user?.name, avatarUrl: user?.image ?? undefined });
 
     return () => {
       emit('leave-convoy', { convoyId, userId: user?.id });

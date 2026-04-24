@@ -45,36 +45,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
+    // Check existing vote first (only for "toggle off" detection)
     const existingVote = await prisma.reportVote.findUnique({
-      where: {
-        reportId_userId: {
-          reportId,
-          userId: session.user.id,
-        },
-      },
+      where: { reportId_userId: { reportId, userId: session.user.id } },
     });
 
-    if (existingVote) {
-      if (existingVote.isUpvote === isUpvote) {
-        // Same vote direction: remove the vote (toggle off)
-        await prisma.reportVote.delete({
-          where: { id: existingVote.id },
-        });
-      } else {
-        // Different vote direction: update the vote
-        await prisma.reportVote.update({
-          where: { id: existingVote.id },
-          data: { isUpvote },
-        });
-      }
+    if (existingVote?.isUpvote === isUpvote) {
+      // Same direction → toggle off (delete)
+      await prisma.reportVote.delete({ where: { id: existingVote.id } });
     } else {
-      // No existing vote: create new one
-      await prisma.reportVote.create({
-        data: {
-          reportId,
-          userId: session.user.id,
-          isUpvote,
-        },
+      // Different direction or no vote → upsert (atomic, no race condition)
+      await prisma.reportVote.upsert({
+        where: { reportId_userId: { reportId, userId: session.user.id } },
+        update: { isUpvote },
+        create: { reportId, userId: session.user.id, isUpvote },
       });
     }
 

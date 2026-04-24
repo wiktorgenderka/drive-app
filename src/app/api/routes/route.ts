@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { CreateRouteSchema } from "@/lib/schemas";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
@@ -10,12 +11,21 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const routes = await prisma.route.findMany({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: "desc" },
-    });
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(0, parseInt(searchParams.get("page") ?? "0", 10) || 0);
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10) || 20));
 
-    return NextResponse.json(routes);
+    const [routes, total] = await Promise.all([
+      prisma.route.findMany({
+        where: { userId: session.user.id },
+        orderBy: { createdAt: "desc" },
+        take: limit,
+        skip: page * limit,
+      }),
+      prisma.route.count({ where: { userId: session.user.id } }),
+    ]);
+
+    return NextResponse.json({ data: routes, total, page, limit });
   } catch (error) {
     console.error("Get routes error:", error);
     return NextResponse.json(
@@ -33,44 +43,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { name, description, waypoints } = body;
-
-    if (!name || typeof name !== "string" || name.trim().length === 0) {
-      return NextResponse.json(
-        { error: "Route name is required" },
-        { status: 400 }
-      );
+    const parsed = CreateRouteSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
-
-    if (!waypoints || !Array.isArray(waypoints) || waypoints.length < 2) {
-      return NextResponse.json(
-        { error: "At least 2 waypoints are required" },
-        { status: 400 }
-      );
-    }
-
-    // Validate each waypoint has lat/lng
-    for (const wp of waypoints) {
-      if (
-        typeof wp.latitude !== "number" ||
-        typeof wp.longitude !== "number" ||
-        wp.latitude < -90 ||
-        wp.latitude > 90 ||
-        wp.longitude < -180 ||
-        wp.longitude > 180
-      ) {
-        return NextResponse.json(
-          { error: "Each waypoint must have valid latitude and longitude" },
-          { status: 400 }
-        );
-      }
-    }
+    const { name, description, waypoints } = parsed.data;
 
     const route = await prisma.route.create({
       data: {
-        name: name.trim(),
-        description: description || null,
+        name,
+        description: description ?? null,
         waypoints,
         userId: session.user.id,
       },

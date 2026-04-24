@@ -152,25 +152,77 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     }
 
     if (convoy.ownerId === session.user.id) {
-      return NextResponse.json(
-        { error: "Owner cannot leave. Delete the convoy instead via /api/convoy" },
-        { status: 400 }
-      );
+      // Owner deletes the whole convoy
+      await prisma.$transaction([
+        prisma.convoyMember.deleteMany({ where: { convoyId: id } }),
+        prisma.convoy.delete({ where: { id } }),
+      ]);
+      return NextResponse.json({ message: "Convoy deleted successfully" });
     }
 
-    await prisma.convoyMember.deleteMany({
-      where: {
-        convoyId: id,
-        userId: session.user.id,
-      },
-    });
-
+    await prisma.convoyMember.deleteMany({ where: { convoyId: id, userId: session.user.id } });
     return NextResponse.json({ message: "Left convoy successfully" });
   } catch (error) {
-    console.error("Leave convoy error:", error);
+    console.error("Leave/delete convoy error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
+  }
+}
+
+export async function PATCH(request: NextRequest, context: RouteContext) {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await context.params;
+    const body = await request.json();
+    const { name, destLat, destLng, destName } = body;
+
+    const convoy = await prisma.convoy.findUnique({ where: { id } });
+
+    if (!convoy) {
+      return NextResponse.json({ error: "Convoy not found" }, { status: 404 });
+    }
+
+    if (convoy.ownerId !== session.user.id) {
+      return NextResponse.json({ error: "Only the owner can update the convoy" }, { status: 403 });
+    }
+
+    const updateData: Record<string, unknown> = {};
+
+    if (name !== undefined) {
+      if (typeof name !== "string" || name.trim().length === 0) {
+        return NextResponse.json({ error: "Name must be a non-empty string" }, { status: 400 });
+      }
+      updateData.name = name.trim();
+    }
+
+    if (destLat !== undefined) updateData.destLat = typeof destLat === "number" ? destLat : null;
+    if (destLng !== undefined) updateData.destLng = typeof destLng === "number" ? destLng : null;
+    if (destName !== undefined) updateData.destName = typeof destName === "string" ? destName : null;
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
+    }
+
+    const updated = await prisma.convoy.update({
+      where: { id },
+      data: updateData,
+      include: {
+        members: {
+          include: { user: { select: { id: true, name: true, email: true, image: true } } },
+        },
+      },
+    });
+
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error("Update convoy error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

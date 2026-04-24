@@ -54,22 +54,19 @@ async function refreshAccessToken(userId: string, refreshToken: string) {
 
   if (!res.ok) {
     // Token revoked — clear from DB
-    await prisma.user.update({
-      where: { id: userId },
-      data: { spotifyAccessToken: null, spotifyRefreshToken: null, spotifyExpiresAt: null },
-    });
+    await prisma.spotifyToken.delete({ where: { userId } }).catch(() => null);
     return null;
   }
 
   const data = await res.json();
   const expiresAt = new Date(Date.now() + data.expires_in * 1000);
 
-  await prisma.user.update({
-    where: { id: userId },
+  await prisma.spotifyToken.update({
+    where: { userId },
     data: {
-      spotifyAccessToken: data.access_token,
-      spotifyRefreshToken: data.refresh_token ?? refreshToken,
-      spotifyExpiresAt: expiresAt,
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token ?? refreshToken,
+      expiresAt,
     },
   });
 
@@ -77,19 +74,16 @@ async function refreshAccessToken(userId: string, refreshToken: string) {
 }
 
 export async function getValidAccessToken(userId: string): Promise<string | null> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { spotifyAccessToken: true, spotifyRefreshToken: true, spotifyExpiresAt: true },
-  });
+  const token = await prisma.spotifyToken.findUnique({ where: { userId } });
 
-  if (!user?.spotifyRefreshToken) return null;
+  if (!token) return null;
 
   // If token is still valid (with 60s buffer)
-  if (user.spotifyAccessToken && user.spotifyExpiresAt && user.spotifyExpiresAt > new Date(Date.now() + 60_000)) {
-    return user.spotifyAccessToken;
+  if (token.expiresAt > new Date(Date.now() + 60_000)) {
+    return token.accessToken;
   }
 
-  return refreshAccessToken(userId, user.spotifyRefreshToken);
+  return refreshAccessToken(userId, token.refreshToken);
 }
 
 export interface NowPlaying {

@@ -1,14 +1,24 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { getToken } from 'next-auth/jwt';
+import { NextRequest, NextResponse } from 'next/server';
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register');
+  const isAuthPage =
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/register') ||
+    pathname.startsWith('/forgot-password') ||
+    pathname.startsWith('/reset-password');
 
-  // Check for session token (NextAuth v5 stores it as a cookie)
-  const token =
-    request.cookies.get('authjs.session-token')?.value ||
-    request.cookies.get('__Secure-authjs.session-token')?.value;
+  const isSecure = request.nextUrl.protocol === 'https:';
+  const cookieName = isSecure
+    ? '__Secure-authjs.session-token'
+    : 'authjs.session-token';
+
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET ?? '',
+    cookieName,
+  });
 
   const isLoggedIn = !!token;
 
@@ -17,9 +27,11 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // Redirect unauthenticated users to login
+  // Redirect unauthenticated users to login (preserve callbackUrl)
   if (!isAuthPage && !isLoggedIn) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('callbackUrl', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();

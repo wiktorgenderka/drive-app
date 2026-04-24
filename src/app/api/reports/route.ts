@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { ReportType } from "@prisma/client";
+import { rateLimit } from "@/lib/rateLimit";
+import { CreateReportSchema } from "@/lib/schemas";
 
 const REPORT_EXPIRY_HOURS = 2;
 
@@ -32,17 +34,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const expiryDate = new Date(
-      Date.now() - REPORT_EXPIRY_HOURS * 60 * 60 * 1000
-    );
-
     // Calculate bounding box for rough filtering (radius in km)
     const latDelta = radius / 111.32;
     const lngDelta = radius / (111.32 * Math.cos((lat * Math.PI) / 180));
 
     const reports = await prisma.report.findMany({
       where: {
-        createdAt: { gte: expiryDate },
+        expiresAt: { gte: new Date() },
         latitude: { gte: lat - latDelta, lte: lat + latDelta },
         longitude: { gte: lng - lngDelta, lte: lng + lngDelta },
       },
@@ -94,6 +92,11 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ?? '127.0.0.1';
+  if (!rateLimit(`reports:${ip}`, 10, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   try {
     const session = await auth();
 
@@ -101,30 +104,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { type, latitude, longitude, description } = body;
-
-    const validTypes = Object.values(ReportType);
-    if (!type || !validTypes.includes(type as ReportType)) {
-      return NextResponse.json(
-        { error: `type must be one of: ${validTypes.join(", ")}` },
-        { status: 400 }
-      );
+    const parsed = CreateReportSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
-
-    if (typeof latitude !== "number" || typeof longitude !== "number") {
-      return NextResponse.json(
-        { error: "Valid latitude and longitude are required" },
-        { status: 400 }
-      );
-    }
-
-    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
-      return NextResponse.json(
-        { error: "Invalid latitude or longitude values" },
-        { status: 400 }
-      );
-    }
+    const { type, latitude, longitude, description } = parsed.data;
 
     const expiresAt = new Date(
       Date.now() + REPORT_EXPIRY_HOURS * 60 * 60 * 1000

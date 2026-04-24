@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
@@ -10,6 +10,31 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get("search")?.trim();
+
+    // User search by name (for adding friends by name)
+    if (search) {
+      const limit = Math.min(20, Math.max(1, parseInt(searchParams.get("limit") ?? "10", 10) || 10));
+      const users = await prisma.user.findMany({
+        where: {
+          AND: [
+            { id: { not: session.user.id } },
+            {
+              OR: [
+                { name: { contains: search, mode: "insensitive" } },
+                { email: { contains: search, mode: "insensitive" } },
+              ],
+            },
+          ],
+        },
+        select: { id: true, name: true, email: true, image: true },
+        take: limit,
+      });
+      return NextResponse.json(users);
+    }
+
+    // Default: return current user profile
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: {

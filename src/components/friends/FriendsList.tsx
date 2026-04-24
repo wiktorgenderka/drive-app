@@ -24,7 +24,7 @@ export default function FriendsList() {
       const res = await fetch('/api/friends');
       if (!res.ok) throw new Error('Failed to load friends');
       const data = await res.json();
-      setFriends(data.friends ?? data);
+      setFriends(Array.isArray(data) ? data : (data.data ?? []));
     } catch {
       setError('Could not load friends.');
     } finally {
