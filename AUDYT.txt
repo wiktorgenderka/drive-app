@@ -510,6 +510,88 @@ SZYBKIE WYSZUKIWANIE W PLIKU
 ================================================================================
 
 ================================================================================
+                     DZIENNIK WDROZONYCH ZMIAN - RUNDA 10
+                     Data wdrozenia: 24 kwietnia 2026
+================================================================================
+
+[ZROBIONE] FUNKCJA - SYSTEM POWIADOMIEN IN-APP (TOASTY)
+
+  Cel: Wyswietlanie powiadomien push w aplikacji (toast 4s) dla kluczowych
+  zdarzen - zaproszenia do znajomych, konwoju, dolaczanie/odchodzenie czlonkow
+  konwoju, nowe raporty drogowe, zmiana celu konwoju.
+
+  Architektura:
+    - Osobne polaczenie Socket.IO ("notification socket") tworzone w nowym hooku
+      useNotifications - niezalezne od socketow convoy/map.
+    - Serwer przechowuje instancje io w global.__socketIo (dostepna z API routes).
+    - Kazdy uzytkownik dolacza do osobistego pokoju socket: user:${userId}.
+    - Powiadomienia convoy (dolaczenie/odejscie czlonka, cel konwoju) wysylane
+      przez pokoj convoy:${convoyId} - hook dolacza do niego gdy uzytkownik
+      jest w konwoju.
+
+  Nowe pliki:
+    src/lib/socket-server.ts
+      - Eksportuje getSocketServer() - zwraca global.__socketIo z logiem ostrzegawczym
+        jezeli global nie jest ustawiony.
+    src/hooks/useNotifications.ts
+      - Hook React: tworzy socket.io, dolacza do user:${userId} i convoy:${convoyId}
+      - Nasluchuje eventow i wywoluje addToast() z useToast()
+      - Odtwarza pokoj convoy gdy convoyId zmienia sie (bez pelnego reconnectu)
+
+  Zmiany w server.js:
+    - global.__socketIo = io  (udostepnienie io dla API routes)
+    - Event 'user-connect': dolacza socket do pokoju user:${userId}
+    - Event 'join-convoy-notify': dolacza socket do pokoju convoy:${convoyId}
+      bez emitowania member-joined (tylko do odbioru powiadomien)
+    - Event 'leave-convoy': teraz przekazuje pole memberName (do wyswietlenia
+      imienia w powiadomieniu o opuszczeniu konwoju)
+
+  Zmiany w API routes:
+    src/app/api/friends/route.ts
+      - POST (wyslij zaproszenie): emituje 'friend-request' do user:${targetUser.id}
+        z payload { fromName, fromId }
+      - PUT (akceptuj zaproszenie): emituje 'friend-accepted' do user:${requesterId}
+        z payload { fromName, fromId }
+    src/app/api/convoy/[id]/invite/route.ts
+      - POST (zaproszenie do konwoju): emituje 'convoy-invite' do user:${userId}
+        z payload { convoyId, convoyName, invitedByName }
+
+  Zmiany w komponentach (leave-convoy payload):
+    src/components/convoy/ConvoyChat.tsx
+    src/components/convoy/ConvoyDriveMode.tsx
+    src/components/convoy/ConvoyMapVoice.tsx
+    src/hooks/useRealTimeLocation.ts
+      - Dodano pole name do emitu 'leave-convoy' - serwer teraz przekazuje
+        memberName w convoy-update, co pozwala wyswietlic imie w towascie.
+
+  Integracja w dashoboardzie:
+    src/app/dashboard/page.tsx
+      - Importy: useSession, useConvoyStore, useNotifications
+      - Na poczatku DashboardPage: useNotifications({ userId, convoyId })
+
+  Powiadomienia (toasty, znikaja po 4 sekundach):
+    Event             | Typ     | Tresc
+    ---               | ---     | ---
+    friend-request    | info    | "X zaprasza Cie do znajomych"
+    friend-accepted   | success | "X zaakceptowal(a) Twoje zaproszenie"
+    convoy-invite     | info    | "X zaproscil(a) Cie do konwoju 'Nazwa'"
+    member-joined     | info    | "X dolaczyl(a) do konwoju"
+    member-left       | info    | "X opuscil(a) konwoj"
+    convoy-destination| info    | "Cel konwoju: Nazwa" / "Cel konwoju zaktualizowany"
+    new-report        | warning | "Nowy raport drogowy w poblizu"
+
+  Stan: Zaimplementowane. Funkcjonalnosc (zaproszenia, konwoj) dziala.
+  Powiadomienia wymagaja dodiagnozowania - toast nie wyskakuje mimo
+  ze socket laczy sie poprawnie (console.log potwierdzony). Logi diagnostyczne
+  pozostawione w kodzie (useNotifications, socket-server, server.js).
+  Prawdopodobna przyczyna: event dociera do socketu ale addToast nie jest
+  wywolywane - do sprawdzenia przy nastepnej sesji.
+
+================================================================================
+             LACZNIE WDROZONO LACZNIE: 35 poprawek + 9 nowych funkcji
+================================================================================
+
+================================================================================
                      ZNANE BLEDY DO NAPRAWY (priorytet malejacy)
 ================================================================================
 
