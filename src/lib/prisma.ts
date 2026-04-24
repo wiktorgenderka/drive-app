@@ -6,10 +6,10 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
-    throw new Error('DATABASE_URL is not set');
-  }
+  // Do NOT throw here — a top-level throw prevents lib/auth.ts from loading,
+  // causing Next.js to return HTML 500 for /api/auth/* (ClientFetchError).
+  // A missing DATABASE_URL will produce a clear error on the first DB query.
+  const connectionString = process.env.DATABASE_URL ?? '';
   const adapter = new PrismaPg({ connectionString });
   return new PrismaClient({ adapter });
 }
