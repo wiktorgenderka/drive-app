@@ -1,5 +1,5 @@
 export { proxy as default } from './proxy';
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api).*)'],
+  matcher: ['/dashboard/:path*', '/settings/:path*'],
 };
