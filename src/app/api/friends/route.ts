@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimit";
 import { FriendshipStatus } from "@prisma/client";
 import { SendFriendRequestSchema, RespondFriendSchema } from "@/lib/schemas";
+import { getSocketServer } from "@/lib/socket-server";
 
 export async function GET(request: NextRequest) {
   try {
@@ -112,6 +113,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Notify target user via socket
+    const socketIo = getSocketServer();
+    if (socketIo) {
+      socketIo.to(`user:${targetUser.id}`).emit('friend-request', {
+        fromName: session.user.name ?? 'Ktoś',
+        fromId: session.user.id,
+      });
+    }
+
     return NextResponse.json(friendship, { status: 201 });
   } catch (error) {
     console.error("Send friend request error:", error);
@@ -164,6 +174,15 @@ export async function PUT(request: NextRequest) {
         addressee: { select: { id: true, name: true, email: true, image: true } },
       },
     });
+
+    // Notify the original requester that their request was accepted
+    const socketIo = getSocketServer();
+    if (socketIo) {
+      socketIo.to(`user:${updated.requesterId}`).emit('friend-accepted', {
+        fromName: updated.addressee.name ?? 'Ktoś',
+        fromId: updated.addresseeId,
+      });
+    }
 
     return NextResponse.json(updated);
   } catch (error) {

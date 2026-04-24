@@ -3,8 +3,10 @@
 import { useState, useCallback, useMemo, useRef } from 'react';
 import { calculateDistance, formatDistance } from '@/lib/utils';
 import dynamic from 'next/dynamic';
+import { useSession } from 'next-auth/react';
 import AuthGuard from '@/components/auth/AuthGuard';
 import { useMapStore } from '@/stores/useMapStore';
+import { useConvoyStore } from '@/stores/useConvoyStore';
 import Link from 'next/link';
 import HomeScreen from '@/components/dashboard/HomeScreen';
 import SettingsPanel from '@/components/settings/SettingsPanel';
@@ -14,6 +16,7 @@ import AddFriendModal from '@/components/friends/AddFriendModal';
 import ConvoyPanel from '@/components/convoy/ConvoyPanel';
 import ConvoyMapVoice from '@/components/convoy/ConvoyMapVoice';
 import RoutePanel from '@/components/routes/RoutePanel';
+import { useNotifications } from '@/hooks/useNotifications';
 
 const MapView = dynamic(() => import('@/components/map/MapView'), {
   ssr: false,
@@ -100,6 +103,10 @@ const SECTION_META: Record<Exclude<Tab, 'home' | 'map'>, { title: string; color:
 };
 
 export default function DashboardPage() {
+  const { data: session } = useSession();
+  const activeConvoy = useConvoyStore((s) => s.activeConvoy);
+  useNotifications({ userId: session?.user?.id, convoyId: activeConvoy?.id });
+
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [mapVoiceEnabled, setMapVoiceEnabled] = useState(() => {
     if (typeof window !== 'undefined') {

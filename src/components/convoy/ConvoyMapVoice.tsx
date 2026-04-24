@@ -85,7 +85,7 @@ export default function ConvoyMapVoice({ onIncomingMessage }: Props) {
     });
 
     return () => {
-      socket.emit('leave-convoy', { convoyId: convoy.id, userId: session.user.id });
+      socket.emit('leave-convoy', { convoyId: convoy.id, userId: session.user.id, name: session.user.name });
       socket.removeAllListeners();
       socket.disconnect();
       socketRef.current = null;

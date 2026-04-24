@@ -23,8 +23,21 @@ app.prepare().then(() => {
     path: '/api/socketio',
   });
 
+  // Make io accessible from Next.js API routes
+  global.__socketIo = io;
+
   io.on('connection', (socket) => {
     console.log('Client connected:', socket.id);
+
+    // Join personal room for targeted notifications
+    socket.on('user-connect', ({ userId }) => {
+      if (userId) socket.join(`user:${userId}`);
+    });
+
+    // Join a convoy room for notifications only (no member-joined broadcast)
+    socket.on('join-convoy-notify', ({ convoyId }) => {
+      if (convoyId) socket.join(`convoy:${convoyId}`);
+    });
 
     socket.on('join-convoy', (data) => {
       const { convoyId, userId, name, avatarUrl } = data;
@@ -47,11 +60,12 @@ app.prepare().then(() => {
     });
 
     socket.on('leave-convoy', (data) => {
-      const { convoyId, userId } = data;
+      const { convoyId, userId, name } = data;
       socket.leave(`convoy:${convoyId}`);
       socket.to(`convoy:${convoyId}`).emit('convoy-update', {
         type: 'member-left',
         memberId: userId,
+        memberName: name ?? null,
       });
     });
 

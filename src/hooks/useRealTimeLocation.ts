@@ -95,7 +95,7 @@ export function useRealTimeLocation(
     emit('join-convoy', { convoyId, userId: user?.id, name: user?.name, avatarUrl: user?.image ?? undefined });
 
     return () => {
-      emit('leave-convoy', { convoyId, userId: user?.id });
+      emit('leave-convoy', { convoyId, userId: user?.id, name: user?.name });
       lastBroadcastRef.current = null;
     };
   }, [convoyId, isConnected, emit, user?.id]);

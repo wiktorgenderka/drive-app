@@ -36,7 +36,7 @@ export default function ConvoyChat({ convoyId }: ConvoyChatProps) {
     });
 
     return () => {
-      socket.emit('leave-convoy', { convoyId, userId: session?.user?.id });
+      socket.emit('leave-convoy', { convoyId, userId: session?.user?.id, name: session?.user?.name });
       socket.removeAllListeners();
       socket.disconnect();
       socketRef.current = null;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { getSocketServer } from "@/lib/socket-server";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -69,6 +70,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
         user: { select: { id: true, name: true, email: true, image: true } },
       },
     });
+
+    // Notify invited user via socket
+    const socketIo = getSocketServer();
+    if (socketIo) {
+      socketIo.to(`user:${userId}`).emit('convoy-invite', {
+        convoyId,
+        convoyName: convoy.name,
+        invitedByName: session.user.name ?? 'Ktoś',
+      });
+    }
 
     return NextResponse.json(member, { status: 201 });
   } catch (error) {

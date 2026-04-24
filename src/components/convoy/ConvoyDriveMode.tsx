@@ -202,7 +202,7 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
     });
 
     return () => {
-      socket.emit('leave-convoy', { convoyId: convoy.id, userId: session?.user?.id });
+      socket.emit('leave-convoy', { convoyId: convoy.id, userId: session?.user?.id, name: session?.user?.name });
       socket.removeAllListeners();
       socket.disconnect();
     };
