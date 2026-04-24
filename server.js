@@ -31,7 +31,10 @@ app.prepare().then(() => {
 
     // Join personal room for targeted notifications
     socket.on('user-connect', ({ userId }) => {
-      if (userId) socket.join(`user:${userId}`);
+      if (userId) {
+        socket.join(`user:${userId}`);
+        console.log(`[server] socket ${socket.id} joined room user:${userId}`);
+      }
     });
 
     // Join a convoy room for notifications only (no member-joined broadcast)
