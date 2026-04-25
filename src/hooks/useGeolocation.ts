@@ -73,16 +73,16 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
     let message: string;
     switch (error.code) {
       case error.PERMISSION_DENIED:
-        message = 'Location permission denied. Please enable location access.';
+        message = 'Brak zgody na dostęp do lokalizacji. Zezwól w ustawieniach przeglądarki dla tej strony.';
         break;
       case error.POSITION_UNAVAILABLE:
-        message = 'Location information is unavailable.';
+        message = 'Lokalizacja niedostępna. Sprawdź czy GPS / usługi lokalizacji systemu są włączone.';
         break;
       case error.TIMEOUT:
-        message = 'Location request timed out.';
+        message = 'Przekroczono czas oczekiwania na lokalizację.';
         break;
       default:
-        message = 'An unknown geolocation error occurred.';
+        message = 'Nieznany błąd geolokalizacji.';
     }
     setState((prev) => ({
       ...prev,

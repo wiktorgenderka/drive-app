@@ -172,6 +172,8 @@ export default function SettingsPanel() {
   const [email, setEmail] = useState('');
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [pendingAvatar, setPendingAvatar] = useState<string | null>(null);
+  const [carDisplay, setCarDisplay] = useState('');
+  const [bio, setBio] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [createdAt, setCreatedAt] = useState<string | null>(null);
@@ -252,6 +254,8 @@ export default function SettingsPanel() {
             day: 'numeric', month: 'long', year: 'numeric',
           }));
         }
+        if (d?.carDisplay !== undefined) setCarDisplay(d.carDisplay ?? '');
+        if (d?.bio !== undefined) setBio(d.bio ?? '');
       })
       .catch(() => {});
     fetch('/api/dashboard/stats')
@@ -275,7 +279,7 @@ export default function SettingsPanel() {
     setProfileMsg(null);
     setProfileSaving(true);
     try {
-      const body: Record<string, string> = { name, email };
+      const body: Record<string, string> = { name, email, carDisplay, bio };
       if (pendingAvatar) body.image = pendingAvatar;
       const res = await fetch('/api/users/me', {
         method: 'PATCH',
@@ -509,6 +513,19 @@ export default function SettingsPanel() {
         <form onSubmit={handleProfileSave} className="flex flex-col gap-4">
           <Field id="s-name" label="Imię i nazwisko" value={name} onChange={setName} placeholder="Jan Kowalski" />
           <Field id="s-email" label="Adres e-mail" type="email" value={email} onChange={setEmail} placeholder="jan@example.com" />
+          <Field id="s-car" label="Wyświetlany pojazd" value={carDisplay} onChange={setCarDisplay} placeholder="np. BMW E46 320d" />
+          <div>
+            <label htmlFor="s-bio" className="mb-1.5 block text-sm font-medium text-muted">Bio</label>
+            <textarea
+              id="s-bio"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              maxLength={280}
+              rows={3}
+              placeholder="Krótko o sobie — widoczne na publicznym profilu (max 280 znaków)"
+              className="w-full resize-none rounded-xl border border-card-border bg-input-bg px-4 py-2.5 text-sm text-foreground placeholder-muted outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            />
+          </div>
           <button
             type="submit" disabled={profileSaving}
             className="flex h-11 w-full items-center justify-center rounded-xl text-sm font-semibold text-white transition disabled:opacity-50"

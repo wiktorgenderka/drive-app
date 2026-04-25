@@ -20,6 +20,8 @@ export async function GET() {
         image: true,
         latitude: true,
         longitude: true,
+        carDisplay: true,
+        bio: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -85,15 +87,17 @@ export async function PATCH(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
-    const { name, image } = parsed.data;
-
-    if (name === undefined && image === undefined) {
-      return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
-    }
+    const { name, image, carDisplay, bio } = parsed.data;
 
     const updateData: Record<string, unknown> = {};
     if (name !== undefined) updateData.name = name;
     if (image !== undefined) updateData.image = image;
+    if (carDisplay !== undefined) updateData.carDisplay = carDisplay === '' ? null : carDisplay;
+    if (bio !== undefined) updateData.bio = bio === '' ? null : bio;
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
+    }
 
     const user = await prisma.user.update({
       where: { id: session.user.id },
@@ -103,6 +107,8 @@ export async function PATCH(request: NextRequest) {
         email: true,
         name: true,
         image: true,
+        carDisplay: true,
+        bio: true,
         updatedAt: true,
       },
     });

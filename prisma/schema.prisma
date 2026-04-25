@@ -42,6 +42,8 @@ model User {
   latitude           Float?
   longitude          Float?
   lastLocationUpdate DateTime?
+  carDisplay         String?
+  bio                String?
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
 
@@ -52,6 +54,8 @@ model User {
   reports          Report[]
   fuelPrices       FuelPrice[]
   routes           Route[]
+  routeTimes       RouteTime[]
+  routeRatings        RouteRating[]
   reportVotes         ReportVote[]
   spotifyToken        SpotifyToken?
   trips               Trip[]
@@ -204,19 +208,61 @@ model FuelPrice {
 }
 
 model Route {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  waypoints   Json
-  createdAt   DateTime @default(now())
-  userId      String
-  convoyId    String?
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  waypoints     Json
+  createdAt     DateTime  @default(now())
+  userId        String
+  convoyId      String?
+  isPublic      Boolean   @default(false)
+  publishedAt   DateTime?
+  importedFromId String?
+  avgRating     Float?
+  ratingCount   Int       @default(0)
 
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  convoy Convoy? @relation(fields: [convoyId], references: [id], onDelete: SetNull)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  convoy         Convoy?       @relation(fields: [convoyId], references: [id], onDelete: SetNull)
+  times          RouteTime[]
+  ratings        RouteRating[]
+  importedFrom   Route?        @relation("RouteImports", fields: [importedFromId], references: [id], onDelete: SetNull)
+  imports        Route[]       @relation("RouteImports")
 
   @@index([userId, createdAt])
+  @@index([isPublic, publishedAt])
+  @@index([isPublic, avgRating, ratingCount])
   @@map("routes")
+}
+
+model RouteRating {
+  id        String   @id @default(cuid())
+  routeId   String
+  userId    String
+  stars     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  route Route @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([routeId, userId])
+  @@index([routeId])
+  @@map("route_ratings")
+}
+
+model RouteTime {
+  id        String   @id @default(cuid())
+  routeId   String
+  userId    String
+  seconds   Int
+  createdAt DateTime @default(now())
+
+  route Route @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([routeId, seconds])
+  @@index([userId, routeId])
+  @@map("route_times")
 }
 
 model PasswordResetToken {

@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
-    const { name, description, waypoints } = parsed.data;
+    const { name, description, waypoints, isPublic } = parsed.data;
 
     const route = await prisma.route.create({
       data: {
@@ -55,6 +55,8 @@ export async function POST(request: NextRequest) {
         description: description ?? null,
         waypoints,
         userId: session.user.id,
+        isPublic: isPublic ?? false,
+        publishedAt: isPublic ? new Date() : null,
       },
     });
 

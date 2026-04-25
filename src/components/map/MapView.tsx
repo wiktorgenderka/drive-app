@@ -7,7 +7,6 @@ import { useMapStore } from '@/stores/useMapStore';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { useProfileStore } from '@/stores/useProfileStore';
 import { useStatsStore } from '@/stores/useStatsStore';
-import { useGeolocation } from '@/hooks/useGeolocation';
 import UserMarker from './UserMarker';
 import ConvoyMarker from './ConvoyMarker';
 import ReportMarker from './ReportMarker';
@@ -63,8 +62,6 @@ export default function MapView() {
     outdoors: 'mapbox://styles/mapbox/outdoors-v12',
   };
   const mapStyle = MAP_STYLE_URLS[mapTheme] ?? MAP_STYLE_URLS.auto;
-
-  useGeolocation({ enableHighAccuracy: true, autoStart: true });
 
   // ── Map layers ──
   const addRouteArrowImage = useCallback(() => {

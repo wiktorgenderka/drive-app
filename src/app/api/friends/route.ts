@@ -72,12 +72,17 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
-    const { email } = parsed.data;
+    const { email, userId } = parsed.data;
 
-    const targetUser = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
-      select: { id: true, name: true, email: true },
-    });
+    const targetUser = userId
+      ? await prisma.user.findUnique({
+          where: { id: userId },
+          select: { id: true, name: true, email: true },
+        })
+      : await prisma.user.findUnique({
+          where: { email: email!.toLowerCase() },
+          select: { id: true, name: true, email: true },
+        });
 
     if (!targetUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

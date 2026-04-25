@@ -37,9 +37,14 @@ export const UpdateConvoySchema = z.object({
 
 // ─── Friends ─────────────────────────────────────────────────────────────────
 
-export const SendFriendRequestSchema = z.object({
-  email: z.string().email('Nieprawidłowy adres email'),
-});
+export const SendFriendRequestSchema = z
+  .object({
+    email: z.string().email('Nieprawidłowy adres email').optional(),
+    userId: z.string().min(1).optional(),
+  })
+  .refine((d) => !!d.email || !!d.userId, {
+    message: 'Wymagany email lub userId',
+  });
 
 export const RespondFriendSchema = z.object({
   friendshipId: z.string().min(1),
@@ -66,6 +71,13 @@ export const CreateRouteSchema = z.object({
   name: z.string().min(1, 'Nazwa trasy jest wymagana').max(100).trim(),
   description: z.string().max(500).optional(),
   waypoints: z.array(WaypointSchema).min(2, 'Trasa wymaga co najmniej 2 punktów'),
+  isPublic: z.boolean().optional(),
+});
+
+export const UpdateRouteSchema = z.object({
+  isPublic: z.boolean().optional(),
+  name: z.string().min(1).max(100).trim().optional(),
+  description: z.string().max(500).optional().nullable(),
 });
 
 // ─── User profile ────────────────────────────────────────────────────────────
@@ -83,6 +95,8 @@ export const UpdateProfileSchema = z.object({
       }
     }, 'Nieprawidłowy URL obrazu')
     .optional(),
+  carDisplay: z.string().max(80).trim().optional().nullable(),
+  bio: z.string().max(280).trim().optional().nullable(),
 });
 
 export const DeleteAccountSchema = z.object({

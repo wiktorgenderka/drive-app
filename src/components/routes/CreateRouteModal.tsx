@@ -31,6 +31,7 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
+  const [isPublic, setIsPublic] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showMapPicker, setShowMapPicker] = useState(false);
@@ -122,6 +123,25 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
     setWaypoints(arr);
   }
 
+  function closeLoop() {
+    if (waypoints.length < 2) return;
+    const first = waypoints[0];
+    setWaypoints((prev) => [
+      ...prev,
+      {
+        id: `wp-${Date.now()}-loop`,
+        latitude: first.latitude,
+        longitude: first.longitude,
+        label: first.label,
+      },
+    ]);
+  }
+
+  const isLoop =
+    waypoints.length >= 2 &&
+    waypoints[0].latitude === waypoints[waypoints.length - 1].latitude &&
+    waypoints[0].longitude === waypoints[waypoints.length - 1].longitude;
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
@@ -139,6 +159,7 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
         body: JSON.stringify({
           name,
           description,
+          isPublic,
           waypoints: waypoints.map((wp) => ({
             latitude: wp.latitude,
             longitude: wp.longitude,
@@ -156,6 +177,7 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
       setName('');
       setDescription('');
       setWaypoints([]);
+      setIsPublic(false);
       onCreated?.();
     } catch {
       setError('Wystąpił nieoczekiwany błąd.');
@@ -333,13 +355,32 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
                     key={wp.id}
                     className="flex items-center gap-2 rounded-xl bg-input-bg px-3 py-2"
                   >
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-600 text-[10px] font-bold text-white">
+                    <span
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${
+                        index === 0 ? 'bg-emerald-600' : index === waypoints.length - 1 ? 'bg-red-500' : 'bg-orange-600'
+                      }`}
+                    >
                       {index + 1}
                     </span>
                     <span className="flex-1 truncate text-xs text-foreground">
                       {wp.label}
                     </span>
                     <div className="flex items-center gap-0.5">
+                      {/* Loop button — only on first waypoint when 2+ wps and not already a loop */}
+                      {index === 0 && waypoints.length >= 2 && !isLoop && (
+                        <button
+                          type="button"
+                          onClick={closeLoop}
+                          title="Ustaw jako punkt końcowy (pętla)"
+                          className="rounded p-1 text-muted transition hover:text-emerald-400"
+                        >
+                          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                            <path d="M23 4v6h-6" />
+                            <path d="M1 20v-6h6" />
+                            <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+                          </svg>
+                        </button>
+                      )}
                       {index > 0 && (
                         <button
                           type="button"
@@ -377,6 +418,22 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
               </ul>
             )}
           </div>
+
+          {/* Public visibility */}
+          <label className="flex items-start gap-3 rounded-xl border border-card-border bg-input-bg px-3 py-2.5 cursor-pointer transition hover:border-orange-500/60">
+            <input
+              type="checkbox"
+              checked={isPublic}
+              onChange={(e) => setIsPublic(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-orange-500"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-foreground">Udostępnij publicznie</p>
+              <p className="mt-0.5 text-[11px] leading-4 text-muted">
+                Trasa pojawi się w zakładce <span className="text-foreground">Społeczność</span> — inni kierowcy będą mogli ją pokazać na mapie i dodać do swoich.
+              </p>
+            </div>
+          </label>
 
           {/* Actions */}
           <div className="flex gap-3">

@@ -1,11 +1,28 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useSession } from 'next-auth/react';
 import { useMapStore } from '@/stores/useMapStore';
+import { haversineMeters } from '@/lib/geo';
 import CreateRouteModal from './CreateRouteModal';
+import { MiniProfileModal, type MiniProfileUser, type MiniProfileContext } from '@/components/profile/PublicProfileModals';
+import type { RouteTime } from '@/types';
+
+interface LeaderboardEntry {
+  userId: string;
+  seconds: number;
+  attempts: number;
+  user: { id: string; name: string; image: string | null; carDisplay: string | null };
+}
+
+// Auto-finish: kiedy użytkownik wejdzie w promień ostatniego waypointa, timer jest automatycznie zatrzymywany.
+// MIN_START_DISPLACEMENT_M zapobiega natychmiastowemu wyzwoleniu, gdy start i meta są blisko siebie.
+const FINISH_RADIUS_M = 40;
+const MIN_START_DISPLACEMENT_M = 100;
 
 interface RoutePanelProps {
   onShowOnMap?: () => void;
+  onShowProfile?: (userId: string) => void;
 }
 
 interface SavedRoute {
@@ -14,6 +31,23 @@ interface SavedRoute {
   description?: string;
   waypoints: string | { latitude: number; longitude: number; label?: string }[];
   createdAt: string;
+  isPublic?: boolean;
+  publishedAt?: string | null;
+}
+
+interface PublicRoute {
+  id: string;
+  name: string;
+  description?: string | null;
+  waypoints: string | { latitude: number; longitude: number; label?: string }[];
+  publishedAt: string | null;
+  createdAt: string;
+  userId: string;
+  user: { id: string; name: string; image: string | null };
+  _count?: { times: number; imports: number };
+  avgRating?: number | null;
+  ratingCount?: number;
+  myStars?: number | null;
 }
 
 interface SuggestedRoute {
@@ -61,20 +95,66 @@ function formatDuration(minutes: number): string {
   return m > 0 ? `${h} h ${m} min` : `${h} h`;
 }
 
-export default function RoutePanel({ onShowOnMap }: RoutePanelProps = {}) {
+function formatTime(seconds: number): string {
+  const total = Math.max(0, seconds);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = Math.floor(total % 60);
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function formatTimeMs(seconds: number): string {
+  const total = Math.max(0, seconds);
+  const m = Math.floor(total / 60);
+  const s = Math.floor(total % 60);
+  const cs = Math.floor((total - Math.floor(total)) * 100);
+  return `${m}:${String(s).padStart(2, '0')}.${String(cs).padStart(2, '0')}`;
+}
+
+const MEDAL_COLORS = ['text-yellow-400', 'text-slate-300', 'text-amber-600'];
+
+export default function RoutePanel({ onShowOnMap, onShowProfile }: RoutePanelProps = {}) {
   const [routes, setRoutes] = useState<SavedRoute[]>([]);
   const [suggested, setSuggested] = useState<SuggestedRoute[]>([]);
   const [loading, setLoading] = useState(true);
   const [suggestedLoading, setSuggestedLoading] = useState(true);
   const [error, setError] = useState('');
   const [showCreate, setShowCreate] = useState(false);
-  const [activeSection, setActiveSection] = useState<'suggested' | 'saved'>('suggested');
+  const [activeSection, setActiveSection] = useState<'suggested' | 'community' | 'saved'>('suggested');
+
+  // Community (public) routes
+  const [publicRoutes, setPublicRoutes] = useState<PublicRoute[]>([]);
+  const [publicLoading, setPublicLoading] = useState(false);
+  const [publicLoaded, setPublicLoaded] = useState(false);
+  const [publicQuery, setPublicQuery] = useState('');
+  const [publicSort, setPublicSort] = useState<'top' | 'new'>('top');
+  const [importingId, setImportingId] = useState<string | null>(null);
+  const [expandedPublicId, setExpandedPublicId] = useState<string | null>(null);
+  const [togglingPublicId, setTogglingPublicId] = useState<string | null>(null);
+  const [ratingId, setRatingId] = useState<string | null>(null);
+  const [leaderboards, setLeaderboards] = useState<Record<string, LeaderboardEntry[]>>({});
+  const [leaderboardsLoading, setLeaderboardsLoading] = useState<Record<string, boolean>>({});
+  const [miniProfile, setMiniProfile] = useState<{ user: MiniProfileUser; context: MiniProfileContext } | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [expandedSuggestedId, setExpandedSuggestedId] = useState<string | null>(null);
   const [loadingMapId, setLoadingMapId] = useState<string | null>(null);
   const [routeInfo, setRouteInfo] = useState<Record<string, { distance: number; duration: number } | null>>({});
 
+  // Challenge timer
+  const [timerRouteId, setTimerRouteId] = useState<string | null>(null);
+  const [timerStart, setTimerStart] = useState<number | null>(null);
+  const [timerElapsed, setTimerElapsed] = useState(0);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [hasLeftStart, setHasLeftStart] = useState(false);
+  const [savingTime, setSavingTime] = useState(false);
+  const [scores, setScores] = useState<Record<string, RouteTime[]>>({});
+  const [scoresLoading, setScoresLoading] = useState<Record<string, boolean>>({});
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stoppingRef = useRef(false);
+
+  const { data: session } = useSession();
   const userLocation = useMapStore((s) => s.userLocation);
   const { setRoutes: setMapRoutes, setMapFlyTarget, routes: mapRoutes, setNavigationRoute } = useMapStore();
 
@@ -85,13 +165,123 @@ export default function RoutePanel({ onShowOnMap }: RoutePanelProps = {}) {
       const res = await fetch('/api/routes');
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setRoutes(Array.isArray(data) ? data : data.routes ?? []);
+      setRoutes(Array.isArray(data) ? data : data.data ?? []);
     } catch {
       setError('Nie udało się załadować tras.');
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const fetchPublicRoutes = useCallback(async (query = '', sort: 'top' | 'new' = 'top') => {
+    setPublicLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (query) params.set('q', query);
+      params.set('sort', sort);
+      const res = await fetch(`/api/routes/public?${params.toString()}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error ?? `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      setPublicRoutes(Array.isArray(data?.data) ? data.data : []);
+    } catch (err) {
+      setError(`Nie udało się załadować tras społeczności. ${err instanceof Error ? err.message : ''}`);
+    } finally {
+      setPublicLoading(false);
+      setPublicLoaded(true);
+    }
+  }, []);
+
+  const ratePublic = useCallback(async (routeId: string, stars: number | null) => {
+    setRatingId(routeId);
+    try {
+      const res = stars === null
+        ? await fetch(`/api/routes/${routeId}/ratings`, { method: 'DELETE' })
+        : await fetch(`/api/routes/${routeId}/ratings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ stars }),
+          });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error ?? `HTTP ${res.status}`);
+      }
+      const updated = await res.json();
+      setPublicRoutes((prev) =>
+        prev.map((r) =>
+          r.id === routeId
+            ? {
+                ...r,
+                avgRating: updated.avgRating ?? null,
+                ratingCount: updated.ratingCount ?? 0,
+                myStars: updated.myStars ?? null,
+              }
+            : r
+        )
+      );
+    } catch (err) {
+      setError(`Nie udało się zapisać oceny. ${err instanceof Error ? err.message : ''}`);
+    } finally {
+      setRatingId(null);
+    }
+  }, []);
+
+  const togglePublic = useCallback(async (routeId: string, next: boolean) => {
+    setTogglingPublicId(routeId);
+    try {
+      const res = await fetch(`/api/routes/${routeId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPublic: next }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const msg = typeof body?.error === 'string' ? body.error : `HTTP ${res.status}`;
+        throw new Error(msg);
+      }
+      const updated = await res.json();
+      setRoutes((prev) =>
+        prev.map((r) => (r.id === routeId ? { ...r, isPublic: updated.isPublic, publishedAt: updated.publishedAt } : r))
+      );
+    } catch (err) {
+      setError(`Nie udało się zmienić widoczności trasy. ${err instanceof Error ? err.message : ''}`);
+    } finally {
+      setTogglingPublicId(null);
+    }
+  }, []);
+
+  const fetchLeaderboard = useCallback(async (routeId: string) => {
+    setLeaderboardsLoading((p) => ({ ...p, [routeId]: true }));
+    try {
+      const res = await fetch(`/api/routes/${routeId}/leaderboard`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setLeaderboards((p) => ({ ...p, [routeId]: Array.isArray(data?.entries) ? data.entries : [] }));
+    } catch {
+      setLeaderboards((p) => ({ ...p, [routeId]: [] }));
+    } finally {
+      setLeaderboardsLoading((p) => ({ ...p, [routeId]: false }));
+    }
+  }, []);
+
+  const importPublicRoute = useCallback(async (routeId: string) => {
+    setImportingId(routeId);
+    try {
+      const res = await fetch(`/api/routes/public/${routeId}/import`, { method: 'POST' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? `HTTP ${res.status}`);
+      }
+      await fetchRoutes();
+      setActiveSection('saved');
+    } catch (err) {
+      setError(`Nie udało się dodać trasy. ${err instanceof Error ? err.message : ''}`);
+    } finally {
+      setImportingId(null);
+    }
+  }, [fetchRoutes]);
 
   const fetchSuggested = useCallback(async () => {
     if (!userLocation) {
@@ -120,6 +310,118 @@ export default function RoutePanel({ onShowOnMap }: RoutePanelProps = {}) {
   useEffect(() => {
     fetchSuggested();
   }, [fetchSuggested]);
+
+  useEffect(() => {
+    if (activeSection === 'community' && !publicLoaded && !publicLoading) {
+      fetchPublicRoutes(publicQuery, publicSort);
+    }
+  }, [activeSection, publicLoaded, publicLoading, publicQuery, publicSort, fetchPublicRoutes]);
+
+  useEffect(() => {
+    if (timerStart !== null) {
+      timerRef.current = setInterval(() => {
+        setTimerElapsed((Date.now() - timerStart) / 1000);
+      }, 100);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+      setTimerElapsed(0);
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [timerStart]);
+
+  // Countdown 5→1 przed faktycznym startem timera.
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown <= 0) {
+      setCountdown(null);
+      setHasLeftStart(false);
+      setTimerStart(Date.now());
+      return;
+    }
+    const t = setTimeout(() => setCountdown((c) => (c ?? 1) - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown]);
+
+  const fetchScores = useCallback(async (routeId: string) => {
+    setScoresLoading((prev) => ({ ...prev, [routeId]: true }));
+    try {
+      const res = await fetch(`/api/routes/${routeId}/times`);
+      if (!res.ok) throw new Error();
+      const data: RouteTime[] = await res.json();
+      setScores((prev) => ({ ...prev, [routeId]: data }));
+    } catch {
+      // silent
+    } finally {
+      setScoresLoading((prev) => ({ ...prev, [routeId]: false }));
+    }
+  }, []);
+
+  const startTimer = useCallback((routeId: string) => {
+    stoppingRef.current = false;
+    setTimerRouteId(routeId);
+    setTimerElapsed(0);
+    setHasLeftStart(false);
+    setCountdown(5);
+  }, []);
+
+  const cancelChallenge = useCallback(() => {
+    stoppingRef.current = false;
+    setCountdown(null);
+    setTimerStart(null);
+    setTimerRouteId(null);
+    setHasLeftStart(false);
+  }, []);
+
+  const finishTimer = useCallback(async (routeId: string, startedAt: number) => {
+    if (stoppingRef.current) return;
+    stoppingRef.current = true;
+    const elapsedMs = Date.now() - startedAt;
+    const seconds = Math.max(1, Math.round(elapsedMs / 1000));
+    setTimerStart(null);
+    setTimerRouteId(null);
+    setHasLeftStart(false);
+    setSavingTime(true);
+    try {
+      await fetch(`/api/routes/${routeId}/times`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seconds }),
+      });
+      await fetchScores(routeId);
+    } catch {
+      setError('Nie udało się zapisać czasu.');
+    } finally {
+      setSavingTime(false);
+      stoppingRef.current = false;
+    }
+  }, [fetchScores]);
+
+  // Auto-stop: obserwuj GPS i kończ wyzwanie automatycznie po dotarciu do ostatniego waypointa.
+  useEffect(() => {
+    if (timerStart === null || !timerRouteId || !userLocation) return;
+    const route = routes.find((r) => r.id === timerRouteId);
+    if (!route) return;
+    const waypoints = getParsedWaypoints(route);
+    if (waypoints.length < 2) return;
+
+    const first = waypoints[0];
+    const last = waypoints[waypoints.length - 1];
+    const distFromStart = haversineMeters(
+      userLocation.latitude, userLocation.longitude,
+      first.latitude, first.longitude
+    );
+    const distToFinish = haversineMeters(
+      userLocation.latitude, userLocation.longitude,
+      last.latitude, last.longitude
+    );
+
+    if (!hasLeftStart && distFromStart >= MIN_START_DISPLACEMENT_M) {
+      setHasLeftStart(true);
+    }
+    if ((hasLeftStart || distFromStart >= MIN_START_DISPLACEMENT_M) && distToFinish <= FINISH_RADIUS_M) {
+      finishTimer(timerRouteId, timerStart);
+    }
+  }, [userLocation, timerStart, timerRouteId, routes, hasLeftStart, finishTimer]);
 
   async function deleteRoute(routeId: string) {
     if (!confirm('Czy na pewno chcesz usunąć tę trasę?')) return;
@@ -296,6 +598,16 @@ export default function RoutePanel({ onShowOnMap }: RoutePanelProps = {}) {
           }`}
         >
           Proponowane
+        </button>
+        <button
+          onClick={() => setActiveSection('community')}
+          className={`flex-1 rounded-lg py-2 text-xs font-semibold transition ${
+            activeSection === 'community'
+              ? 'bg-card-bg text-foreground shadow-sm'
+              : 'text-muted hover:text-foreground'
+          }`}
+        >
+          Społeczność
         </button>
         <button
           onClick={() => setActiveSection('saved')}
@@ -503,6 +815,339 @@ export default function RoutePanel({ onShowOnMap }: RoutePanelProps = {}) {
         </>
       )}
 
+      {/* === COMMUNITY (PUBLIC) ROUTES === */}
+      {activeSection === 'community' && (
+        <>
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <svg
+                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="M21 21l-4.35-4.35" />
+              </svg>
+              <input
+                type="text"
+                value={publicQuery}
+                onChange={(e) => setPublicQuery(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') fetchPublicRoutes(publicQuery, publicSort); }}
+                placeholder="Szukaj publicznych tras..."
+                className="w-full rounded-xl border border-card-border bg-input-bg py-2 pl-10 pr-4 text-sm text-foreground placeholder-muted outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+              />
+            </div>
+            <button
+              onClick={() => fetchPublicRoutes(publicQuery, publicSort)}
+              className="flex items-center justify-center rounded-xl border border-card-border bg-card-bg px-3 py-2 text-xs font-semibold text-muted transition hover:bg-input-bg hover:text-foreground"
+              title="Odśwież"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path d="M23 4v6h-6" />
+                <path d="M1 20v-6h6" />
+                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Sort toggle */}
+          <div className="flex gap-1 rounded-xl bg-input-bg p-1">
+            <button
+              onClick={() => { setPublicSort('top'); fetchPublicRoutes(publicQuery, 'top'); }}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-semibold transition ${
+                publicSort === 'top' ? 'bg-card-bg text-foreground shadow-sm' : 'text-muted hover:text-foreground'
+              }`}
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" />
+              </svg>
+              Najlepsze
+            </button>
+            <button
+              onClick={() => { setPublicSort('new'); fetchPublicRoutes(publicQuery, 'new'); }}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-semibold transition ${
+                publicSort === 'new' ? 'bg-card-bg text-foreground shadow-sm' : 'text-muted hover:text-foreground'
+              }`}
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v6l4 2" />
+              </svg>
+              Nowe
+            </button>
+          </div>
+
+          {publicLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <svg className="h-6 w-6 animate-spin text-orange-500" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            </div>
+          ) : publicRoutes.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-card-border bg-card-bg py-12 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-600/15 text-orange-500">
+                <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Brak publicznych tras</p>
+                <p className="mt-0.5 text-xs text-muted">Bądź pierwszym, który udostępni swoją trasę społeczności!</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {publicRoutes.map((route) => {
+                const wps: { latitude: number; longitude: number; label?: string }[] =
+                  typeof route.waypoints === 'string'
+                    ? (() => { try { return JSON.parse(route.waypoints as string); } catch { return []; } })()
+                    : (route.waypoints ?? []);
+                const wpCount = wps.length;
+                const isExpanded = expandedPublicId === route.id;
+                const when = route.publishedAt ? new Date(route.publishedAt) : new Date(route.createdAt);
+                return (
+                  <div
+                    key={route.id}
+                    className="overflow-hidden rounded-2xl border border-card-border bg-card-bg"
+                  >
+                    <button
+                      onClick={() => {
+                        const next = isExpanded ? null : route.id;
+                        setExpandedPublicId(next);
+                        if (next && !leaderboards[next] && !leaderboardsLoading[next]) {
+                          fetchLeaderboard(next);
+                        }
+                      }}
+                      className="flex w-full items-start gap-3 px-4 py-3.5 text-left"
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600/15 text-indigo-400">
+                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" />
+                        </svg>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-foreground">{route.name}</p>
+                        {route.description && (
+                          <p className="mt-0.5 truncate text-xs text-muted">{route.description}</p>
+                        )}
+                        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+                          <span className="flex items-center gap-1">
+                            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                              <circle cx="12" cy="7" r="4" />
+                            </svg>
+                            {route.user?.name ?? 'Użytkownik'}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                              <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            {wpCount} pkt
+                          </span>
+                          {route._count?.times !== undefined && (
+                            <span className="flex items-center gap-1">
+                              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+                              </svg>
+                              {route._count.times}
+                            </span>
+                          )}
+                          {typeof route.ratingCount === 'number' && route.ratingCount > 0 ? (
+                            <span className="flex items-center gap-1 rounded-md bg-yellow-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-yellow-400">
+                              <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" />
+                              </svg>
+                              {(route.avgRating ?? 0).toFixed(1)} ({route.ratingCount})
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-muted">Brak ocen</span>
+                          )}
+                          <span>{when.toLocaleDateString('pl-PL')}</span>
+                        </div>
+                      </div>
+                      <svg
+                        className={`mt-1 h-4 w-4 shrink-0 text-muted transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+                      >
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
+                    </button>
+
+                    {isExpanded && (
+                      <div className="border-t border-card-border px-4 pb-3.5 pt-3">
+                        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted">Punkty trasy</p>
+                        <ol className="flex flex-col gap-1.5">
+                          {wps.map((wp, idx) => (
+                            <li key={idx} className="flex items-start gap-2.5">
+                              <span
+                                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${
+                                  idx === 0 ? 'bg-emerald-500' : idx === wps.length - 1 ? 'bg-red-500' : 'bg-orange-500'
+                                }`}
+                              >
+                                {idx + 1}
+                              </span>
+                              <span className="text-xs text-foreground leading-5">
+                                {wp.label ?? `${wp.latitude.toFixed(5)}, ${wp.longitude.toFixed(5)}`}
+                              </span>
+                            </li>
+                          ))}
+                        </ol>
+                        <div className="mt-3 flex gap-2">
+                          {onShowOnMap && wpCount >= 2 && (
+                            <button
+                              onClick={() => showRouteOnMap(route.id, route.name, wps)}
+                              disabled={loadingMapId === route.id}
+                              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-600 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
+                            >
+                              {loadingMapId === route.id ? (
+                                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                </svg>
+                              ) : (
+                                <>
+                                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                                    <path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z" />
+                                    <path d="M8 2v16M16 6v16" />
+                                  </svg>
+                                  Pokaż na mapie
+                                </>
+                              )}
+                            </button>
+                          )}
+                          <button
+                            onClick={() => importPublicRoute(route.id)}
+                            disabled={importingId === route.id}
+                            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-orange-600 py-2.5 text-xs font-semibold text-white transition hover:bg-orange-700 disabled:opacity-50"
+                          >
+                            {importingId === route.id ? (
+                              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                              </svg>
+                            ) : (
+                              <>
+                                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                                  <path d="M12 5v14M5 12h14" />
+                                </svg>
+                                Dodaj do moich
+                              </>
+                            )}
+                          </button>
+                        </div>
+
+                        {/* Top 5 leaderboard */}
+                        <div className="mt-4 border-t border-card-border pt-3">
+                          <div className="mb-2 flex items-center justify-between">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Top 5 czasów</p>
+                            <button
+                              onClick={() => fetchLeaderboard(route.id)}
+                              className="text-[10px] text-muted hover:text-foreground transition"
+                            >
+                              Odśwież
+                            </button>
+                          </div>
+                          {leaderboardsLoading[route.id] ? (
+                            <div className="flex justify-center py-3">
+                              <svg className="h-4 w-4 animate-spin text-muted" viewBox="0 0 24 24" fill="none">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                              </svg>
+                            </div>
+                          ) : !leaderboards[route.id] || leaderboards[route.id].length === 0 ? (
+                            <p className="text-center text-xs text-muted py-3">Brak wyników — bądź pierwszy!</p>
+                          ) : (
+                            <ol className="flex flex-col gap-1.5">
+                              {leaderboards[route.id].map((entry, idx) => (
+                                <li key={entry.userId}>
+                                  <button
+                                    onClick={() =>
+                                      setMiniProfile({
+                                        user: entry.user,
+                                        context: { routeName: route.name, seconds: entry.seconds, position: idx + 1 },
+                                      })
+                                    }
+                                    className="flex w-full items-center gap-2.5 rounded-xl bg-input-bg px-3 py-2 text-left transition hover:bg-card-bg"
+                                  >
+                                    <span className={`w-5 text-center text-sm font-bold ${MEDAL_COLORS[idx] ?? 'text-muted'}`}>
+                                      {idx < 3 ? ['🥇','🥈','🥉'][idx] : `${idx + 1}.`}
+                                    </span>
+                                    <div className="flex h-7 w-7 shrink-0 overflow-hidden rounded-full bg-card-bg">
+                                      {entry.user.image ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={entry.user.image} alt={entry.user.name} className="h-full w-full object-cover" />
+                                      ) : (
+                                        <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-muted">
+                                          {entry.user.name?.[0]?.toUpperCase() ?? '?'}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="truncate text-xs font-semibold text-foreground">{entry.user.name}</p>
+                                      {entry.user.carDisplay && (
+                                        <p className="truncate text-[10px] text-muted">{entry.user.carDisplay}</p>
+                                      )}
+                                    </div>
+                                    <span className="font-mono text-xs font-bold text-orange-400 tabular-nums">
+                                      {formatTime(entry.seconds)}
+                                    </span>
+                                  </button>
+                                </li>
+                              ))}
+                            </ol>
+                          )}
+                        </div>
+
+                        {/* Ratings */}
+                        <div className="mt-4 border-t border-card-border pt-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-[11px] font-semibold text-foreground">
+                                {route.userId === session?.user?.id ? 'Oceny tej trasy' : 'Oceń trasę'}
+                              </p>
+                              <p className="mt-0.5 text-[11px] leading-4 text-muted">
+                                {route.ratingCount && route.ratingCount > 0
+                                  ? `Średnia ${(route.avgRating ?? 0).toFixed(2)} z ${route.ratingCount} ${route.ratingCount === 1 ? 'oceny' : 'ocen'}`
+                                  : 'Jeszcze nikt nie ocenił — bądź pierwszy!'}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-0.5">
+                              {[1, 2, 3, 4, 5].map((n) => {
+                                const filled = (route.myStars ?? 0) >= n;
+                                const isOwn = route.userId === session?.user?.id;
+                                return (
+                                  <button
+                                    key={n}
+                                    type="button"
+                                    disabled={isOwn || ratingId === route.id}
+                                    onClick={() => ratePublic(route.id, route.myStars === n ? null : n)}
+                                    title={isOwn ? 'Nie możesz ocenić własnej trasy' : filled ? `${n}/5 — kliknij by cofnąć` : `Oceń ${n}/5`}
+                                    className={`p-0.5 transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                                      filled ? 'text-yellow-400' : 'text-muted hover:text-yellow-400'
+                                    }`}
+                                  >
+                                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.5}>
+                                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" />
+                                    </svg>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+
       {/* === SAVED ROUTES === */}
       {activeSection === 'saved' && (
         <>
@@ -544,7 +1189,10 @@ export default function RoutePanel({ onShowOnMap }: RoutePanelProps = {}) {
                       onClick={() => {
                         const next = isExpanded ? null : route.id;
                         setExpandedId(next);
-                        if (next) fetchRouteInfo(next, getParsedWaypoints(route));
+                        if (next) {
+                          fetchRouteInfo(next, getParsedWaypoints(route));
+                          if (!scores[next]) fetchScores(next);
+                        }
                       }}
                       className="flex w-full items-start justify-between gap-2 px-4 py-3.5 text-left"
                     >
@@ -572,6 +1220,15 @@ export default function RoutePanel({ onShowOnMap }: RoutePanelProps = {}) {
                             <span>
                               {new Date(route.createdAt).toLocaleDateString('pl-PL')}
                             </span>
+                            {route.isPublic && (
+                              <span className="flex items-center gap-1 rounded-md bg-orange-600/15 px-1.5 py-0.5 text-[10px] font-semibold text-orange-400">
+                                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                                  <circle cx="12" cy="12" r="10" />
+                                  <path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" />
+                                </svg>
+                                Publiczna
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -684,6 +1341,158 @@ export default function RoutePanel({ onShowOnMap }: RoutePanelProps = {}) {
                             </button>
                           </div>
                         </div>
+
+                        {/* Publish toggle */}
+                        <div className="mt-4 border-t border-card-border pt-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-[11px] font-semibold text-foreground">Publiczna trasa</p>
+                              <p className="mt-0.5 text-[11px] leading-4 text-muted">
+                                {route.isPublic
+                                  ? 'Inni kierowcy widzą ją w zakładce Społeczność.'
+                                  : 'Opublikuj, aby inni mogli ją zobaczyć i dodać do swoich.'}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => togglePublic(route.id, !route.isPublic)}
+                              disabled={togglingPublicId === route.id}
+                              aria-pressed={!!route.isPublic}
+                              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-50 ${
+                                route.isPublic ? 'bg-orange-600' : 'bg-input-bg border border-card-border'
+                              }`}
+                            >
+                              <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                                  route.isPublic ? 'translate-x-6' : 'translate-x-1'
+                                }`}
+                              />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Challenge timer */}
+                        <div className="mt-4 border-t border-card-border pt-3">
+                          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted">Wyzwanie czasowe</p>
+                          {timerRouteId === route.id && countdown !== null ? (
+                            <div className="flex flex-col items-center gap-2 rounded-xl bg-orange-600/10 px-3 py-5">
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-orange-400">Gotów? Start za…</p>
+                              <span className="font-mono text-5xl font-black text-orange-400 tabular-nums">
+                                {countdown}
+                              </span>
+                              <button
+                                onClick={cancelChallenge}
+                                className="mt-1 text-[11px] font-medium text-muted hover:text-foreground transition"
+                              >
+                                Anuluj
+                              </button>
+                            </div>
+                          ) : timerRouteId === route.id && timerStart !== null ? (
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center gap-3">
+                                <div className="flex flex-1 items-center gap-2 rounded-xl bg-orange-600/10 px-3 py-2.5">
+                                  <svg className="h-4 w-4 animate-pulse text-orange-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                    <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+                                  </svg>
+                                  <span className="font-mono text-sm font-bold text-orange-400 tabular-nums">
+                                    {formatTimeMs(timerElapsed)}
+                                  </span>
+                                </div>
+                                <button
+                                  onClick={cancelChallenge}
+                                  disabled={savingTime}
+                                  className="flex items-center gap-1.5 rounded-xl border border-card-border px-3 py-2.5 text-xs font-semibold text-muted transition hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 disabled:opacity-50"
+                                >
+                                  Przerwij
+                                </button>
+                              </div>
+                              {(() => {
+                                const wps = getParsedWaypoints(route);
+                                if (wps.length < 2 || !userLocation) {
+                                  return (
+                                    <p className="text-[11px] text-muted">
+                                      {userLocation ? 'Brak ostatniego punktu trasy.' : 'Czekam na sygnał GPS…'}
+                                    </p>
+                                  );
+                                }
+                                const last = wps[wps.length - 1];
+                                const d = haversineMeters(
+                                  userLocation.latitude, userLocation.longitude,
+                                  last.latitude, last.longitude
+                                );
+                                const dist = d < 1000 ? `${Math.round(d)} m` : `${(d / 1000).toFixed(2)} km`;
+                                return (
+                                  <p className="text-[11px] text-muted">
+                                    Do mety: <span className="font-semibold text-foreground">{dist}</span>
+                                    {savingTime && <span className="ml-2 text-orange-400">Zapisuję…</span>}
+                                  </p>
+                                );
+                              })()}
+                            </div>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => startTimer(route.id)}
+                                disabled={timerRouteId !== null || !userLocation || wpCount < 2}
+                                className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-orange-500/40 bg-orange-600/10 py-2.5 text-xs font-semibold text-orange-400 transition hover:bg-orange-600/20 disabled:opacity-40"
+                              >
+                                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+                                  <polygon points="5 3 19 12 5 21 5 3" />
+                                </svg>
+                                Start wyzwania
+                              </button>
+                              {!userLocation && (
+                                <p className="mt-1 text-[11px] text-muted">
+                                  Włącz lokalizację — meta wykrywana jest automatycznie z GPS.
+                                </p>
+                              )}
+                            </>
+                          )}
+                        </div>
+
+                        {/* Scoreboard */}
+                        <div className="mt-3">
+                          <div className="mb-2 flex items-center justify-between">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Tabela wyników</p>
+                            <button
+                              onClick={() => fetchScores(route.id)}
+                              className="text-[10px] text-muted hover:text-foreground transition"
+                            >
+                              Odśwież
+                            </button>
+                          </div>
+                          {scoresLoading[route.id] ? (
+                            <div className="flex justify-center py-3">
+                              <svg className="h-4 w-4 animate-spin text-muted" viewBox="0 0 24 24" fill="none">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                              </svg>
+                            </div>
+                          ) : !scores[route.id] || scores[route.id].length === 0 ? (
+                            <p className="text-center text-xs text-muted py-3">
+                              Brak wyników — bądź pierwszy!
+                            </p>
+                          ) : (
+                            <ol className="flex flex-col gap-1.5">
+                              {scores[route.id].map((entry, idx) => (
+                                <li
+                                  key={entry.id}
+                                  className="flex items-center gap-2.5 rounded-xl bg-input-bg px-3 py-2"
+                                >
+                                  <span className={`w-5 text-center text-sm font-bold ${MEDAL_COLORS[idx] ?? 'text-muted'}`}>
+                                    {idx < 3 ? ['🥇','🥈','🥉'][idx] : `${idx + 1}.`}
+                                  </span>
+                                  <span className="flex-1 truncate text-xs font-medium text-foreground">
+                                    {entry.user?.name ?? 'Użytkownik'}
+                                  </span>
+                                  <span className="font-mono text-xs font-bold text-orange-400 tabular-nums">
+                                    {formatTime(entry.seconds)}
+                                  </span>
+                                </li>
+                              ))}
+                            </ol>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -693,6 +1502,15 @@ export default function RoutePanel({ onShowOnMap }: RoutePanelProps = {}) {
           )}
         </>
       )}
+
+      {/* Profile modal — pełny profil otwiera się jako pełna strona w dashboardzie */}
+      <MiniProfileModal
+        open={!!miniProfile}
+        user={miniProfile?.user ?? null}
+        context={miniProfile?.context}
+        onClose={() => setMiniProfile(null)}
+        onOpenFull={(uid) => { onShowProfile?.(uid); setMiniProfile(null); }}
+      />
 
       {/* Create route modal */}
       <CreateRouteModal

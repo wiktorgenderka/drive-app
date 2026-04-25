@@ -130,6 +130,15 @@ export interface Route {
   convoyId?: string | null;
 }
 
+export interface RouteTime {
+  id: string;
+  routeId: string;
+  userId: string;
+  seconds: number;
+  createdAt: string;
+  user?: Pick<User, 'id' | 'name' | 'image'>;
+}
+
 export interface ThemeConfig {
   mode: 'dark' | 'light';
   accentColor: string;

@@ -17,6 +17,8 @@ import ConvoyPanel from '@/components/convoy/ConvoyPanel';
 import ConvoyMapVoice from '@/components/convoy/ConvoyMapVoice';
 import RoutePanel from '@/components/routes/RoutePanel';
 import { useNotifications } from '@/hooks/useNotifications';
+import { UserProfileView } from '@/components/profile/PublicProfileModals';
+import { useGeolocation } from '@/hooks/useGeolocation';
 
 const MapView = dynamic(() => import('@/components/map/MapView'), {
   ssr: false,
@@ -107,7 +109,13 @@ export default function DashboardPage() {
   const activeConvoy = useConvoyStore((s) => s.activeConvoy);
   useNotifications({ userId: session?.user?.id, convoyId: activeConvoy?.id });
 
+  // Trzymaj GPS aktywny dopóki użytkownik jest zalogowany — dzięki temu lokalizacja
+  // działa też w zakładkach Trasy/Społeczność, nie tylko po wejściu w pełnoekranową mapę.
+  const geo = useGeolocation({ enableHighAccuracy: true, autoStart: true });
+  const [geoBannerDismissed, setGeoBannerDismissed] = useState(false);
+
   const [activeTab, setActiveTab] = useState<Tab>('home');
+  const [viewedProfileUserId, setViewedProfileUserId] = useState<string | null>(null);
   const [mapVoiceEnabled, setMapVoiceEnabled] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('convoy_map_voice') !== 'false';
@@ -180,12 +188,15 @@ export default function DashboardPage() {
     showConvoyMembers,
   };
 
-  const isMapMode = activeTab === 'map';
-  const isHome = activeTab === 'home';
-  const isOverlay = !isHome && !isMapMode;
+  const isProfileView = viewedProfileUserId !== null;
+  const isMapMode = activeTab === 'map' && !isProfileView;
+  const isHome = activeTab === 'home' && !isProfileView;
+  const isOverlay = !isHome && !isMapMode && !isProfileView;
 
   function handleTabClick(tab: Tab) {
-    if (tab === activeTab) {
+    // Każde kliknięcie w dolnej nawigacji zamyka pełnostronicowy widok profilu.
+    if (viewedProfileUserId !== null) setViewedProfileUserId(null);
+    if (tab === activeTab && viewedProfileUserId === null) {
       setActiveTab('home');
     } else {
       setActiveTab(tab);
@@ -197,6 +208,37 @@ export default function DashboardPage() {
   return (
     <AuthGuard>
       <div className="relative h-screen w-screen overflow-hidden bg-background">
+
+        {/* === GPS STATUS BANNER === */}
+        {geo.error && !geoBannerDismissed && (
+          <div className="absolute left-1/2 top-3 z-40 w-[min(90vw,420px)] -translate-x-1/2 rounded-xl border border-red-500/40 bg-red-500/15 px-3 py-2 shadow-lg backdrop-blur-md">
+            <div className="flex items-start gap-2">
+              <svg className="mt-0.5 h-4 w-4 shrink-0 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+                <line x1="15" y1="9" x2="9" y2="15" />
+              </svg>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-red-300">Lokalizacja niedostępna</p>
+                <p className="mt-0.5 text-[11px] leading-4 text-red-200/90">{geo.error}</p>
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={() => geo.startTracking()}
+                    className="rounded-md bg-red-600 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-red-700"
+                  >
+                    Spróbuj ponownie
+                  </button>
+                  <button
+                    onClick={() => setGeoBannerDismissed(true)}
+                    className="rounded-md border border-red-500/40 px-2.5 py-1 text-[11px] font-semibold text-red-200 transition hover:bg-red-500/10"
+                  >
+                    Ukryj
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* === HOME SCREEN === */}
         {isHome && (
@@ -412,7 +454,12 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {activeTab === 'routes' && <RoutePanel onShowOnMap={() => setActiveTab('map')} />}
+              {activeTab === 'routes' && (
+                <RoutePanel
+                  onShowOnMap={() => setActiveTab('map')}
+                  onShowProfile={(uid) => setViewedProfileUserId(uid)}
+                />
+              )}
 
               {activeTab === 'friends' && (
                 <div className="flex flex-col gap-5">
@@ -445,6 +492,38 @@ export default function DashboardPage() {
                   />
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* === USER PROFILE OVERLAY (full page) === */}
+        {isProfileView && viewedProfileUserId && (
+          <div className="absolute inset-0 z-20 flex flex-col bg-background">
+            <div className="flex items-center gap-3 px-5 pt-6 pb-4">
+              <button
+                onClick={() => setViewedProfileUserId(null)}
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-card-bg border border-card-border text-muted transition hover:text-foreground"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 text-white">
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-bold text-foreground">Profil</h2>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 pb-24">
+              <div className="mx-auto w-full max-w-2xl">
+                <UserProfileView
+                  key={viewedProfileUserId}
+                  userId={viewedProfileUserId}
+                  onBack={() => setViewedProfileUserId(null)}
+                />
+              </div>
             </div>
           </div>
         )}
