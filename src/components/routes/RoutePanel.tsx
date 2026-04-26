@@ -23,6 +23,7 @@ const MIN_START_DISPLACEMENT_M = 100;
 interface RoutePanelProps {
   onShowOnMap?: () => void;
   onShowProfile?: (userId: string) => void;
+  onCreateRouteOpenChange?: (open: boolean) => void;
 }
 
 interface SavedRoute {
@@ -114,7 +115,7 @@ function formatTimeMs(seconds: number): string {
 
 const MEDAL_COLORS = ['text-yellow-400', 'text-slate-300', 'text-amber-600'];
 
-export default function RoutePanel({ onShowOnMap, onShowProfile }: RoutePanelProps = {}) {
+export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOpenChange }: RoutePanelProps = {}) {
   const [routes, setRoutes] = useState<SavedRoute[]>([]);
   const [suggested, setSuggested] = useState<SuggestedRoute[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,6 +123,10 @@ export default function RoutePanel({ onShowOnMap, onShowProfile }: RoutePanelPro
   const [error, setError] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [activeSection, setActiveSection] = useState<'suggested' | 'community' | 'saved'>('suggested');
+
+  useEffect(() => {
+    onCreateRouteOpenChange?.(showCreate);
+  }, [showCreate, onCreateRouteOpenChange]);
 
   // Community (public) routes
   const [publicRoutes, setPublicRoutes] = useState<PublicRoute[]>([]);
@@ -156,7 +161,13 @@ export default function RoutePanel({ onShowOnMap, onShowProfile }: RoutePanelPro
 
   const { data: session } = useSession();
   const userLocation = useMapStore((s) => s.userLocation);
-  const { setRoutes: setMapRoutes, setMapFlyTarget, routes: mapRoutes, setNavigationRoute } = useMapStore();
+  const { setRoutes: setMapRoutes, setMapFlyTarget, routes: mapRoutes, setNavigationRoute, startMysteryDrive } = useMapStore();
+
+  function startMysteryRun(id: string, name: string, waypoints: { latitude: number; longitude: number; label?: string }[]) {
+    if (waypoints.length < 2) return;
+    startMysteryDrive({ routeId: id, routeName: name, waypoints });
+    onShowOnMap?.();
+  }
 
   const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
@@ -607,7 +618,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile }: RoutePanelPro
               : 'text-muted hover:text-foreground'
           }`}
         >
-          Społeczność
+          Publiczne
         </button>
         <button
           onClick={() => setActiveSection('saved')}
@@ -1039,6 +1050,20 @@ export default function RoutePanel({ onShowOnMap, onShowProfile }: RoutePanelPro
                           </button>
                         </div>
 
+                        {wpCount >= 2 && (
+                          <button
+                            onClick={() => startMysteryRun(route.id, route.name, wps)}
+                            disabled={!userLocation}
+                            title={userLocation ? 'Tryb tajemniczy — checkpointy odsłaniają się w trakcie jazdy' : 'Wymaga GPS'}
+                            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-600 via-orange-600 to-amber-500 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg transition hover:brightness-110 disabled:opacity-40"
+                          >
+                            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M2 12l5-9 5 5 5-9 5 13H2z" />
+                            </svg>
+                            Tryb NFS
+                          </button>
+                        )}
+
                         {/* Top 5 leaderboard */}
                         <div className="mt-4 border-t border-card-border pt-3">
                           <div className="mb-2 flex items-center justify-between">
@@ -1305,6 +1330,19 @@ export default function RoutePanel({ onShowOnMap, onShowProfile }: RoutePanelPro
                               Nawiguj
                             </button>
                           )}
+                          {wpCount >= 2 && (
+                            <button
+                              onClick={() => startMysteryRun(route.id, route.name, getParsedWaypoints(route))}
+                              disabled={!userLocation}
+                              title={userLocation ? 'Tryb tajemniczy — checkpointy odsłaniają się w trakcie jazdy' : 'Wymaga GPS'}
+                              className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-600 via-orange-600 to-amber-500 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg transition hover:brightness-110 disabled:opacity-40"
+                            >
+                              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M2 12l5-9 5 5 5-9 5 13H2z" />
+                              </svg>
+                              Tryb NFS
+                            </button>
+                          )}
                           <div className="flex gap-2">
                             {onShowOnMap && wpCount >= 2 && (
                               <button
@@ -1349,7 +1387,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile }: RoutePanelPro
                               <p className="text-[11px] font-semibold text-foreground">Publiczna trasa</p>
                               <p className="mt-0.5 text-[11px] leading-4 text-muted">
                                 {route.isPublic
-                                  ? 'Inni kierowcy widzą ją w zakładce Społeczność.'
+                                  ? 'Inni kierowcy widzą ją w sekcji Trasy → Publiczne.'
                                   : 'Opublikuj, aby inni mogli ją zobaczyć i dodać do swoich.'}
                               </p>
                             </div>

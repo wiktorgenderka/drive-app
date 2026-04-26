@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export type ThemeMode = 'dark' | 'light';
-export type MapTheme = 'auto' | 'dark' | 'light' | 'satellite' | 'navigation' | 'outdoors';
+export type MapTheme = 'auto' | 'dark' | 'light' | 'satellite' | 'navigation' | 'outdoors' | 'nfs';
 
 interface ThemeState {
   mode: ThemeMode;

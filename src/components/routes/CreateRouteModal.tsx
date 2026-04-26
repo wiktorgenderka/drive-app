@@ -430,7 +430,7 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
             <div className="min-w-0 flex-1">
               <p className="text-xs font-semibold text-foreground">Udostępnij publicznie</p>
               <p className="mt-0.5 text-[11px] leading-4 text-muted">
-                Trasa pojawi się w zakładce <span className="text-foreground">Społeczność</span> — inni kierowcy będą mogli ją pokazać na mapie i dodać do swoich.
+                Trasa pojawi się w <span className="text-foreground">Trasy → Publiczne</span> — inni kierowcy będą mogli ją pokazać na mapie i dodać do swoich.
               </p>
             </div>
           </label>
@@ -478,6 +478,8 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
             },
           ]);
         }}
+        onPointDeleted={(idx) => setWaypoints((prev) => prev.filter((_, i) => i !== idx))}
+        onCloseLoop={closeLoop}
       />
     </div>
   );

@@ -16,6 +16,7 @@ import AddFriendModal from '@/components/friends/AddFriendModal';
 import ConvoyPanel from '@/components/convoy/ConvoyPanel';
 import ConvoyMapVoice from '@/components/convoy/ConvoyMapVoice';
 import RoutePanel from '@/components/routes/RoutePanel';
+import SocialFeed from '@/components/social/SocialFeed';
 import { useNotifications } from '@/hooks/useNotifications';
 import { UserProfileView } from '@/components/profile/PublicProfileModals';
 import { useGeolocation } from '@/hooks/useGeolocation';
@@ -32,7 +33,7 @@ const MapView = dynamic(() => import('@/components/map/MapView'), {
   ),
 });
 
-type Tab = 'home' | 'map' | 'profile' | 'car' | 'routes' | 'friends';
+type Tab = 'home' | 'map' | 'profile' | 'car' | 'routes' | 'friends' | 'feed';
 type LayerKey = 'showReports' | 'showFuelStations' | 'showConvoyMembers';
 
 const LAYER_CONFIG: { key: LayerKey; label: string }[] = [
@@ -43,45 +44,21 @@ const LAYER_CONFIG: { key: LayerKey; label: string }[] = [
 
 const NAV_ITEMS: { id: Tab; icon: React.ReactNode; label: string }[] = [
   {
-    id: 'friends',
-    label: 'Znajomi',
+    id: 'feed',
+    label: 'Społeczność',
     icon: (
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 00-3-3.87" />
-        <path d="M16 3.13a4 4 0 010 7.75" />
+        <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
       </svg>
     ),
   },
   {
-    id: 'car',
-    label: 'Konwój',
+    id: 'home',
+    label: 'Główna',
     icon: (
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M5 17h14M5 17a2 2 0 01-2-2V9a2 2 0 012-2h1l2-3h8l2 3h1a2 2 0 012 2v6a2 2 0 01-2 2M5 17a2 2 0 100 4 2 2 0 000-4zm14 0a2 2 0 100 4 2 2 0 000-4z" />
-      </svg>
-    ),
-  },
-  {
-    id: 'map',
-    label: 'Mapa',
-    icon: (
-      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z" />
-        <path d="M8 2v16" />
-        <path d="M16 6v16" />
-      </svg>
-    ),
-  },
-  {
-    id: 'routes',
-    label: 'Trasy',
-    icon: (
-      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="6" cy="19" r="3" />
-        <path d="M9 19h8.5a3.5 3.5 0 000-7h-11a3.5 3.5 0 010-7H15" />
-        <circle cx="18" cy="5" r="3" />
+        <path d="M3 12l9-9 9 9" />
+        <path d="M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10" />
       </svg>
     ),
   },
@@ -102,6 +79,7 @@ const SECTION_META: Record<Exclude<Tab, 'home' | 'map'>, { title: string; color:
   car: { title: 'Konwój', color: 'bg-emerald-600' },
   routes: { title: 'Trasy', color: 'bg-orange-600' },
   friends: { title: 'Znajomi', color: 'bg-pink-600' },
+  feed: { title: 'Społeczność', color: 'bg-rose-600' },
 };
 
 export default function DashboardPage() {
@@ -116,6 +94,7 @@ export default function DashboardPage() {
 
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [viewedProfileUserId, setViewedProfileUserId] = useState<string | null>(null);
+  const [createRouteOpen, setCreateRouteOpen] = useState(false);
   const [mapVoiceEnabled, setMapVoiceEnabled] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('convoy_map_voice') !== 'false';
@@ -458,7 +437,12 @@ export default function DashboardPage() {
                 <RoutePanel
                   onShowOnMap={() => setActiveTab('map')}
                   onShowProfile={(uid) => setViewedProfileUserId(uid)}
+                  onCreateRouteOpenChange={setCreateRouteOpen}
                 />
+              )}
+
+              {activeTab === 'feed' && (
+                <SocialFeed onShowProfile={(uid) => setViewedProfileUserId(uid)} />
               )}
 
               {activeTab === 'friends' && (
@@ -528,8 +512,8 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Bottom nav bar - visible when NOT in full map mode */}
-        {!isMapMode && (
+        {/* Bottom nav bar - visible when NOT in full map mode and no fullscreen modal */}
+        {!isMapMode && !createRouteOpen && (
           <div className="absolute bottom-0 left-0 right-0 z-30">
             <div className="mx-4 mb-6 flex items-center justify-around rounded-2xl border border-card-border bg-card-bg/95 px-2 py-2 shadow-xl backdrop-blur-md">
               {NAV_ITEMS.map((item) => (

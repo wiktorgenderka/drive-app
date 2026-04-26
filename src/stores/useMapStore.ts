@@ -86,6 +86,23 @@ export interface NavigationRoute {
   waypoints: { latitude: number; longitude: number; label?: string }[];
 }
 
+// Tryb "tajemniczego przejazdu" (jak w Need for Speed) — gracz nie widzi
+// całej trasy, tylko najbliższe N checkpointów na mapie. Po dojeździe do
+// pierwszego, kolejny pojawia się na mapie.
+export type MysteryDriveStatus = 'countdown' | 'running' | 'finished' | 'cancelled';
+
+export interface MysteryDrive {
+  routeId: string;
+  routeName: string;
+  waypoints: { latitude: number; longitude: number; label?: string }[];
+  currentIdx: number;
+  visibleAhead: number;
+  countdown: number | null;
+  startedAt: number | null;
+  status: MysteryDriveStatus;
+  savedSeconds: number | null;
+}
+
 interface MapState {
   viewState: ViewState;
   userLocation: UserLocation | null;
@@ -100,6 +117,7 @@ interface MapState {
   showConvoyMembers: boolean;
   mapFlyTarget: { longitude: number; latitude: number; zoom: number } | null;
   navigationRoute: NavigationRoute | null;
+  mysteryDrive: MysteryDrive | null;
 }
 
 interface MapActions {
@@ -123,6 +141,13 @@ interface MapActions {
   toggleLayer: (layer: 'showReports' | 'showFuelStations' | 'showConvoyMembers') => void;
   setMapFlyTarget: (target: { longitude: number; latitude: number; zoom: number } | null) => void;
   setNavigationRoute: (route: NavigationRoute | null) => void;
+  startMysteryDrive: (config: { routeId: string; routeName: string; waypoints: { latitude: number; longitude: number; label?: string }[]; visibleAhead?: number }) => void;
+  setMysteryCountdown: (n: number | null) => void;
+  beginMysteryRun: () => void;
+  advanceMysteryCheckpoint: () => void;
+  finishMysteryDrive: (seconds: number) => void;
+  cancelMysteryDrive: () => void;
+  clearMysteryDrive: () => void;
   clearAll: () => void;
 }
 
@@ -150,6 +175,7 @@ export const useMapStore = create<MapStore>()((set) => ({
   showConvoyMembers: true,
   mapFlyTarget: null,
   navigationRoute: null,
+  mysteryDrive: null,
 
   setViewState: (viewState) =>
     set((state) => ({
@@ -241,6 +267,73 @@ export const useMapStore = create<MapStore>()((set) => ({
   setMapFlyTarget: (target) => set({ mapFlyTarget: target }),
 
   setNavigationRoute: (route) => set({ navigationRoute: route }),
+
+  startMysteryDrive: ({ routeId, routeName, waypoints, visibleAhead = 3 }) =>
+    set({
+      mysteryDrive: {
+        routeId,
+        routeName,
+        waypoints,
+        currentIdx: 0,
+        visibleAhead,
+        countdown: 5,
+        startedAt: null,
+        status: 'countdown',
+        savedSeconds: null,
+      },
+    }),
+
+  setMysteryCountdown: (n) =>
+    set((state) =>
+      state.mysteryDrive
+        ? { mysteryDrive: { ...state.mysteryDrive, countdown: n } }
+        : state
+    ),
+
+  beginMysteryRun: () =>
+    set((state) =>
+      state.mysteryDrive
+        ? {
+            mysteryDrive: {
+              ...state.mysteryDrive,
+              countdown: null,
+              startedAt: Date.now(),
+              status: 'running',
+            },
+          }
+        : state
+    ),
+
+  advanceMysteryCheckpoint: () =>
+    set((state) => {
+      if (!state.mysteryDrive || state.mysteryDrive.status !== 'running') return state;
+      const next = state.mysteryDrive.currentIdx + 1;
+      return {
+        mysteryDrive: { ...state.mysteryDrive, currentIdx: next },
+      };
+    }),
+
+  finishMysteryDrive: (seconds) =>
+    set((state) =>
+      state.mysteryDrive
+        ? {
+            mysteryDrive: {
+              ...state.mysteryDrive,
+              status: 'finished',
+              savedSeconds: seconds,
+            },
+          }
+        : state
+    ),
+
+  cancelMysteryDrive: () =>
+    set((state) =>
+      state.mysteryDrive
+        ? { mysteryDrive: { ...state.mysteryDrive, status: 'cancelled' } }
+        : state
+    ),
+
+  clearMysteryDrive: () => set({ mysteryDrive: null }),
 
   clearAll: () =>
     set({

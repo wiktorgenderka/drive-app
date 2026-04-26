@@ -118,6 +118,37 @@ function getGreeting(): string {
   return 'Dobry wieczór';
 }
 
+interface ShortcutTileProps {
+  onClick: () => void;
+  label: string;
+  sub: string;
+  gradient: string;
+  icon: React.ReactNode;
+  badge?: number;
+}
+
+function ShortcutTile({ onClick, label, sub, gradient, icon, badge }: ShortcutTileProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={`relative flex h-28 flex-col justify-between rounded-2xl bg-gradient-to-br ${gradient} p-3 text-left text-white shadow-lg transition hover:brightness-110 active:scale-[0.98]`}
+    >
+      <div className="flex items-start justify-between">
+        <span className="rounded-lg bg-white/20 p-1.5">{icon}</span>
+        {badge && badge > 0 ? (
+          <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-black text-foreground">
+            {badge}
+          </span>
+        ) : null}
+      </div>
+      <div className="leading-tight">
+        <p className="text-sm font-bold">{label}</p>
+        <p className="text-[10px] font-medium text-white/80">{sub}</p>
+      </div>
+    </button>
+  );
+}
+
 
 export default function HomeScreen({
   onNavigateToMap,
@@ -245,7 +276,14 @@ export default function HomeScreen({
             </div>
             <div>
               <p className="text-sm font-medium text-foreground">Jesteś w trasie</p>
-              <p className="text-xs text-muted">Jazda aktywna</p>
+              <p className="text-xs text-muted">
+                Jazda aktywna
+                {userLocation?.accuracy != null && (
+                  <span className="ml-1 text-[10px] opacity-70">
+                    • GPS ±{Math.round(userLocation.accuracy)} m
+                  </span>
+                )}
+              </p>
             </div>
             <button
               onClick={onNavigateToMap}
@@ -291,34 +329,51 @@ export default function HomeScreen({
           </button>
         </div>
 
-        {/* Active convoy banner */}
-        {stats?.activeConvoy && (
-          <button
+        {/* Skróty: Konwój / Znajomi / Trasy */}
+        <div className="mx-5 mt-4 grid grid-cols-3 gap-3">
+          <ShortcutTile
             onClick={onNavigateToConvoy}
-            className="mx-5 mt-5 flex items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-left transition hover:bg-emerald-500/15"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white">
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            label="Konwój"
+            sub={stats?.activeConvoy ? `${stats.activeConvoy.memberCount} osób` : 'Jedź razem'}
+            gradient="from-emerald-500 to-teal-700"
+            icon={(
+              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <rect x="1" y="3" width="15" height="13" rx="2" />
                 <path d="M16 8h4l3 3v5a1 1 0 01-1 1h-2" />
                 <circle cx="5.5" cy="18.5" r="2.5" />
                 <circle cx="18.5" cy="18.5" r="2.5" />
               </svg>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate">
-                {stats.activeConvoy.name}
-              </p>
-              <p className="text-xs text-muted">
-                {stats.activeConvoy.memberCount} czł. &middot;{' '}
-                {stats.activeConvoy.role === 'OWNER' ? 'Lider' : 'Członek'}
-              </p>
-            </div>
-            <svg className="h-4 w-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path d="M9 18l6-6-6-6" />
-            </svg>
-          </button>
-        )}
+            )}
+          />
+          <ShortcutTile
+            onClick={onNavigateToFriends}
+            label="Znajomi"
+            sub={stats?.pendingRequests ? `${stats.pendingRequests} zaproszeń` : 'Twoja paczka'}
+            gradient="from-pink-500 to-rose-700"
+            badge={stats?.pendingRequests ?? 0}
+            icon={(
+              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 00-3-3.87" />
+                <path d="M16 3.13a4 4 0 010 7.75" />
+              </svg>
+            )}
+          />
+          <ShortcutTile
+            onClick={onNavigateToRoutes}
+            label="Trasy"
+            sub={stats?.totalRoutes ? `${stats.totalRoutes} zapisanych` : 'Zaplanuj jazdę'}
+            gradient="from-orange-500 to-amber-700"
+            icon={(
+              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <circle cx="6" cy="19" r="3" />
+                <path d="M9 19h8.5a3.5 3.5 0 000-7h-11a3.5 3.5 0 010-7H15" />
+                <circle cx="18" cy="5" r="3" />
+              </svg>
+            )}
+          />
+        </div>
 
         {/* Pending friend requests badge */}
         {stats && stats.pendingRequests > 0 && (

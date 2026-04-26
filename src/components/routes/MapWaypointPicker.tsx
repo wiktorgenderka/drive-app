@@ -20,6 +20,8 @@ interface MapWaypointPickerProps {
   open: boolean;
   onClose: () => void;
   onPointPicked: (point: PickedPoint) => void;
+  onPointDeleted?: (index: number) => void;
+  onCloseLoop?: () => void;
   existingWaypoints: { latitude: number; longitude: number; label: string }[];
 }
 
@@ -27,6 +29,8 @@ export default function MapWaypointPicker({
   open,
   onClose,
   onPointPicked,
+  onPointDeleted,
+  onCloseLoop,
   existingWaypoints,
 }: MapWaypointPickerProps) {
   const userLocation = useMapStore((s) => s.userLocation);
@@ -36,6 +40,7 @@ export default function MapWaypointPicker({
   const [pendingPoint, setPendingPoint] = useState<{ lng: number; lat: number } | null>(null);
   const [reverseLabel, setReverseLabel] = useState<string | null>(null);
   const [loadingLabel, setLoadingLabel] = useState(false);
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -79,6 +84,11 @@ export default function MapWaypointPicker({
   }, []);
 
   function handleMapClick(evt: { lngLat: { lng: number; lat: number } }) {
+    // Klik w tło mapy gdy zaznaczony jest istniejący punkt → tylko odznacz.
+    if (selectedIdx !== null) {
+      setSelectedIdx(null);
+      return;
+    }
     const { lng, lat } = evt.lngLat;
     setPendingPoint({ lng, lat });
     setReverseLabel(null);
@@ -160,14 +170,32 @@ export default function MapWaypointPicker({
           </Marker>
         )}
 
-        {/* Existing waypoints */}
-        {existingWaypoints.map((wp, idx) => (
-          <Marker key={`existing-${idx}`} longitude={wp.longitude} latitude={wp.latitude} anchor="center">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-orange-600 text-[11px] font-bold text-white shadow-lg border-2 border-white">
-              {idx + 1}
-            </div>
-          </Marker>
-        ))}
+        {/* Existing waypoints — klikalne, otwierają panel akcji */}
+        {existingWaypoints.map((wp, idx) => {
+          const isFirst = idx === 0;
+          const isLast = idx === existingWaypoints.length - 1;
+          const selected = selectedIdx === idx;
+          const color = isFirst ? 'bg-emerald-600' : isLast ? 'bg-red-500' : 'bg-orange-600';
+          return (
+            <Marker key={`existing-${idx}`} longitude={wp.longitude} latitude={wp.latitude} anchor="center">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPendingPoint(null);
+                  setReverseLabel(null);
+                  setSelectedIdx(idx);
+                }}
+                title={`Punkt ${idx + 1} — kliknij, aby otworzyć opcje`}
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-lg transition ${color} ${
+                  selected ? 'ring-4 ring-white scale-110' : 'border-2 border-white hover:scale-110'
+                }`}
+              >
+                {idx + 1}
+              </button>
+            </Marker>
+          );
+        })}
 
         {/* Pending point */}
         {pendingPoint && (
@@ -178,6 +206,62 @@ export default function MapWaypointPicker({
           </Marker>
         )}
       </Map>
+
+      {/* Bottom panel — selected existing waypoint actions */}
+      {!pendingPoint && selectedIdx !== null && existingWaypoints[selectedIdx] && (() => {
+        const wp = existingWaypoints[selectedIdx];
+        const isFirst = selectedIdx === 0;
+        const lastIdx = existingWaypoints.length - 1;
+        const isLoopAlready =
+          existingWaypoints.length >= 2 &&
+          existingWaypoints[0].latitude === existingWaypoints[lastIdx].latitude &&
+          existingWaypoints[0].longitude === existingWaypoints[lastIdx].longitude;
+        const canCloseLoop = isFirst && existingWaypoints.length >= 2 && !isLoopAlready && !!onCloseLoop;
+        return (
+          <div className="absolute bottom-0 left-0 right-0 z-10 rounded-t-2xl border-t border-card-border bg-card-bg/95 px-5 py-4 shadow-xl backdrop-blur-md">
+            <div className="mb-3 flex items-start gap-3">
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[13px] font-bold text-white ${
+                isFirst ? 'bg-emerald-600' : selectedIdx === lastIdx ? 'bg-red-500' : 'bg-orange-600'
+              }`}>
+                {selectedIdx + 1}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-foreground truncate">{wp.label}</p>
+                <p className="mt-0.5 text-xs text-muted">
+                  Punkt {selectedIdx + 1} z {existingWaypoints.length}
+                  {isFirst && ' • start'}
+                  {selectedIdx === lastIdx && !isFirst && ' • meta'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedIdx(null)}
+                className="flex-1 rounded-xl border border-card-border bg-card-bg py-2.5 text-xs font-semibold text-muted transition hover:bg-input-bg hover:text-foreground"
+              >
+                Anuluj
+              </button>
+              {canCloseLoop && (
+                <button
+                  onClick={() => { onCloseLoop?.(); setSelectedIdx(null); }}
+                  className="flex-1 rounded-xl border border-emerald-500/30 bg-emerald-500/10 py-2.5 text-xs font-semibold text-emerald-400 transition hover:bg-emerald-500/20"
+                  title="Dodaj kopię tego punktu jako ostatni — start będzie też metą"
+                >
+                  Oznacz również jako koniec
+                </button>
+              )}
+              <button
+                onClick={() => { onPointDeleted?.(selectedIdx); setSelectedIdx(null); }}
+                disabled={!onPointDeleted}
+                className="flex-1 rounded-xl bg-red-600 py-2.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
+              >
+                Usuń punkt
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Bottom panel — pending point confirmation */}
       {pendingPoint && (

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useMapStore } from '@/stores/useMapStore';
+import { haversineMeters } from '@/lib/geo';
 
 interface GeolocationState {
   latitude: number | null;
@@ -31,6 +32,12 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
   const mergedOptions = { ...defaultOptions, ...options };
   const setUserLocation = useMapStore((state) => state.setUserLocation);
   const watchIdRef = useRef<number | null>(null);
+  // Poprzedni fix do liczenia prędkości gdy GeolocationPosition.coords.speed jest null/0
+  // (typowe dla przeglądarek na desktopie / bez sprzętowego GPS).
+  const lastFixRef = useRef<{ lat: number; lng: number; t: number; accuracy: number } | null>(null);
+  // Wygładzanie prędkości — średnia ruchoma z ostatnich 3 fixów eliminuje skoki
+  // typowe dla pozycjonowania WiFi (lokalizacja "teleportuje się" o 30-100 m).
+  const speedHistoryRef = useRef<number[]>([]);
 
   const [state, setState] = useState<GeolocationState>({
     latitude: null,
@@ -47,12 +54,44 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
       const { latitude, longitude, accuracy, heading, speed } =
         position.coords;
 
+      // Fallback dla braku natywnej prędkości — Δdystansu / Δczasu w m/s.
+      let effectiveSpeed: number | null = speed != null && speed > 0 ? speed : null;
+      const prev = lastFixRef.current;
+      if (effectiveSpeed === null && prev) {
+        const dtSec = (position.timestamp - prev.t) / 1000;
+        if (dtSec >= 0.5 && dtSec <= 30) {
+          const dist = haversineMeters(prev.lat, prev.lng, latitude, longitude);
+          // Próg ruchu uzależniony od dokładności fixu — przy WiFi (accuracy ~50 m)
+          // ruch <25 m to najpewniej szum, nie prawdziwe przemieszczenie.
+          const accForGate = Math.max(accuracy ?? 10, prev.accuracy);
+          const minMove = Math.max(2, accForGate * 0.5);
+          if (dist >= minMove) {
+            const computed = dist / dtSec;
+            if (computed <= 100) effectiveSpeed = computed;
+          } else {
+            effectiveSpeed = 0;
+          }
+        }
+      }
+
+      // Średnia ruchoma — wygładza pojedyncze skoki.
+      if (effectiveSpeed !== null) {
+        const hist = speedHistoryRef.current;
+        hist.push(effectiveSpeed);
+        if (hist.length > 3) hist.shift();
+        effectiveSpeed = hist.reduce((s, v) => s + v, 0) / hist.length;
+      } else {
+        speedHistoryRef.current = [];
+      }
+
+      lastFixRef.current = { lat: latitude, lng: longitude, t: position.timestamp, accuracy: accuracy ?? 50 };
+
       setState({
         latitude,
         longitude,
         accuracy,
         heading,
-        speed,
+        speed: effectiveSpeed,
         error: null,
         isTracking: true,
       });
@@ -62,7 +101,7 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
         longitude,
         accuracy,
         heading,
-        speed,
+        speed: effectiveSpeed,
         timestamp: position.timestamp,
       });
     },

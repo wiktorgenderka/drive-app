@@ -60,6 +60,9 @@ model User {
   spotifyToken        SpotifyToken?
   trips               Trip[]
   passwordResetTokens PasswordResetToken[]
+  posts               Post[]
+  postLikes           PostLike[]
+  postComments        PostComment[]
 
   @@map("users")
 }
@@ -295,4 +298,54 @@ model Trip {
 
   @@index([userId, createdAt])
   @@map("trips")
+}
+
+model Post {
+  id           String   @id @default(cuid())
+  userId       String
+  content      String?
+  imageData    String?
+  latitude     Float?
+  longitude    Float?
+  likeCount    Int      @default(0)
+  commentCount Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes    PostLike[]
+  comments PostComment[]
+
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([likeCount])
+  @@map("posts")
+}
+
+model PostLike {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId])
+  @@map("post_likes")
+}
+
+model PostComment {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+  @@map("post_comments")
 }

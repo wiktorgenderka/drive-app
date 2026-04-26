@@ -80,6 +80,23 @@ export const UpdateRouteSchema = z.object({
   description: z.string().max(500).optional().nullable(),
 });
 
+// ─── Social feed ─────────────────────────────────────────────────────────────
+
+export const CreatePostSchema = z
+  .object({
+    content: z.string().max(1000).trim().optional().nullable(),
+    imageData: z.string().max(2_500_000).optional().nullable(),
+    latitude: z.number().min(-90).max(90).optional().nullable(),
+    longitude: z.number().min(-180).max(180).optional().nullable(),
+  })
+  .refine((d) => (d.content && d.content.length > 0) || (d.imageData && d.imageData.length > 0), {
+    message: 'Post musi zawierać tekst lub zdjęcie',
+  });
+
+export const CreateCommentSchema = z.object({
+  content: z.string().min(1, 'Komentarz nie może być pusty').max(500).trim(),
+});
+
 // ─── User profile ────────────────────────────────────────────────────────────
 
 export const UpdateProfileSchema = z.object({

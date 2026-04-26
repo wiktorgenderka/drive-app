@@ -38,6 +38,7 @@ const MAP_THEMES: { value: MapTheme; label: string; bg: string; road: string; wa
   { value: 'satellite',  label: 'Satelita', bg: '#14532d', road: '#6b7280', water: '#164e63' },
   { value: 'navigation', label: 'Nawigacja',bg: '#1e1b4b', road: '#4f46e5', water: '#1e3a5f' },
   { value: 'outdoors',   label: 'Teren',    bg: '#365314', road: '#a3e635', water: '#0891b2' },
+  { value: 'nfs',        label: 'NFS',      bg: '#040712', road: '#fde047', water: '#0a1733' },
 ];
 
 // ─── Tiny helpers ─────────────────────────────────────────────────────────────
