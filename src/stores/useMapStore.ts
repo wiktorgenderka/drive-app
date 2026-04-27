@@ -115,6 +115,7 @@ interface MapState {
   showReports: boolean;
   showFuelStations: boolean;
   showConvoyMembers: boolean;
+  showSpots: boolean;
   mapFlyTarget: { longitude: number; latitude: number; zoom: number } | null;
   navigationRoute: NavigationRoute | null;
   mysteryDrive: MysteryDrive | null;
@@ -138,7 +139,7 @@ interface MapActions {
   setRoutes: (routes: Route[]) => void;
   setSelectedReport: (report: Report | null) => void;
   setSelectedStation: (station: FuelStation | null) => void;
-  toggleLayer: (layer: 'showReports' | 'showFuelStations' | 'showConvoyMembers') => void;
+  toggleLayer: (layer: 'showReports' | 'showFuelStations' | 'showConvoyMembers' | 'showSpots') => void;
   setMapFlyTarget: (target: { longitude: number; latitude: number; zoom: number } | null) => void;
   setNavigationRoute: (route: NavigationRoute | null) => void;
   startMysteryDrive: (config: { routeId: string; routeName: string; waypoints: { latitude: number; longitude: number; label?: string }[]; visibleAhead?: number }) => void;
@@ -173,6 +174,7 @@ export const useMapStore = create<MapStore>()((set) => ({
   showReports: true,
   showFuelStations: true,
   showConvoyMembers: true,
+  showSpots: true,
   mapFlyTarget: null,
   navigationRoute: null,
   mysteryDrive: null,

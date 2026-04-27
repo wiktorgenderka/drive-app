@@ -4,12 +4,14 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import Map, { Marker, Source, Layer } from 'react-map-gl/mapbox';
 import type { MapRef } from 'react-map-gl/mapbox';
 import { useMapStore } from '@/stores/useMapStore';
+import { useSpotStore } from '@/stores/useSpotStore';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { useProfileStore } from '@/stores/useProfileStore';
 import { useStatsStore } from '@/stores/useStatsStore';
 import UserMarker from './UserMarker';
 import ConvoyMarker from './ConvoyMarker';
 import ReportMarker from './ReportMarker';
+import SpotMarker from './SpotMarker';
 import FuelStationMarker from './FuelStationMarker';
 import RouteLayer from './RouteLayer';
 import MysteryDriveLayer from './MysteryDriveLayer';
@@ -276,6 +278,9 @@ export default function MapView() {
 
   const setReports = useMapStore((s) => s.setReports);
   const setFuelStations = useMapStore((s) => s.setFuelStations);
+  const showSpots = useMapStore((s) => s.showSpots);
+  const setSpots = useSpotStore((s) => s.setSpots);
+  const spots = useSpotStore((s) => s.spots);
   const lastFetchRef = useRef<string>('');
 
   const fetchMapData = useCallback(
@@ -310,8 +315,13 @@ export default function MapView() {
         .then((res) => (res.ok ? res.json() : []))
         .then((data) => { if (Array.isArray(data)) setFuelStations(data); })
         .catch(() => {});
+
+      fetch(`/api/spots?lat=${lat}&lng=${lng}&radius=50`)
+        .then((res) => (res.ok ? res.json() : []))
+        .then((data) => { if (Array.isArray(data)) setSpots(data); })
+        .catch(() => {});
     },
-    [setReports, setFuelStations]
+    [setReports, setFuelStations, setSpots]
   );
 
   useEffect(() => {
@@ -802,6 +812,7 @@ export default function MapView() {
         )}
 
         {showReports && reports.map((r) => <ReportMarker key={r.id} report={r} />)}
+        {showSpots && spots.map((s) => <SpotMarker key={s.id} spot={s} />)}
         {showFuelStations && fuelStations
           .filter((s) => !userLocation || haversineMeters(userLocation.latitude, userLocation.longitude, s.latitude, s.longitude) <= 1000)
           .map((s) => <FuelStationMarker key={s.id} station={s} />)}

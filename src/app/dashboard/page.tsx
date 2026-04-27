@@ -17,7 +17,11 @@ import ConvoyPanel from '@/components/convoy/ConvoyPanel';
 import ConvoyMapVoice from '@/components/convoy/ConvoyMapVoice';
 import RoutePanel from '@/components/routes/RoutePanel';
 import SocialFeed from '@/components/social/SocialFeed';
+import CreateSpotModal from '@/components/spots/CreateSpotModal';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useLocationPing } from '@/hooks/useLocationPing';
+import { useAutoSpotDetection } from '@/hooks/useAutoSpotDetection';
+import { useProfileStore } from '@/stores/useProfileStore';
 import { UserProfileView } from '@/components/profile/PublicProfileModals';
 import { useGeolocation } from '@/hooks/useGeolocation';
 
@@ -34,12 +38,13 @@ const MapView = dynamic(() => import('@/components/map/MapView'), {
 });
 
 type Tab = 'home' | 'map' | 'profile' | 'car' | 'routes' | 'friends' | 'feed';
-type LayerKey = 'showReports' | 'showFuelStations' | 'showConvoyMembers';
+type LayerKey = 'showReports' | 'showFuelStations' | 'showConvoyMembers' | 'showSpots';
 
 const LAYER_CONFIG: { key: LayerKey; label: string }[] = [
   { key: 'showReports', label: 'Raporty' },
   { key: 'showFuelStations', label: 'Stacje paliw' },
   { key: 'showConvoyMembers', label: 'Konwój' },
+  { key: 'showSpots', label: 'Spoty' },
 ];
 
 const NAV_ITEMS: { id: Tab; icon: React.ReactNode; label: string }[] = [
@@ -86,6 +91,9 @@ export default function DashboardPage() {
   const { data: session } = useSession();
   const activeConvoy = useConvoyStore((s) => s.activeConvoy);
   useNotifications({ userId: session?.user?.id, convoyId: activeConvoy?.id });
+  const autoSpotEnabled = useProfileStore((s) => s.privacy.autoSpot !== false);
+  useLocationPing(true);
+  useAutoSpotDetection(autoSpotEnabled);
 
   // Trzymaj GPS aktywny dopóki użytkownik jest zalogowany — dzięki temu lokalizacja
   // działa też w zakładkach Trasy/Społeczność, nie tylko po wejściu w pełnoekranową mapę.
@@ -126,10 +134,11 @@ export default function DashboardPage() {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     toastTimerRef.current = setTimeout(() => setMapToast(null), 3500);
   }, [mapNotificationsEnabled]);
-  const { showReports, showFuelStations, showConvoyMembers, toggleLayer } = useMapStore();
+  const { showReports, showFuelStations, showConvoyMembers, showSpots, toggleLayer } = useMapStore();
   const [showLayerMenu, setShowLayerMenu] = useState(false);
   const [showAddReport, setShowAddReport] = useState(false);
   const [showAddFriend, setShowAddFriend] = useState(false);
+  const [showCreateSpot, setShowCreateSpot] = useState(false);
   const userLocation = useMapStore((s) => s.userLocation);
   const fuelStations = useMapStore((s) => s.fuelStations);
 
@@ -165,6 +174,7 @@ export default function DashboardPage() {
     showReports,
     showFuelStations,
     showConvoyMembers,
+    showSpots,
   };
 
   const isProfileView = viewedProfileUserId !== null;
@@ -379,6 +389,18 @@ export default function DashboardPage() {
                   )}
                 </div>
 
+                {/* Create spot */}
+                <button
+                  onClick={() => { setShowCreateSpot(true); setShowAddReport(false); setShowLayerMenu(false); }}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-card-bg/90 text-muted border border-card-border backdrop-blur-md shadow-lg transition hover:text-foreground"
+                  title="Stwórz spot"
+                >
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                </button>
+
                 <Link
                   href="/settings"
                   className="flex h-10 w-10 items-center justify-center rounded-xl bg-card-bg/90 shadow-lg backdrop-blur-md border border-card-border text-muted transition hover:text-foreground"
@@ -511,6 +533,11 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+
+        <CreateSpotModal
+          open={showCreateSpot}
+          onClose={() => setShowCreateSpot(false)}
+        />
 
         {/* Bottom nav bar - visible when NOT in full map mode and no fullscreen modal */}
         {!isMapMode && !createRouteOpen && (

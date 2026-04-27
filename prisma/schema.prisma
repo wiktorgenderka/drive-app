@@ -33,6 +33,16 @@ enum FuelType {
   LPG
 }
 
+enum SpotKind {
+  AUTO
+  MANUAL
+}
+
+enum SpotVisibility {
+  FRIENDS
+  PUBLIC
+}
+
 model User {
   id                 String          @id @default(cuid())
   email              String          @unique
@@ -41,6 +51,7 @@ model User {
   image              String?
   latitude           Float?
   longitude          Float?
+  speed              Float?
   lastLocationUpdate DateTime?
   carDisplay         String?
   bio                String?
@@ -63,6 +74,8 @@ model User {
   posts               Post[]
   postLikes           PostLike[]
   postComments        PostComment[]
+  spots               Spot[]
+  spotParticipations  SpotParticipant[]
 
   @@map("users")
 }
@@ -334,6 +347,43 @@ model PostLike {
   @@unique([postId, userId])
   @@index([postId])
   @@map("post_likes")
+}
+
+model Spot {
+  id          String         @id @default(cuid())
+  kind        SpotKind
+  visibility  SpotVisibility
+  latitude    Float
+  longitude   Float
+  title       String?
+  description String?
+  createdById String
+  createdAt   DateTime       @default(now())
+  expiresAt   DateTime
+  closedAt    DateTime?
+
+  createdBy    User              @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  participants SpotParticipant[]
+
+  @@index([visibility, closedAt, expiresAt])
+  @@index([createdById, createdAt])
+  @@index([latitude, longitude])
+  @@map("spots")
+}
+
+model SpotParticipant {
+  id       String    @id @default(cuid())
+  spotId   String
+  userId   String
+  joinedAt DateTime  @default(now())
+  leftAt   DateTime?
+
+  spot Spot @relation(fields: [spotId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([spotId, userId])
+  @@index([userId, leftAt])
+  @@map("spot_participants")
 }
 
 model PostComment {

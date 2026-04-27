@@ -814,6 +814,7 @@ export default function SettingsPanel() {
           <ToggleRow label="Widoczny w konwoju" desc="Pojawiasz się na liście konwojów" value={privacy.showInConvoy} onChange={(v) => setPrivacy({ showInConvoy: v })} accent={accentColor} />
           <ToggleRow label="Publiczny profil" desc="Inni mogą wyszukać Twój profil" value={privacy.publicProfile} onChange={(v) => setPrivacy({ publicProfile: v })} accent={accentColor} />
           <ToggleRow label="Pokaż prędkość" desc="Wyświetlaj prędkość w konwoju" value={privacy.showSpeed} onChange={(v) => setPrivacy({ showSpeed: v })} accent={accentColor} />
+          <ToggleRow label="Auto-spoty" desc="Automatycznie twórz spot, gdy stoisz blisko znajomego" value={privacy.autoSpot !== false} onChange={(v) => setPrivacy({ autoSpot: v })} accent={accentColor} />
         </div>
       </Card>
 
