@@ -17,6 +17,7 @@ export interface PrivacySettings {
   showInConvoy: boolean;
   publicProfile: boolean;
   showSpeed: boolean;
+  autoSpot: boolean;
 }
 
 export interface NotificationSettings {
@@ -46,7 +47,7 @@ export const useProfileStore = create<ProfileState & ProfileActions>()(
   persist(
     (set) => ({
       vehicles: [],
-      privacy: { shareLocation: true, showInConvoy: true, publicProfile: false, showSpeed: true },
+      privacy: { shareLocation: true, showInConvoy: true, publicProfile: false, showSpeed: true, autoSpot: true },
       notifications: { nearbyReports: true, friendRequests: true, convoyInvites: true, speedAlerts: true, policeAlerts: true },
 
       addVehicle: (v) =>

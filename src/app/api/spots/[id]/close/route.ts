@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { getSocketServer } from "@/lib/socket-server";
-import { FriendshipStatus, SpotVisibility } from "@prisma/client";
+import { FriendshipStatus, SpotKind, SpotVisibility } from "@prisma/client";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -22,8 +22,14 @@ export async function PATCH(_request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Spot not found" }, { status: 404 });
     }
 
-    // PR1: only the creator can close (manual spots).
-    // PR2 will allow any participant for AUTO spots.
+    // AUTO spots are dissolved by participants leaving (POST /leave),
+    // not closed manually. MANUAL spots are closed only by their creator.
+    if (spot.kind === SpotKind.AUTO) {
+      return NextResponse.json(
+        { error: "AUTO spots cannot be closed manually — leave instead" },
+        { status: 400 }
+      );
+    }
     if (spot.createdById !== session.user.id) {
       return NextResponse.json(
         { error: "Only the creator can close this spot" },

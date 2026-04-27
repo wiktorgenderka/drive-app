@@ -8,6 +8,13 @@ import { FriendshipStatus, SpotKind, SpotVisibility } from "@prisma/client";
 
 const SPOT_EXPIRY_HOURS = 2;
 
+const PARTICIPANT_INCLUDE = {
+  where: { leftAt: null },
+  include: {
+    user: { select: { id: true, name: true, image: true } },
+  },
+} as const;
+
 async function getFriendIds(userId: string): Promise<string[]> {
   const friendships = await prisma.friendship.findMany({
     where: {
@@ -54,17 +61,20 @@ export async function GET(request: NextRequest) {
           { visibility: SpotVisibility.PUBLIC },
           {
             visibility: SpotVisibility.FRIENDS,
-            createdById: { in: visibleAuthorIds },
+            OR: [
+              { createdById: { in: visibleAuthorIds } },
+              { participants: { some: { userId: { in: visibleAuthorIds }, leftAt: null } } },
+            ],
           },
         ],
       },
       include: {
         createdBy: { select: { id: true, name: true, image: true } },
+        participants: PARTICIPANT_INCLUDE,
       },
       orderBy: { createdAt: "desc" },
     });
 
-    // Precise distance filter
     const filtered = spots.filter((s) => {
       const dLat = ((s.latitude - lat) * Math.PI) / 180;
       const dLng = ((s.longitude - lng) * Math.PI) / 180;
@@ -80,6 +90,7 @@ export async function GET(request: NextRequest) {
     const result = filtered.map((s) => ({
       ...s,
       isOwner: s.createdById === userId,
+      isParticipant: s.participants.some((p) => p.userId === userId),
     }));
 
     return NextResponse.json(result);
@@ -124,10 +135,11 @@ export async function POST(request: NextRequest) {
       },
       include: {
         createdBy: { select: { id: true, name: true, image: true } },
+        participants: PARTICIPANT_INCLUDE,
       },
     });
 
-    const payload = { ...spot, isOwner: false };
+    const payload = { ...spot, isOwner: false, isParticipant: false };
 
     const io = getSocketServer();
     if (io) {
@@ -135,15 +147,16 @@ export async function POST(request: NextRequest) {
         io.emit("spot-created", payload);
       } else {
         const friendIds = await getFriendIds(session.user.id);
-        // Author also gets it locally via the POST response, but emit to author room
-        // for consistency with multi-tab sessions.
         for (const fid of [session.user.id, ...friendIds]) {
           io.to(`user:${fid}`).emit("spot-created", payload);
         }
       }
     }
 
-    return NextResponse.json({ ...spot, isOwner: true }, { status: 201 });
+    return NextResponse.json(
+      { ...spot, isOwner: true, isParticipant: false },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Create spot error:", error);
     const message =

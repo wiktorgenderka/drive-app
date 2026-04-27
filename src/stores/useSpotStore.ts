@@ -8,6 +8,7 @@ interface SpotState {
 interface SpotActions {
   setSpots: (spots: Spot[]) => void;
   addSpot: (spot: Spot) => void;
+  upsertSpot: (spot: Spot) => void;
   removeSpot: (spotId: string) => void;
   clear: () => void;
 }
@@ -25,6 +26,13 @@ export const useSpotStore = create<SpotStore>()((set) => ({
         ? state
         : { spots: [...state.spots, spot] }
     ),
+
+  upsertSpot: (spot) =>
+    set((state) => ({
+      spots: state.spots.some((s) => s.id === spot.id)
+        ? state.spots.map((s) => (s.id === spot.id ? spot : s))
+        : [...state.spots, spot],
+    })),
 
   removeSpot: (spotId) =>
     set((state) => ({ spots: state.spots.filter((s) => s.id !== spotId) })),

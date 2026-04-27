@@ -149,6 +149,15 @@ export interface RouteTime {
   user?: Pick<User, 'id' | 'name' | 'image'>;
 }
 
+export interface SpotParticipant {
+  id: string;
+  spotId: string;
+  userId: string;
+  joinedAt: string;
+  leftAt?: string | null;
+  user?: Pick<User, 'id' | 'name' | 'image'>;
+}
+
 export interface Spot {
   id: string;
   kind: SpotKind;
@@ -162,7 +171,9 @@ export interface Spot {
   expiresAt: string;
   closedAt?: string | null;
   createdBy?: Pick<User, 'id' | 'name' | 'image'>;
+  participants?: SpotParticipant[];
   isOwner?: boolean;
+  isParticipant?: boolean;
 }
 
 export interface ThemeConfig {

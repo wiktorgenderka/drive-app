@@ -5,9 +5,20 @@ import { io, Socket } from 'socket.io-client';
 import { useMapStore } from '@/stores/useMapStore';
 import { useConvoyStore } from '@/stores/useConvoyStore';
 import { useSpotStore } from '@/stores/useSpotStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 import type { ConvoyMember, Report, FuelStation } from '@/stores/useMapStore';
 import type { ConvoyMemberInfo } from '@/stores/useConvoyStore';
 import type { Spot } from '@/types';
+
+function decorateSpot(spot: Spot, meId: string | undefined): Spot {
+  return {
+    ...spot,
+    isOwner: !!meId && spot.createdById === meId,
+    isParticipant:
+      !!meId &&
+      !!spot.participants?.some((p) => p.userId === meId && !p.leftAt),
+  };
+}
 
 interface UseSocketOptions {
   url?: string;
@@ -46,6 +57,7 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
   const updateFuelStation = useMapStore((s) => s.updateFuelStation);
 
   const addSpot = useSpotStore((s) => s.addSpot);
+  const upsertSpot = useSpotStore((s) => s.upsertSpot);
   const removeSpot = useSpotStore((s) => s.removeSpot);
 
   const convoyAddMember = useConvoyStore((s) => s.addMember);
@@ -148,7 +160,14 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
 
       // Spot created (manual or auto)
       socket.on('spot-created', (spot: Spot) => {
-        addSpot(spot);
+        const meId = useAuthStore.getState().user?.id;
+        addSpot(decorateSpot(spot, meId));
+      });
+
+      // Spot updated (e.g. participants joined)
+      socket.on('spot-updated', (spot: Spot) => {
+        const meId = useAuthStore.getState().user?.id;
+        upsertSpot(decorateSpot(spot, meId));
       });
 
       // Spot closed by owner / auto-expired
@@ -169,6 +188,7 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
       updateReportVotes,
       updateFuelStation,
       addSpot,
+      upsertSpot,
       removeSpot,
       convoyAddMember,
       convoyRemoveMember,

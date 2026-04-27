@@ -19,6 +19,9 @@ import RoutePanel from '@/components/routes/RoutePanel';
 import SocialFeed from '@/components/social/SocialFeed';
 import CreateSpotModal from '@/components/spots/CreateSpotModal';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useLocationPing } from '@/hooks/useLocationPing';
+import { useAutoSpotDetection } from '@/hooks/useAutoSpotDetection';
+import { useProfileStore } from '@/stores/useProfileStore';
 import { UserProfileView } from '@/components/profile/PublicProfileModals';
 import { useGeolocation } from '@/hooks/useGeolocation';
 
@@ -88,6 +91,9 @@ export default function DashboardPage() {
   const { data: session } = useSession();
   const activeConvoy = useConvoyStore((s) => s.activeConvoy);
   useNotifications({ userId: session?.user?.id, convoyId: activeConvoy?.id });
+  const autoSpotEnabled = useProfileStore((s) => s.privacy.autoSpot !== false);
+  useLocationPing(true);
+  useAutoSpotDetection(autoSpotEnabled);
 
   // Trzymaj GPS aktywny dopóki użytkownik jest zalogowany — dzięki temu lokalizacja
   // działa też w zakładkach Trasy/Społeczność, nie tylko po wejściu w pełnoekranową mapę.

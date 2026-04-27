@@ -27,6 +27,7 @@ export async function GET() {
             latitude: true,
             longitude: true,
             lastLocationUpdate: true,
+            speed: true,
             spotifyToken: { select: { userId: true } },
           },
         },
@@ -39,6 +40,7 @@ export async function GET() {
             latitude: true,
             longitude: true,
             lastLocationUpdate: true,
+            speed: true,
             spotifyToken: { select: { userId: true } },
           },
         },
@@ -66,6 +68,8 @@ export async function GET() {
         isDriving,
         latitude: isOnline ? friend.latitude : null,
         longitude: isOnline ? friend.longitude : null,
+        speed: isOnline ? friend.speed : null,
+        lastLocationUpdate: isOnline ? friend.lastLocationUpdate : null,
         hasSpotify: !!friend.spotifyToken,
       };
     });

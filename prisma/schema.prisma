@@ -51,6 +51,7 @@ model User {
   image              String?
   latitude           Float?
   longitude          Float?
+  speed              Float?
   lastLocationUpdate DateTime?
   carDisplay         String?
   bio                String?
@@ -74,6 +75,7 @@ model User {
   postLikes           PostLike[]
   postComments        PostComment[]
   spots               Spot[]
+  spotParticipations  SpotParticipant[]
 
   @@map("users")
 }
@@ -360,12 +362,28 @@ model Spot {
   expiresAt   DateTime
   closedAt    DateTime?
 
-  createdBy User @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy    User              @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  participants SpotParticipant[]
 
   @@index([visibility, closedAt, expiresAt])
   @@index([createdById, createdAt])
   @@index([latitude, longitude])
   @@map("spots")
+}
+
+model SpotParticipant {
+  id       String    @id @default(cuid())
+  spotId   String
+  userId   String
+  joinedAt DateTime  @default(now())
+  leftAt   DateTime?
+
+  spot Spot @relation(fields: [spotId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([spotId, userId])
+  @@index([userId, leftAt])
+  @@map("spot_participants")
 }
 
 model PostComment {
