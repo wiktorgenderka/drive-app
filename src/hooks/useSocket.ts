@@ -4,8 +4,10 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useMapStore } from '@/stores/useMapStore';
 import { useConvoyStore } from '@/stores/useConvoyStore';
+import { useSpotStore } from '@/stores/useSpotStore';
 import type { ConvoyMember, Report, FuelStation } from '@/stores/useMapStore';
 import type { ConvoyMemberInfo } from '@/stores/useConvoyStore';
+import type { Spot } from '@/types';
 
 interface UseSocketOptions {
   url?: string;
@@ -42,6 +44,9 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
   const removeReport = useMapStore((s) => s.removeReport);
   const updateReportVotes = useMapStore((s) => s.updateReportVotes);
   const updateFuelStation = useMapStore((s) => s.updateFuelStation);
+
+  const addSpot = useSpotStore((s) => s.addSpot);
+  const removeSpot = useSpotStore((s) => s.removeSpot);
 
   const convoyAddMember = useConvoyStore((s) => s.addMember);
   const convoyRemoveMember = useConvoyStore((s) => s.removeMember);
@@ -141,6 +146,16 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
         updateFuelStation(station);
       });
 
+      // Spot created (manual or auto)
+      socket.on('spot-created', (spot: Spot) => {
+        addSpot(spot);
+      });
+
+      // Spot closed by owner / auto-expired
+      socket.on('spot-closed', (data: { spotId: string }) => {
+        removeSpot(data.spotId);
+      });
+
       // Convoy shared destination update
       socket.on('convoy-destination-set', (data: { convoyId: string; destLat: number | null; destLng: number | null; destName: string | null }) => {
         convoySetDestination(data.destLat, data.destLng, data.destName);
@@ -153,6 +168,8 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
       removeReport,
       updateReportVotes,
       updateFuelStation,
+      addSpot,
+      removeSpot,
       convoyAddMember,
       convoyRemoveMember,
       convoyUpdateMemberLocation,

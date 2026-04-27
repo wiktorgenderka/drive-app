@@ -120,6 +120,16 @@ export const DeleteAccountSchema = z.object({
   password: z.string().min(1, 'Hasło jest wymagane'),
 });
 
+// ─── Spots ───────────────────────────────────────────────────────────────────
+
+export const CreateSpotSchema = z.object({
+  visibility: z.enum(['FRIENDS', 'PUBLIC']),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+  title: z.string().max(80).trim().optional(),
+  description: z.string().max(280).trim().optional(),
+});
+
 // ─── Trips ───────────────────────────────────────────────────────────────────
 
 export const CreateTripSchema = z.object({

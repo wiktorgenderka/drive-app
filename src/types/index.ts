@@ -25,6 +25,16 @@ export enum FriendshipStatus {
   REJECTED = 'REJECTED',
 }
 
+export enum SpotKind {
+  AUTO = 'AUTO',
+  MANUAL = 'MANUAL',
+}
+
+export enum SpotVisibility {
+  FRIENDS = 'FRIENDS',
+  PUBLIC = 'PUBLIC',
+}
+
 export interface Location {
   latitude: number;
   longitude: number;
@@ -137,6 +147,22 @@ export interface RouteTime {
   seconds: number;
   createdAt: string;
   user?: Pick<User, 'id' | 'name' | 'image'>;
+}
+
+export interface Spot {
+  id: string;
+  kind: SpotKind;
+  visibility: SpotVisibility;
+  latitude: number;
+  longitude: number;
+  title?: string | null;
+  description?: string | null;
+  createdById: string;
+  createdAt: string;
+  expiresAt: string;
+  closedAt?: string | null;
+  createdBy?: Pick<User, 'id' | 'name' | 'image'>;
+  isOwner?: boolean;
 }
 
 export interface ThemeConfig {
