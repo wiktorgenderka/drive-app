@@ -26,6 +26,7 @@ export default function MysteryDriveHUD() {
   const setMapFlyTarget = useMapStore((s) => s.setMapFlyTarget);
   const setMysteryCountdown = useMapStore((s) => s.setMysteryCountdown);
   const beginMysteryRun = useMapStore((s) => s.beginMysteryRun);
+  const triggerMysteryStart = useMapStore((s) => s.triggerMysteryStart);
   const advanceMysteryCheckpoint = useMapStore((s) => s.advanceMysteryCheckpoint);
   const finishMysteryDrive = useMapStore((s) => s.finishMysteryDrive);
   const cancelMysteryDrive = useMapStore((s) => s.cancelMysteryDrive);
@@ -117,6 +118,13 @@ export default function MysteryDriveHUD() {
     const d = haversineMeters(userLocation.latitude, userLocation.longitude, wp.latitude, wp.longitude);
     if (d > CHECKPOINT_RADIUS_M) return;
 
+    // Tryb checkpoint: pierwsze przejście przez PKT 0 uruchamia timer i przesuwa indeks.
+    if (mystery.startMode === 'checkpoint' && mystery.startedAt === null) {
+      triggerMysteryStart();
+      advanceMysteryCheckpoint();
+      return;
+    }
+
     const isLast = mystery.currentIdx >= mystery.waypoints.length - 1;
     if (isLast) {
       if (finishingRef.current) return;
@@ -139,13 +147,14 @@ export default function MysteryDriveHUD() {
     } else {
       advanceMysteryCheckpoint();
     }
-  }, [userLocation, mystery, advanceMysteryCheckpoint, finishMysteryDrive]);
+  }, [userLocation, mystery, triggerMysteryStart, advanceMysteryCheckpoint, finishMysteryDrive]);
 
   if (!mystery) return null;
 
   const total = mystery.waypoints.length;
   const isCountdown = mystery.status === 'countdown';
   const isRunning = mystery.status === 'running';
+  const isWaitingForStart = isRunning && mystery.startMode === 'checkpoint' && mystery.startedAt === null;
   const isFinished = mystery.status === 'finished';
   const isCancelled = mystery.status === 'cancelled';
 
@@ -193,6 +202,19 @@ export default function MysteryDriveHUD() {
               <div className="flex flex-col items-center gap-1 px-4 py-5">
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-rose-300">Gotów? Start za…</p>
                 <p className="font-mono text-6xl font-black text-rose-400 tabular-nums">{mystery.countdown ?? 0}</p>
+              </div>
+            ) : isWaitingForStart ? (
+              <div className="flex flex-col items-center gap-2 px-4 py-5">
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 animate-ping rounded-full bg-amber-400" />
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-300">Oczekiwanie na start</p>
+                </div>
+                <p className="text-center text-sm font-bold text-white">
+                  Przejedź przez <span className="text-amber-300">PKT 1</span>, aby uruchomić timer
+                </p>
+                {distLabel && (
+                  <p className="font-mono text-base font-bold text-amber-200">{distLabel}</p>
+                )}
               </div>
             ) : (
               <>

@@ -102,12 +102,15 @@ export interface NavigationRoute {
 // pierwszego, kolejny pojawia się na mapie.
 export type MysteryDriveStatus = 'countdown' | 'running' | 'finished' | 'cancelled';
 
+export type MysteryStartMode = 'countdown' | 'checkpoint';
+
 export interface MysteryDrive {
   routeId: string;
   routeName: string;
   waypoints: { latitude: number; longitude: number; label?: string }[];
   currentIdx: number;
   visibleAhead: number;
+  startMode: MysteryStartMode;
   countdown: number | null;
   startedAt: number | null;
   status: MysteryDriveStatus;
@@ -158,9 +161,10 @@ interface MapActions {
   toggleLayer: (layer: 'showReports' | 'showFuelStations' | 'showConvoyMembers' | 'showSpots' | 'showFriends') => void;
   setMapFlyTarget: (target: { longitude: number; latitude: number; zoom: number } | null) => void;
   setNavigationRoute: (route: NavigationRoute | null) => void;
-  startMysteryDrive: (config: { routeId: string; routeName: string; waypoints: { latitude: number; longitude: number; label?: string }[]; visibleAhead?: number }) => void;
+  startMysteryDrive: (config: { routeId: string; routeName: string; waypoints: { latitude: number; longitude: number; label?: string }[]; visibleAhead?: number; startMode?: MysteryStartMode }) => void;
   setMysteryCountdown: (n: number | null) => void;
   beginMysteryRun: () => void;
+  triggerMysteryStart: () => void;
   advanceMysteryCheckpoint: () => void;
   finishMysteryDrive: (seconds: number) => void;
   cancelMysteryDrive: () => void;
@@ -302,7 +306,7 @@ export const useMapStore = create<MapStore>()((set) => ({
 
   setNavigationRoute: (route) => set({ navigationRoute: route }),
 
-  startMysteryDrive: ({ routeId, routeName, waypoints, visibleAhead = 3 }) =>
+  startMysteryDrive: ({ routeId, routeName, waypoints, visibleAhead = 3, startMode = 'countdown' }) =>
     set({
       mysteryDrive: {
         routeId,
@@ -310,9 +314,10 @@ export const useMapStore = create<MapStore>()((set) => ({
         waypoints,
         currentIdx: 0,
         visibleAhead,
-        countdown: 5,
+        startMode,
+        countdown: startMode === 'countdown' ? 5 : null,
         startedAt: null,
-        status: 'countdown',
+        status: startMode === 'countdown' ? 'countdown' : 'running',
         savedSeconds: null,
       },
     }),
@@ -335,6 +340,13 @@ export const useMapStore = create<MapStore>()((set) => ({
               status: 'running',
             },
           }
+        : state
+    ),
+
+  triggerMysteryStart: () =>
+    set((state) =>
+      state.mysteryDrive && state.mysteryDrive.startedAt === null
+        ? { mysteryDrive: { ...state.mysteryDrive, startedAt: Date.now() } }
         : state
     ),
 

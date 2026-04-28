@@ -144,6 +144,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
   const [savingId, setSavingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [expandedSuggestedId, setExpandedSuggestedId] = useState<string | null>(null);
+  const [nfsStartMode, setNfsStartMode] = useState<'countdown' | 'checkpoint'>('countdown');
   const [loadingMapId, setLoadingMapId] = useState<string | null>(null);
   const [routeInfo, setRouteInfo] = useState<Record<string, { distance: number; duration: number } | null>>({});
 
@@ -177,7 +178,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
     } catch {
       setMapRoutes([{ id, name, coordinates: waypoints.map((wp) => [wp.longitude, wp.latitude] as [number, number]), waypoints, distance: 0, duration: 0, isActive: true }]);
     }
-    startMysteryDrive({ routeId: id, routeName: name, waypoints });
+    startMysteryDrive({ routeId: id, routeName: name, waypoints, startMode: nfsStartMode });
     onShowOnMap?.();
   }
 
@@ -1063,17 +1064,35 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                         </div>
 
                         {wpCount >= 2 && (
-                          <button
-                            onClick={() => startMysteryRun(route.id, route.name, wps)}
-                            disabled={!userLocation}
-                            title={userLocation ? 'Tryb tajemniczy — checkpointy odsłaniają się w trakcie jazdy' : 'Wymaga GPS'}
-                            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-600 via-orange-600 to-amber-500 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg transition hover:brightness-110 disabled:opacity-40"
-                          >
-                            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M2 12l5-9 5 5 5-9 5 13H2z" />
-                            </svg>
-                            Tryb NFS
-                          </button>
+                          <div className="mt-2 flex flex-col gap-1.5">
+                            <div className="flex overflow-hidden rounded-lg border border-rose-500/30 bg-black/20">
+                              <button
+                                onClick={() => setNfsStartMode('countdown')}
+                                className={`flex flex-1 items-center justify-center gap-1 py-1.5 text-[10px] font-bold uppercase tracking-wide transition ${nfsStartMode === 'countdown' ? 'bg-rose-600 text-white' : 'text-white/50 hover:text-white/80'}`}
+                              >
+                                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                Odliczanie
+                              </button>
+                              <button
+                                onClick={() => setNfsStartMode('checkpoint')}
+                                className={`flex flex-1 items-center justify-center gap-1 py-1.5 text-[10px] font-bold uppercase tracking-wide transition ${nfsStartMode === 'checkpoint' ? 'bg-rose-600 text-white' : 'text-white/50 hover:text-white/80'}`}
+                              >
+                                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M2 12h4M18 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+                                PKT 1
+                              </button>
+                            </div>
+                            <button
+                              onClick={() => startMysteryRun(route.id, route.name, wps)}
+                              disabled={!userLocation}
+                              title={userLocation ? 'Tryb tajemniczy — checkpointy odsłaniają się w trakcie jazdy' : 'Wymaga GPS'}
+                              className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-600 via-orange-600 to-amber-500 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg transition hover:brightness-110 disabled:opacity-40"
+                            >
+                              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M2 12l5-9 5 5 5-9 5 13H2z" />
+                              </svg>
+                              Tryb NFS
+                            </button>
+                          </div>
                         )}
 
                         {/* Top 5 leaderboard */}
@@ -1343,17 +1362,35 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                             </button>
                           )}
                           {wpCount >= 2 && (
-                            <button
-                              onClick={() => startMysteryRun(route.id, route.name, getParsedWaypoints(route))}
-                              disabled={!userLocation}
-                              title={userLocation ? 'Tryb tajemniczy — checkpointy odsłaniają się w trakcie jazdy' : 'Wymaga GPS'}
-                              className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-600 via-orange-600 to-amber-500 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg transition hover:brightness-110 disabled:opacity-40"
-                            >
-                              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M2 12l5-9 5 5 5-9 5 13H2z" />
-                              </svg>
-                              Tryb NFS
-                            </button>
+                            <div className="flex flex-col gap-1.5">
+                              <div className="flex overflow-hidden rounded-lg border border-rose-500/30 bg-black/20">
+                                <button
+                                  onClick={() => setNfsStartMode('countdown')}
+                                  className={`flex flex-1 items-center justify-center gap-1 py-1.5 text-[10px] font-bold uppercase tracking-wide transition ${nfsStartMode === 'countdown' ? 'bg-rose-600 text-white' : 'text-white/50 hover:text-white/80'}`}
+                                >
+                                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                  Odliczanie
+                                </button>
+                                <button
+                                  onClick={() => setNfsStartMode('checkpoint')}
+                                  className={`flex flex-1 items-center justify-center gap-1 py-1.5 text-[10px] font-bold uppercase tracking-wide transition ${nfsStartMode === 'checkpoint' ? 'bg-rose-600 text-white' : 'text-white/50 hover:text-white/80'}`}
+                                >
+                                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M2 12h4M18 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+                                  PKT 1
+                                </button>
+                              </div>
+                              <button
+                                onClick={() => startMysteryRun(route.id, route.name, getParsedWaypoints(route))}
+                                disabled={!userLocation}
+                                title={userLocation ? 'Tryb tajemniczy — checkpointy odsłaniają się w trakcie jazdy' : 'Wymaga GPS'}
+                                className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-600 via-orange-600 to-amber-500 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg transition hover:brightness-110 disabled:opacity-40"
+                              >
+                                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M2 12l5-9 5 5 5-9 5 13H2z" />
+                                </svg>
+                                Tryb NFS
+                              </button>
+                            </div>
                           )}
                           <div className="flex gap-2">
                             {onShowOnMap && wpCount >= 2 && (
