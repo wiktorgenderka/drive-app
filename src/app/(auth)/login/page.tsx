@@ -1,38 +1,35 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
-export default function LoginPage() {
+function LoginForm() {
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const urlError = searchParams.get('error');
+  const error =
+    urlError === 'CredentialsSignin'
+      ? 'Invalid email or password.'
+      : urlError
+        ? 'An unexpected error occurred. Please try again.'
+        : '';
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setError('');
     setLoading(true);
-
-    try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError('Invalid email or password.');
-      } else {
-        window.location.href = '/dashboard';
-      }
-    } catch {
-      setError('An unexpected error occurred. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    await signIn('credentials', {
+      email,
+      password,
+      callbackUrl: '/dashboard',
+    });
+    // Reached only on unexpected failure (network error etc.)
+    setLoading(false);
   }
 
   return (
@@ -159,5 +156,13 @@ export default function LoginPage() {
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }
