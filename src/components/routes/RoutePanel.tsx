@@ -163,8 +163,20 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
   const userLocation = useMapStore((s) => s.userLocation);
   const { setRoutes: setMapRoutes, setMapFlyTarget, routes: mapRoutes, setNavigationRoute, startMysteryDrive } = useMapStore();
 
-  function startMysteryRun(id: string, name: string, waypoints: { latitude: number; longitude: number; label?: string }[]) {
+  async function startMysteryRun(id: string, name: string, waypoints: { latitude: number; longitude: number; label?: string }[]) {
     if (waypoints.length < 2) return;
+    // Pobierz road-snapped coordinates i wstaw do store zanim segmenty będą renderowane.
+    try {
+      const coordStr = waypoints.map((wp) => `${wp.longitude},${wp.latitude}`).join(';');
+      const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordStr}?geometries=geojson&overview=full&access_token=${MAPBOX_TOKEN}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const leg = data.routes?.[0];
+      const coordinates: [number, number][] = leg?.geometry?.coordinates ?? waypoints.map((wp) => [wp.longitude, wp.latitude]);
+      setMapRoutes([{ id, name, coordinates, waypoints, distance: leg ? Math.round(leg.distance / 1000) : 0, duration: leg ? Math.round(leg.duration / 60) : 0, isActive: true }]);
+    } catch {
+      setMapRoutes([{ id, name, coordinates: waypoints.map((wp) => [wp.longitude, wp.latitude] as [number, number]), waypoints, distance: 0, duration: 0, isActive: true }]);
+    }
     startMysteryDrive({ routeId: id, routeName: name, waypoints });
     onShowOnMap?.();
   }

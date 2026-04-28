@@ -42,24 +42,28 @@ export default function MysteryDriveLayer() {
   let nextSegGeo: GeoJSON.Feature | null = null;
 
   if (coords && coords.length >= 2) {
-    // Indeks w coords najbliższy każdemu waypointowi
     const boundaries = waypoints.map((wp) =>
       nearestCoordIdx(coords, wp.latitude, wp.longitude)
     );
 
-    // Bieżący segment: od poprzedniego checkpointa (lub startu) do aktualnego celu
+    // Bieżący segment: od poprzedniego checkpointa do aktualnego celu.
+    // Gdy currentIdx=0 (waypoints[0] = start trasy, boundaries[0]≈0), segment byłby pusty.
+    // W takim przypadku pokaż cały odcinek start→wp[1] jako bieżący.
     const curStart = currentIdx === 0 ? 0 : (boundaries[currentIdx - 1] ?? 0);
-    const curEnd = boundaries[currentIdx] ?? coords.length - 1;
+    const curEndRaw = boundaries[currentIdx] ?? coords.length - 1;
+    const curEnd = curEndRaw > curStart ? curEndRaw : (boundaries[currentIdx + 1] ?? coords.length - 1);
     const curSlice = coords.slice(curStart, curEnd + 1);
     if (curSlice.length >= 2) currentSegGeo = toGeoJSON(curSlice);
 
-    // Następny segment: od aktualnego celu do kolejnego checkpointa
+    // Następny segment: od aktualnego celu do kolejnego checkpointa.
     const hasNext = currentIdx + 1 < waypoints.length;
     if (hasNext) {
-      const nxtStart = boundaries[currentIdx] ?? 0;
-      const nxtEnd = boundaries[currentIdx + 1] ?? coords.length - 1;
-      const nxtSlice = coords.slice(nxtStart, nxtEnd + 1);
-      if (nxtSlice.length >= 2) nextSegGeo = toGeoJSON(nxtSlice);
+      const nxtStart = curEnd;
+      const nxtEnd = boundaries[currentIdx + (curEndRaw > curStart ? 1 : 2)] ?? coords.length - 1;
+      if (nxtEnd > nxtStart) {
+        const nxtSlice = coords.slice(nxtStart, nxtEnd + 1);
+        if (nxtSlice.length >= 2) nextSegGeo = toGeoJSON(nxtSlice);
+      }
     }
   }
 
