@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { getSupabaseClient } from '@/lib/supabase-client';
 import { useMapStore } from '@/stores/useMapStore';
-import { useThemeStore } from '@/stores/useThemeStore';
-import { useStatsStore } from '@/stores/useStatsStore';
 import SpotifyWidget from '@/components/spotify/SpotifyWidget';
 import { useWeather } from '@/hooks/useWeather';
 import { timeAgo } from '@/lib/utils';
@@ -151,8 +149,6 @@ export default function HomeScreen({
 }: HomeScreenProps) {
   const { data: session } = useSession();
   const userLocation = useMapStore((s) => s.userLocation);
-  const { accentColor } = useThemeStore();
-  const { overall } = useStatsStore();
   const speedKmh =
     userLocation?.speed != null && userLocation.speed >= 0
       ? Math.round(userLocation.speed * 3.6)
@@ -410,22 +406,6 @@ export default function HomeScreen({
             </button>
           </div>
         )}
-
-        <div className="mx-5 mt-6 grid grid-cols-2 gap-3">
-          {[
-            { label: 'Dystans', value: `${overall.totalKm.toFixed(1)} km` },
-            { label: 'Max prędkość', value: `${Math.round(overall.maxSpeedKmh)} km/h` },
-            { label: 'Przejazdy', value: String(overall.totalTrips) },
-            { label: 'Czas jazdy', value: overall.totalMinutes >= 60
-              ? `${Math.floor(overall.totalMinutes / 60)}h ${overall.totalMinutes % 60}m`
-              : `${overall.totalMinutes} min` },
-          ].map((s) => (
-            <div key={s.label} className="rounded-2xl border border-card-border bg-card-bg p-3">
-              <p className="text-xl font-bold" style={{ color: accentColor }}>{s.value}</p>
-              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-muted">{s.label}</p>
-            </div>
-          ))}
-        </div>
 
         {reports.length > 0 && (
           <div className="mt-6">

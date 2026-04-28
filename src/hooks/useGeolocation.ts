@@ -38,6 +38,8 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
   // Wygładzanie prędkości — średnia ruchoma z ostatnich 3 fixów eliminuje skoki
   // typowe dla pozycjonowania WiFi (lokalizacja "teleportuje się" o 30-100 m).
   const speedHistoryRef = useRef<number[]>([]);
+  // Ostatnia wygładzona prędkość — do ograniczenia przyspieszenia (filtr fizyczny).
+  const lastSmoothedSpeedRef = useRef<number | null>(null);
 
   const [state, setState] = useState<GeolocationState>({
     latitude: null,
@@ -54,11 +56,13 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
       const { latitude, longitude, accuracy, heading, speed } =
         position.coords;
 
-      // Fallback dla braku natywnej prędkości — Δdystansu / Δczasu w m/s.
-      let effectiveSpeed: number | null = speed != null && speed > 0 ? speed : null;
       const prev = lastFixRef.current;
-      if (effectiveSpeed === null && prev) {
-        const dtSec = (position.timestamp - prev.t) / 1000;
+      const dtSec = prev ? (position.timestamp - prev.t) / 1000 : null;
+
+      // Urządzenie zwraca speed >= 0 → traktujemy jako wiarygodne (0 = stoisz).
+      // Tylko null oznacza "brak danych" i wtedy liczymy z delty pozycji.
+      let effectiveSpeed: number | null = speed != null && speed >= 0 ? speed : null;
+      if (effectiveSpeed === null && prev && dtSec !== null) {
         if (dtSec >= 0.5 && dtSec <= 30) {
           const dist = haversineMeters(prev.lat, prev.lng, latitude, longitude);
           // Próg ruchu uzależniony od dokładności fixu — przy WiFi (accuracy ~50 m)
@@ -83,6 +87,20 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
       } else {
         speedHistoryRef.current = [];
       }
+
+      // Filtr fizyczny: max przyspieszenie 5 m/s² (~18 km/h na sekundę).
+      // Blokuje skoki GPS (np. 0 → 120 km/h w ciągu 1 s) bez opóźniania
+      // normalnej jazdy — auto 0→100 km/h zajmuje co najmniej 5–6 s.
+      if (effectiveSpeed !== null && dtSec !== null && dtSec > 0 && dtSec < 30) {
+        const prevSmoothed = lastSmoothedSpeedRef.current;
+        if (prevSmoothed !== null) {
+          const maxIncrease = 5 * dtSec; // 5 m/s²
+          if (effectiveSpeed - prevSmoothed > maxIncrease) {
+            effectiveSpeed = prevSmoothed + maxIncrease;
+          }
+        }
+      }
+      lastSmoothedSpeedRef.current = effectiveSpeed;
 
       lastFixRef.current = { lat: latitude, lng: longitude, t: position.timestamp, accuracy: accuracy ?? 50 };
 

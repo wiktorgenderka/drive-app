@@ -2,12 +2,17 @@
 
 import { Source, Layer, Marker } from 'react-map-gl/mapbox';
 import type { Route } from '@/stores/useMapStore';
+import { useMapStore } from '@/stores/useMapStore';
 
 interface RouteLayerProps {
   route: Route;
 }
 
 export default function RouteLayer({ route }: RouteLayerProps) {
+  const mysteryDrive = useMapStore((s) => s.mysteryDrive);
+  // Podczas aktywnego mystery run MysteryDriveLayer renderuje segmentowaną wersję trasy.
+  if (mysteryDrive?.status === 'running' && mysteryDrive.routeId === route.id) return null;
+
   if (!route.coordinates || route.coordinates.length < 2) return null;
 
   const geojson: GeoJSON.Feature = {
