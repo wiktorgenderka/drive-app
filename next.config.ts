@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
   },
+  allowedDevOrigins: ['warm-cpu-victor-definition.trycloudflare.com'],
   async headers() {
     const csp = [
       "default-src 'self'",

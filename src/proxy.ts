@@ -7,7 +7,8 @@ export async function proxy(request: NextRequest) {
   // Without a secret we can't verify the token — let the request through
   if (!secret) return NextResponse.next();
 
-  const isSecure = request.nextUrl.protocol === 'https:';
+  const proto = request.headers.get('x-forwarded-proto') ?? request.nextUrl.protocol;
+  const isSecure = proto === 'https' || proto === 'https:';
   const cookieName = isSecure
     ? '__Secure-authjs.session-token'
     : 'authjs.session-token';

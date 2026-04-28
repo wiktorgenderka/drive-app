@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useSession } from 'next-auth/react';
-import { io, Socket } from 'socket.io-client';
+import { getSupabaseClient } from '@/lib/supabase-client';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 type TextMessage = {
   id: string;
@@ -101,7 +102,7 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
 
-  const socketRef = useRef<Socket | null>(null);
+  const chRef = useRef<RealtimeChannel | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -113,105 +114,60 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
 
   useEffect(() => { setMounted(true); }, []);
 
-  // Load message history from DB
-  useEffect(() => {
-    fetch(`/api/convoy/${convoy.id}/messages`, { cache: 'no-store' })
-      .then(async (r) => {
-        if (!r.ok) {
-          const text = await r.text().catch(() => '');
-          console.error(`[ConvoyDriveMode] GET messages ${r.status}:`, text);
-          return;
-        }
-        const data: Array<{
-          id: string; userId: string; userName: string; type: string;
-          message?: string | null; audioData?: string | null; mimeType?: string | null;
-          duration?: number | null; edited: boolean; deleted: boolean; createdAt: string;
-        }> = await r.json();
-        if (!Array.isArray(data)) return;
-        setMessages(
-          data.map((m) => {
-            if (m.type === 'voice') {
-              return {
-                id: m.id,
-                type: 'voice' as const,
-                userId: m.userId,
-                name: m.userName,
-                audioData: m.audioData ?? '',
-                mimeType: m.mimeType ?? '',
-                duration: m.duration ?? 0,
-                deleted: m.deleted,
-                timestamp: m.createdAt,
-              };
-            }
-            return {
-              id: m.id,
-              type: 'text' as const,
-              userId: m.userId,
-              name: m.userName,
-              message: m.message ?? '',
-              edited: m.edited,
-              deleted: m.deleted,
-              timestamp: m.createdAt,
-            };
-          })
-        );
-      })
-      .catch((err) => console.error('[ConvoyDriveMode] GET messages fetch error:', err));
+  const loadMessages = useCallback(async () => {
+    const r = await fetch(`/api/convoy/${convoy.id}/messages`, { cache: 'no-store' }).catch(() => null);
+    if (!r?.ok) return;
+    const data: Array<{
+      id: string; userId: string; userName: string; type: string;
+      message?: string | null; audioData?: string | null; mimeType?: string | null;
+      duration?: number | null; edited: boolean; deleted: boolean; createdAt: string;
+    }> = await r.json().catch(() => []);
+    if (!Array.isArray(data)) return;
+    setMessages(data.map((m) => {
+      if (m.type === 'voice') {
+        return { id: m.id, type: 'voice' as const, userId: m.userId, name: m.userName, audioData: m.audioData ?? '', mimeType: m.mimeType ?? '', duration: m.duration ?? 0, deleted: m.deleted, timestamp: m.createdAt };
+      }
+      return { id: m.id, type: 'text' as const, userId: m.userId, name: m.userName, message: m.message ?? '', edited: m.edited, deleted: m.deleted, timestamp: m.createdAt };
+    }));
   }, [convoy.id]);
 
+  useEffect(() => { loadMessages(); }, [loadMessages]);
+
   useEffect(() => {
-    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || '', {
-      path: '/api/socketio',
-      transports: ['websocket', 'polling'],
-    });
-    socketRef.current = socket;
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
 
-    socket.emit('join-convoy', {
-      convoyId: convoy.id,
-      userId: session?.user?.id,
-      name: session?.user?.name,
-    });
+    const ch = supabase.channel(`drive:${convoy.id}`);
+    chRef.current = ch;
 
-    socket.on('convoy-chat', (msg: TextMessage) => {
-      // Skip own messages — already added optimistically
+    ch.on('broadcast', { event: 'convoy-chat' }, ({ payload }: { payload: TextMessage }) => {
       setMessages((prev) => {
-        if (prev.some((m) => m.id === msg.id)) return prev;
-        return [...prev, { ...msg, type: 'text' }];
+        if (prev.some((m) => m.id === payload.id)) return prev;
+        return [...prev, { ...payload, type: 'text' }];
       });
-    });
-
-    socket.on('convoy-voice', (msg: VoiceMessage) => {
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === msg.id)) return prev;
-        return [...prev, { ...msg, type: 'voice' }];
-      });
-    });
-
-    socket.on('convoy-message-delete', ({ messageId }: { messageId: string }) => {
-      setMessages((prev) =>
-        prev.map((m) => (m.id === messageId ? { ...m, deleted: true } : m))
-      );
-    });
-
-    socket.on('convoy-message-edit', ({ messageId, newText }: { messageId: string; newText: string }) => {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === messageId && m.type === 'text' ? { ...m, message: newText, edited: true } : m
-        )
-      );
-    });
+    })
+    .on('broadcast', { event: 'convoy-voice' }, () => {
+      // Audio data is in DB — reload messages to get the new voice message
+      loadMessages();
+    })
+    .on('broadcast', { event: 'convoy-message-delete' }, ({ payload }: { payload: { messageId: string } }) => {
+      setMessages((prev) => prev.map((m) => m.id === payload.messageId ? { ...m, deleted: true } : m));
+    })
+    .on('broadcast', { event: 'convoy-message-edit' }, ({ payload }: { payload: { messageId: string; newText: string } }) => {
+      setMessages((prev) => prev.map((m) =>
+        m.id === payload.messageId && m.type === 'text' ? { ...m, message: payload.newText, edited: true } : m
+      ));
+    })
+    .subscribe();
 
     return () => {
-      socket.emit('leave-convoy', { convoyId: convoy.id, userId: session?.user?.id, name: session?.user?.name });
-      socket.removeAllListeners();
-      socket.disconnect();
+      ch.unsubscribe();
+      chRef.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [convoy.id]);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
   useEffect(() => {
     return () => {
@@ -220,7 +176,6 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
     };
   }, []);
 
-  // Close context menu on outside tap
   useEffect(() => {
     if (!selectedId) return;
     const handler = () => setSelectedId(null);
@@ -230,7 +185,7 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
 
   const sendText = useCallback(() => {
     const trimmed = input.trim();
-    if (!trimmed || !socketRef.current?.connected) return;
+    if (!trimmed || !chRef.current) return;
     const id = genId();
     const msg: TextMessage = {
       id,
@@ -240,27 +195,24 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
       message: trimmed,
       timestamp: new Date().toISOString(),
     };
-    // Optimistic update
     setMessages((prev) => [...prev, msg]);
     setInput('');
-    // Persist to DB
     fetch(`/api/convoy/${convoy.id}/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, type: 'text', message: trimmed }),
-    }).catch((err) => console.error('[ConvoyDriveMode] POST text message error:', err));
-    // Broadcast via socket
-    socketRef.current.emit('convoy-chat', { ...msg, convoyId: convoy.id });
+    }).catch((err) => console.error('[ConvoyDriveMode] POST text:', err));
+    chRef.current.send({ type: 'broadcast', event: 'convoy-chat', payload: msg });
   }, [input, convoy.id, session]);
 
   const deleteMessage = useCallback((id: string) => {
-    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, deleted: true } : m)));
+    setMessages((prev) => prev.map((m) => m.id === id ? { ...m, deleted: true } : m));
     fetch(`/api/convoy/${convoy.id}/messages`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messageId: id, action: 'delete' }),
     }).catch(() => {});
-    socketRef.current?.emit('convoy-message-delete', { convoyId: convoy.id, messageId: id });
+    chRef.current?.send({ type: 'broadcast', event: 'convoy-message-delete', payload: { messageId: id } });
     setSelectedId(null);
   }, [convoy.id]);
 
@@ -273,15 +225,13 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
   const confirmEdit = useCallback((id: string) => {
     const trimmed = editText.trim();
     if (!trimmed) return;
-    setMessages((prev) =>
-      prev.map((m) => (m.id === id && m.type === 'text' ? { ...m, message: trimmed, edited: true } : m))
-    );
+    setMessages((prev) => prev.map((m) => m.id === id && m.type === 'text' ? { ...m, message: trimmed, edited: true } : m));
     fetch(`/api/convoy/${convoy.id}/messages`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messageId: id, action: 'edit', newText: trimmed }),
     }).catch(() => {});
-    socketRef.current?.emit('convoy-message-edit', { convoyId: convoy.id, messageId: id, newText: trimmed });
+    chRef.current?.send({ type: 'broadcast', event: 'convoy-message-edit', payload: { messageId: id, newText: trimmed } });
     setEditingId(null);
     setEditText('');
   }, [editText, convoy.id]);
@@ -318,9 +268,7 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
       mediaRecorderRef.current = recorder;
       chunksRef.current = [];
 
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
 
       recorder.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
@@ -333,6 +281,7 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
         if (chunksRef.current.length === 0) return;
         const blob = new Blob(chunksRef.current, { type: actualMimeType });
         if (blob.size === 0) return;
+
         const reader = new FileReader();
         reader.onloadend = () => {
           const base64 = (reader.result as string).split(',')[1];
@@ -348,7 +297,7 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
             duration,
             timestamp: new Date().toISOString(),
           };
-          // Optimistic add
+          // Optimistic: sender sees immediately
           setMessages((prev) => {
             if (prev.some((m) => m.id === id)) return prev;
             return [...prev, voiceMsg];
@@ -359,8 +308,8 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id, type: 'voice', audioData: base64, mimeType: actualMimeType, duration }),
           }).catch(() => {});
-          // Broadcast (server echoes back to all in room)
-          socketRef.current?.emit('convoy-voice', { ...voiceMsg, convoyId: convoy.id });
+          // Notify others (no audio data — they reload from DB)
+          chRef.current?.send({ type: 'broadcast', event: 'convoy-voice', payload: { id, userId: voiceMsg.userId, name: voiceMsg.name, duration, timestamp: voiceMsg.timestamp } });
         };
         reader.readAsDataURL(blob);
       };
@@ -438,7 +387,6 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
 
   const content = (
     <div className="fixed inset-0 z-[999] flex flex-col bg-background">
-      {/* Header */}
       <div className="flex items-center gap-3 border-b border-card-border bg-card-bg px-4 pb-3 pt-6">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600/20 text-emerald-400">
           <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -465,7 +413,6 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
         </button>
       </div>
 
-      {/* Messages */}
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
         {messages.length === 0 && (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
@@ -485,7 +432,6 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
 
           return (
             <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-              {/* Context menu */}
               {isSelected && isMe && !msg.deleted && (
                 <div
                   className={`mb-1 flex gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}
@@ -517,7 +463,6 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
                 </div>
               )}
 
-              {/* Message bubble */}
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                   isMe
@@ -553,18 +498,8 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
                       className="rounded-lg bg-white/10 px-2 py-1 text-sm text-white outline-none placeholder:text-emerald-200 focus:ring-1 focus:ring-white/40"
                     />
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => confirmEdit(msg.id)}
-                        className="rounded-lg bg-white/20 px-2 py-1 text-xs font-semibold text-white hover:bg-white/30"
-                      >
-                        Zapisz
-                      </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="rounded-lg px-2 py-1 text-xs text-emerald-200 hover:text-white"
-                      >
-                        Anuluj
-                      </button>
+                      <button onClick={() => confirmEdit(msg.id)} className="rounded-lg bg-white/20 px-2 py-1 text-xs font-semibold text-white hover:bg-white/30">Zapisz</button>
+                      <button onClick={() => setEditingId(null)} className="rounded-lg px-2 py-1 text-xs text-emerald-200 hover:text-white">Anuluj</button>
                     </div>
                   </div>
                 ) : msg.type === 'text' ? (
@@ -582,14 +517,9 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
                       <div className="flex items-center gap-3">
                         <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition ${isMe ? 'bg-white/20 hover:bg-white/30' : 'bg-emerald-600/20 hover:bg-emerald-600/30'}`}>
                           {isPlaying ? (
-                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                              <rect x="6" y="4" width="4" height="16" rx="1" />
-                              <rect x="14" y="4" width="4" height="16" rx="1" />
-                            </svg>
+                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>
                           ) : (
-                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M8 5v14l11-7z" />
-                            </svg>
+                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
                           )}
                         </div>
                         <Waveform playing={isPlaying} color={barColor} />
@@ -598,10 +528,7 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
                         </span>
                       </div>
                       <div className={`h-0.5 w-full rounded-full ${isMe ? 'bg-white/20' : 'bg-card-border'}`}>
-                        <div
-                          className={`h-full rounded-full transition-all ${isMe ? 'bg-white/70' : 'bg-emerald-500'}`}
-                          style={{ width: `${progress * 100}%` }}
-                        />
+                        <div className={`h-full rounded-full transition-all ${isMe ? 'bg-white/70' : 'bg-emerald-500'}`} style={{ width: `${progress * 100}%` }} />
                       </div>
                     </button>
                   );
@@ -620,7 +547,6 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input area */}
       <div className="border-t border-card-border bg-card-bg px-4 pb-8 pt-4">
         {micError && (
           <div className="mb-3 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
@@ -695,13 +621,7 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
                     <span
                       key={d}
                       className="h-1.5 w-1.5 rounded-full bg-white/80"
-                      style={{
-                        animationName: 'pulse',
-                        animationDuration: '1s',
-                        animationTimingFunction: 'ease-in-out',
-                        animationIterationCount: 'infinite',
-                        animationDelay: `${d}s`,
-                      }}
+                      style={{ animationName: 'pulse', animationDuration: '1s', animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite', animationDelay: `${d}s` }}
                     />
                   ))}
                 </span>

@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimit";
 import { FriendshipStatus } from "@prisma/client";
 import { SendFriendRequestSchema, RespondFriendSchema } from "@/lib/schemas";
-import { getSocketServer } from "@/lib/socket-server";
+import { broadcastToChannel } from "@/lib/supabase-broadcast";
 
 export async function GET(request: NextRequest) {
   try {
@@ -75,14 +75,8 @@ export async function POST(request: NextRequest) {
     const { email, userId } = parsed.data;
 
     const targetUser = userId
-      ? await prisma.user.findUnique({
-          where: { id: userId },
-          select: { id: true, name: true, email: true },
-        })
-      : await prisma.user.findUnique({
-          where: { email: email!.toLowerCase() },
-          select: { id: true, name: true, email: true },
-        });
+      ? await prisma.user.findUnique({ where: { id: userId }, select: { id: true, name: true, email: true } })
+      : await prisma.user.findUnique({ where: { email: email!.toLowerCase() }, select: { id: true, name: true, email: true } });
 
     if (!targetUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -106,26 +100,14 @@ export async function POST(request: NextRequest) {
     }
 
     const friendship = await prisma.friendship.create({
-      data: {
-        requesterId: session.user.id,
-        addresseeId: targetUser.id,
-        status: "PENDING",
-      },
-      include: {
-        addressee: {
-          select: { id: true, name: true, email: true, image: true },
-        },
-      },
+      data: { requesterId: session.user.id, addresseeId: targetUser.id, status: "PENDING" },
+      include: { addressee: { select: { id: true, name: true, email: true, image: true } } },
     });
 
-    // Notify target user via socket
-    const socketIo = getSocketServer();
-    if (socketIo) {
-      socketIo.to(`user:${targetUser.id}`).emit('friend-request', {
-        fromName: session.user.name ?? 'Ktoś',
-        fromId: session.user.id,
-      });
-    }
+    await broadcastToChannel(`user:${targetUser.id}`, 'friend-request', {
+      fromName: session.user.name ?? 'Ktoś',
+      fromId: session.user.id,
+    });
 
     return NextResponse.json(friendship, { status: 201 });
   } catch (error) {
@@ -147,27 +129,20 @@ export async function PUT(request: NextRequest) {
     }
     const { friendshipId, action } = parsed.data;
 
-    const friendship = await prisma.friendship.findUnique({
-      where: { id: friendshipId },
-    });
+    const friendship = await prisma.friendship.findUnique({ where: { id: friendshipId } });
 
     if (!friendship) {
       return NextResponse.json({ error: "Friendship request not found" }, { status: 404 });
     }
-
     if (friendship.addresseeId !== session.user.id) {
       return NextResponse.json({ error: "Only the recipient can accept or reject" }, { status: 403 });
     }
-
     if (friendship.status !== "PENDING") {
       return NextResponse.json({ error: "Request is no longer pending" }, { status: 400 });
     }
 
     if (action === "reject") {
-      await prisma.friendship.update({
-        where: { id: friendshipId },
-        data: { status: "REJECTED" },
-      });
+      await prisma.friendship.update({ where: { id: friendshipId }, data: { status: "REJECTED" } });
       return NextResponse.json({ message: "Friend request rejected" });
     }
 
@@ -180,14 +155,10 @@ export async function PUT(request: NextRequest) {
       },
     });
 
-    // Notify the original requester that their request was accepted
-    const socketIo = getSocketServer();
-    if (socketIo) {
-      socketIo.to(`user:${updated.requesterId}`).emit('friend-accepted', {
-        fromName: updated.addressee.name ?? 'Ktoś',
-        fromId: updated.addresseeId,
-      });
-    }
+    await broadcastToChannel(`user:${updated.requesterId}`, 'friend-accepted', {
+      fromName: updated.addressee.name ?? 'Ktoś',
+      fromId: updated.addresseeId,
+    });
 
     return NextResponse.json(updated);
   } catch (error) {
@@ -210,20 +181,16 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "friendshipId is required" }, { status: 400 });
     }
 
-    const friendship = await prisma.friendship.findUnique({
-      where: { id: friendshipId },
-    });
+    const friendship = await prisma.friendship.findUnique({ where: { id: friendshipId } });
 
     if (!friendship) {
       return NextResponse.json({ error: "Friendship not found" }, { status: 404 });
     }
-
     if (friendship.requesterId !== session.user.id && friendship.addresseeId !== session.user.id) {
       return NextResponse.json({ error: "Not authorized" }, { status: 403 });
     }
 
     await prisma.friendship.delete({ where: { id: friendshipId } });
-
     return NextResponse.json({ message: "Friend removed successfully" });
   } catch (error) {
     console.error("Delete friendship error:", error);

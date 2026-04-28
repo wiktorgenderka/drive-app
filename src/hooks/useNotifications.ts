@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { io, Socket } from 'socket.io-client';
 import { useToast } from '@/components/ui/Toast';
 import { useMapStore } from '@/stores/useMapStore';
+import { getSupabaseClient } from '@/lib/supabase-client';
 import type { FriendLocation } from '@/stores/useMapStore';
 
 interface UseNotificationsOptions {
@@ -16,84 +16,58 @@ export function useNotifications({ userId, convoyId }: UseNotificationsOptions) 
   const addToastRef = useRef(addToast);
   addToastRef.current = addToast;
 
-  const socketRef = useRef<Socket | null>(null);
   const convoyIdRef = useRef(convoyId);
   convoyIdRef.current = convoyId;
 
+  // Personal notifications channel (user:${userId})
   useEffect(() => {
     if (!userId) return;
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
 
-    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || '', {
-      path: '/api/socketio',
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 30000,
-    });
-    socketRef.current = socket;
+    const ch = supabase.channel(`user:${userId}`);
 
-    socket.on('connect', () => {
-      console.log('[useNotifications] connected as', socket.id, 'userId:', userId);
-      socket.emit('user-connect', { userId });
-      if (convoyIdRef.current) {
-        socket.emit('join-convoy-notify', { convoyId: convoyIdRef.current });
-      }
-    });
+    ch.on('broadcast', { event: 'friend-request' }, ({ payload }: { payload: { fromName: string } }) => {
+      addToastRef.current('info', `${payload.fromName} zaprasza Cię do znajomych`);
+    })
+    .on('broadcast', { event: 'friend-accepted' }, ({ payload }: { payload: { fromName: string } }) => {
+      addToastRef.current('success', `${payload.fromName} zaakceptował(a) Twoje zaproszenie`);
+    })
+    .on('broadcast', { event: 'convoy-invite' }, ({ payload }: { payload: { convoyName: string; invitedByName: string } }) => {
+      addToastRef.current('info', `${payload.invitedByName} zaprosił(a) Cię do konwoju „${payload.convoyName}"`);
+    })
+    .on('broadcast', { event: 'friend-location-update' }, ({ payload }: { payload: Omit<FriendLocation, 'updatedAt'> }) => {
+      useMapStore.getState().setFriendLocation({ ...payload, updatedAt: Date.now() });
+    })
+    .subscribe();
 
-    socket.on('connect_error', (err) => {
-      console.error('[useNotifications] connect_error:', err.message);
-    });
-
-    socket.on('friend-request', (data: { fromName: string }) => {
-      console.log('[useNotifications] friend-request from', data.fromName);
-      addToastRef.current('info', `${data.fromName} zaprasza Cię do znajomych`);
-    });
-
-    socket.on('friend-accepted', (data: { fromName: string }) => {
-      console.log('[useNotifications] friend-accepted from', data.fromName);
-      addToastRef.current('success', `${data.fromName} zaakceptował(a) Twoje zaproszenie`);
-    });
-
-    socket.on('convoy-invite', (data: { convoyName: string; invitedByName: string }) => {
-      console.log('[useNotifications] convoy-invite', data);
-      addToastRef.current('info', `${data.invitedByName} zaprosił(a) Cię do konwoju „${data.convoyName}"`);
-    });
-
-    socket.on('convoy-update', (data: { type: string; member?: { name?: string }; memberName?: string }) => {
-      if (data.type === 'member-joined' && data.member?.name) {
-        addToastRef.current('info', `${data.member.name} dołączył(a) do konwoju`);
-      } else if (data.type === 'member-left' && data.memberName) {
-        addToastRef.current('info', `${data.memberName} opuścił(a) konwój`);
-      }
-    });
-
-    socket.on('convoy-destination-set', (data: { destName?: string | null }) => {
-      const label = data.destName ? `Cel konwoju: ${data.destName}` : 'Cel konwoju został zaktualizowany';
-      addToastRef.current('info', label);
-    });
-
-    socket.on('new-report', () => {
-      addToastRef.current('warning', 'Nowy raport drogowy w pobliżu');
-    });
-
-    socket.on('friend-location-update', (data: Omit<FriendLocation, 'updatedAt'>) => {
-      useMapStore.getState().setFriendLocation({ ...data, updatedAt: Date.now() });
-    });
-
-    return () => {
-      socket.removeAllListeners();
-      socket.disconnect();
-      socketRef.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { ch.unsubscribe(); };
   }, [userId]);
 
-  // Join/re-join convoy room when convoyId changes
+  // Convoy notifications channel (convoy:${convoyId})
   useEffect(() => {
-    const socket = socketRef.current;
-    if (!socket?.connected || !convoyId) return;
-    socket.emit('join-convoy-notify', { convoyId });
+    if (!convoyId) return;
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+
+    const ch = supabase.channel(`notif:convoy:${convoyId}`);
+
+    ch.on('broadcast', { event: 'join-convoy' }, ({ payload }: { payload: { name?: string } }) => {
+      if (payload.name) addToastRef.current('info', `${payload.name} dołączył(a) do konwoju`);
+    })
+    .on('broadcast', { event: 'leave-convoy' }, ({ payload }: { payload: { name?: string } }) => {
+      if (payload.name) addToastRef.current('info', `${payload.name} opuścił(a) konwój`);
+    })
+    .on('broadcast', { event: 'convoy-destination-set' }, ({ payload }: { payload: { destName?: string | null } }) => {
+      const label = payload.destName ? `Cel konwoju: ${payload.destName}` : 'Cel konwoju został zaktualizowany';
+      addToastRef.current('info', label);
+    })
+    .on('broadcast', { event: 'new-report' }, () => {
+      addToastRef.current('warning', 'Nowy raport drogowy w pobliżu');
+    })
+    .subscribe();
+
+    return () => { ch.unsubscribe(); };
   }, [convoyId]);
 
   // Remove stale friend markers (no update for > 5 min)

@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { io, Socket } from 'socket.io-client';
+import { getSupabaseClient } from '@/lib/supabase-client';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface ChatMessage {
   userId: string;
@@ -19,32 +20,27 @@ export default function ConvoyChat({ convoyId }: ConvoyChatProps) {
   const { data: session } = useSession();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
-  const socketRef = useRef<Socket | null>(null);
+  const chRef = useRef<RealtimeChannel | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || '', {
-      path: '/api/socketio',
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-    });
-    socketRef.current = socket;
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
 
-    socket.on('connect', () => {
-      // join-convoy-notify: only subscribes to room events, does NOT emit member-joined
-      socket.emit('join-convoy-notify', { convoyId });
-    });
+    const ch = supabase.channel(`convoy:${convoyId}`);
+    chRef.current = ch;
 
-    socket.on('convoy-chat', (msg: ChatMessage) => {
-      setMessages((prev) => [...prev, msg]);
-    });
+    ch.on('broadcast', { event: 'convoy-chat' }, ({ payload }: { payload: ChatMessage }) => {
+      setMessages((prev) => {
+        if (prev.some((m) => m.timestamp === payload.timestamp && m.userId === payload.userId)) return prev;
+        return [...prev, payload];
+      });
+    })
+    .subscribe();
 
     return () => {
-      socket.removeAllListeners();
-      socket.disconnect();
-      socketRef.current = null;
+      ch.unsubscribe();
+      chRef.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [convoyId]);
@@ -55,7 +51,7 @@ export default function ConvoyChat({ convoyId }: ConvoyChatProps) {
 
   const sendMessage = useCallback(() => {
     const trimmed = input.trim();
-    if (!trimmed || !socketRef.current?.connected) return;
+    if (!trimmed || !chRef.current) return;
 
     const msg: ChatMessage = {
       userId: session?.user?.id ?? '',
@@ -64,16 +60,15 @@ export default function ConvoyChat({ convoyId }: ConvoyChatProps) {
       timestamp: new Date().toISOString(),
     };
 
-    socketRef.current.emit('convoy-chat', { ...msg, convoyId });
+    chRef.current.send({ type: 'broadcast', event: 'convoy-chat', payload: msg });
     setMessages((prev) => [...prev, msg]);
     setInput('');
-  }, [input, convoyId, session]);
+  }, [input, session]);
 
   const currentUserId = session?.user?.id;
 
   return (
     <div className="flex flex-col" style={{ height: 300 }}>
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto space-y-2 p-3">
         {messages.length === 0 && (
           <p className="text-center text-xs text-muted pt-8">Brak wiadomości. Rozpocznij czat!</p>
@@ -101,7 +96,6 @@ export default function ConvoyChat({ convoyId }: ConvoyChatProps) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
       <div className="border-t border-card-border flex items-center gap-2 p-2">
         <input
           type="text"

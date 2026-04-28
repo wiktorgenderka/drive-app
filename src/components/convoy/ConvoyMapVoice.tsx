@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { io, Socket } from 'socket.io-client';
+import { getSupabaseClient } from '@/lib/supabase-client';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface ConvoyBasic {
   id: string;
@@ -36,7 +37,7 @@ export default function ConvoyMapVoice({ onIncomingMessage }: Props) {
   const [feedback, setFeedback] = useState<'sent' | 'error' | null>(null);
   const [feedbackMsg, setFeedbackMsg] = useState('');
 
-  const socketRef = useRef<Socket | null>(null);
+  const chRef = useRef<RealtimeChannel | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const isStartingRef = useRef(false);
@@ -58,39 +59,29 @@ export default function ConvoyMapVoice({ onIncomingMessage }: Props) {
 
   useEffect(() => {
     if (!convoy?.id || !session?.user?.id) return;
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
 
-    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || '', {
-      path: '/api/socketio',
-      transports: ['websocket', 'polling'],
-    });
-    socketRef.current = socket;
+    const ch = supabase.channel(`mapvoice:${convoy.id}`);
+    chRef.current = ch;
 
-    socket.emit('join-convoy', {
-      convoyId: convoy.id,
-      userId: session.user.id,
-      name: session.user.name,
-    });
-
-    // Listen for incoming messages to trigger notifications
-    socket.on('convoy-chat', (msg: { userId: string; name: string; message: string }) => {
-      if (msg.userId !== session.user.id) {
-        onIncomingRef.current?.({ name: msg.name, type: 'text' });
+    ch.on('broadcast', { event: 'convoy-chat' }, ({ payload }: { payload: { userId: string; name: string } }) => {
+      if (payload.userId !== session.user.id) {
+        onIncomingRef.current?.({ name: payload.name, type: 'text' });
       }
-    });
-
-    socket.on('convoy-voice', (msg: { userId: string; name: string }) => {
-      if (msg.userId !== session.user.id) {
-        onIncomingRef.current?.({ name: msg.name, type: 'voice' });
+    })
+    .on('broadcast', { event: 'convoy-voice' }, ({ payload }: { payload: { userId: string; name: string } }) => {
+      if (payload.userId !== session.user.id) {
+        onIncomingRef.current?.({ name: payload.name, type: 'voice' });
       }
-    });
+    })
+    .subscribe();
 
     return () => {
-      socket.emit('leave-convoy', { convoyId: convoy.id, userId: session.user.id, name: session.user.name });
-      socket.removeAllListeners();
-      socket.disconnect();
-      socketRef.current = null;
+      ch.unsubscribe();
+      chRef.current = null;
     };
-  }, [convoy?.id, session?.user?.id, session?.user?.name]);
+  }, [convoy?.id, session?.user?.id]);
 
   useEffect(() => {
     return () => {
@@ -135,9 +126,7 @@ export default function ConvoyMapVoice({ onIncomingMessage }: Props) {
       mediaRecorderRef.current = recorder;
       chunksRef.current = [];
 
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
 
       recorder.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
@@ -155,7 +144,7 @@ export default function ConvoyMapVoice({ onIncomingMessage }: Props) {
         const reader = new FileReader();
         reader.onloadend = () => {
           const base64 = (reader.result as string).split(',')[1];
-          if (!base64 || !socketRef.current?.connected) return;
+          if (!base64) return;
 
           const id = genId();
           const userId = session?.user?.id ?? '';
@@ -168,16 +157,11 @@ export default function ConvoyMapVoice({ onIncomingMessage }: Props) {
             body: JSON.stringify({ id, type: 'voice', audioData: base64, mimeType: actualMimeType, duration }),
           }).catch(() => {});
 
-          // Broadcast via socket
-          socketRef.current.emit('convoy-voice', {
-            id,
-            convoyId: convoy.id,
-            userId,
-            name,
-            audioData: base64,
-            mimeType: actualMimeType,
-            duration,
-            timestamp: new Date().toISOString(),
+          // Notify others (metadata only — they reload from DB)
+          chRef.current?.send({
+            type: 'broadcast',
+            event: 'convoy-voice',
+            payload: { id, userId, name, duration, timestamp: new Date().toISOString() },
           });
           showFeedback('sent', 'Wysłano!');
         };
@@ -228,7 +212,6 @@ export default function ConvoyMapVoice({ onIncomingMessage }: Props) {
 
   return (
     <div className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 flex flex-col items-center gap-2">
-      {/* Feedback toast */}
       {feedback && (
         <div
           className={`rounded-xl px-3 py-1.5 text-xs font-medium backdrop-blur-md shadow-lg ${
@@ -241,7 +224,6 @@ export default function ConvoyMapVoice({ onIncomingMessage }: Props) {
         </div>
       )}
 
-      {/* Horizontal pill button */}
       <button
         onPointerDown={startRecording}
         onPointerUp={stopRecording}
@@ -270,13 +252,7 @@ export default function ConvoyMapVoice({ onIncomingMessage }: Props) {
               <span
                 key={d}
                 className="h-1.5 w-1.5 rounded-full bg-white/80"
-                style={{
-                  animationName: 'pulse',
-                  animationDuration: '1s',
-                  animationTimingFunction: 'ease-in-out',
-                  animationIterationCount: 'infinite',
-                  animationDelay: `${d}s`,
-                }}
+                style={{ animationName: 'pulse', animationDuration: '1s', animationTimingFunction: 'ease-in-out', animationIterationCount: 'infinite', animationDelay: `${d}s` }}
               />
             ))}
           </span>

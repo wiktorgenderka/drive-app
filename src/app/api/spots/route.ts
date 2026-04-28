@@ -3,16 +3,14 @@ import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimit";
 import { CreateSpotSchema } from "@/lib/schemas";
-import { getSocketServer } from "@/lib/socket-server";
+import { broadcastToChannel } from "@/lib/supabase-broadcast";
 import { FriendshipStatus, SpotKind, SpotVisibility } from "@prisma/client";
 
 const SPOT_EXPIRY_HOURS = 2;
 
 const PARTICIPANT_INCLUDE = {
   where: { leftAt: null },
-  include: {
-    user: { select: { id: true, name: true, image: true } },
-  },
+  include: { user: { select: { id: true, name: true, image: true } } },
 } as const;
 
 async function getFriendIds(userId: string): Promise<string[]> {
@@ -96,8 +94,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     console.error("Get spots error:", error);
-    const message =
-      error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -141,26 +138,21 @@ export async function POST(request: NextRequest) {
 
     const payload = { ...spot, isOwner: false, isParticipant: false };
 
-    const io = getSocketServer();
-    if (io) {
-      if (visibility === "PUBLIC") {
-        io.emit("spot-created", payload);
-      } else {
-        const friendIds = await getFriendIds(session.user.id);
-        for (const fid of [session.user.id, ...friendIds]) {
-          io.to(`user:${fid}`).emit("spot-created", payload);
-        }
-      }
+    if (visibility === "PUBLIC") {
+      await broadcastToChannel('public', 'spot-created', payload);
+    } else {
+      const friendIds = await getFriendIds(session.user.id);
+      await Promise.all(
+        [session.user.id, ...friendIds].map((fid) =>
+          broadcastToChannel(`user:${fid}`, 'spot-created', payload)
+        )
+      );
     }
 
-    return NextResponse.json(
-      { ...spot, isOwner: true, isParticipant: false },
-      { status: 201 }
-    );
+    return NextResponse.json({ ...spot, isOwner: true, isParticipant: false }, { status: 201 });
   } catch (error) {
     console.error("Create spot error:", error);
-    const message =
-      error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

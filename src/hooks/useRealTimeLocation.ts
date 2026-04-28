@@ -33,7 +33,7 @@ export function useRealTimeLocation(
   const user = session?.user ?? null;
 
   const geo = useGeolocation({ enableHighAccuracy, autoStart: !!convoyId });
-  const { emit, isConnected } = useSocket({ autoConnect: !!convoyId });
+  const { emit, isConnected } = useSocket({ autoConnect: !!convoyId, convoyId });
 
   const lastBroadcastRef = useRef<{
     latitude: number;

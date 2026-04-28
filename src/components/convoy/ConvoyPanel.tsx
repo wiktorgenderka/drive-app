@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { io } from 'socket.io-client';
+import { getSupabaseClient } from '@/lib/supabase-client';
 import CreateConvoyModal from './CreateConvoyModal';
 import InviteFriendModal from './InviteFriendModal';
 import ConvoyChat from './ConvoyChat';
@@ -110,13 +110,15 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
       });
       if (!updateRes.ok) throw new Error();
 
-      // Emit socket event so all members see the destination update
-      const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || '', {
-        path: '/api/socketio',
-        transports: ['websocket', 'polling'],
-      });
-      socket.emit('convoy-destination-set', { convoyId, destLat, destLng, destName: resolvedName });
-      setTimeout(() => socket.disconnect(), 1000);
+      // Broadcast destination update to convoy members via Supabase Realtime
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        await supabase.channel(`convoy:${convoyId}`).send({
+          type: 'broadcast',
+          event: 'convoy-destination-set',
+          payload: { convoyId, destLat, destLng, destName: resolvedName },
+        });
+      }
 
       setDestConvoyId(null);
       setDestInput('');

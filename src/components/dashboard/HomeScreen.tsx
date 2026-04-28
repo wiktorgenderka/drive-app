@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
-import { io, Socket } from 'socket.io-client';
+import { getSupabaseClient } from '@/lib/supabase-client';
 import { useMapStore } from '@/stores/useMapStore';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { useStatsStore } from '@/stores/useStatsStore';
@@ -67,7 +67,6 @@ const REPORT_LABELS: Record<string, { label: string; color: string; icon: string
 };
 
 function WeatherIcon({ code, isDay }: { code: number; isDay: boolean }) {
-  // sunny / clear — show sun during day, moon at night
   if (code === 0) return isDay ? (
     <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
       <circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
@@ -77,32 +76,27 @@ function WeatherIcon({ code, isDay }: { code: number; isDay: boolean }) {
       <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
     </svg>
   );
-  // partly cloudy / cloudy
   if (code <= 3) return (
     <svg className="h-5 w-5 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
       <path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z" />
     </svg>
   );
-  // fog
   if (code <= 48) return (
     <svg className="h-5 w-5 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
       <line x1="3" y1="8" x2="21" y2="8"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="16" x2="21" y2="16"/>
     </svg>
   );
-  // rain / drizzle
   if (code <= 82) return (
     <svg className="h-5 w-5 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
       <line x1="16" y1="13" x2="16" y2="21"/><line x1="8" y1="13" x2="8" y2="21"/><line x1="12" y1="15" x2="12" y2="23"/>
       <path d="M20 16.58A5 5 0 0018 7h-1.26A8 8 0 104 15.25" />
     </svg>
   );
-  // snow
   if (code <= 77) return (
     <svg className="h-5 w-5 text-blue-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
       <path d="M20 17.58A5 5 0 0018 8h-1.26A8 8 0 104 16.25"/><line x1="8" y1="16" x2="8" y2="21"/><line x1="8" y1="21" x2="6" y2="19"/><line x1="8" y1="21" x2="10" y2="19"/>
     </svg>
   );
-  // thunderstorm
   return (
     <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
       <path d="M19 16.9A5 5 0 0018 7h-1.26a8 8 0 10-11.62 9" /><polyline points="13 11 9 17 15 17 11 23" />
@@ -149,7 +143,6 @@ function ShortcutTile({ onClick, label, sub, gradient, icon, badge }: ShortcutTi
   );
 }
 
-
 export default function HomeScreen({
   onNavigateToMap,
   onNavigateToFriends,
@@ -171,7 +164,6 @@ export default function HomeScreen({
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [reports, setReports] = useState<RecentReport[]>([]);
   const [loading, setLoading] = useState(true);
-  const socketRef = useRef<Socket | null>(null);
   const userLocationRef = useRef(userLocation);
   userLocationRef.current = userLocation;
 
@@ -205,28 +197,23 @@ export default function HomeScreen({
     }
   }, [fetchReports]);
 
-  // Initial fetch + socket subscription for real-time updates
   useEffect(() => {
     fetchData();
 
-    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || '', {
-      path: '/api/socketio',
-      transports: ['websocket', 'polling'],
-    });
-    socketRef.current = socket;
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
 
-    // Re-fetch nearby reports when a new report is broadcast
-    socket.on('new-report', () => { fetchReports(); });
-    // Re-fetch stats when a report vote changes
-    socket.on('report-vote', () => { fetchReports(); });
+    const ch = supabase.channel('home:public');
+    ch.on('broadcast', { event: 'new-report' }, () => { fetchReports(); })
+      .on('broadcast', { event: 'report-vote' }, () => { fetchReports(); })
+      .subscribe();
 
-    return () => {
-      socket.removeAllListeners();
-      socket.disconnect();
-      socketRef.current = null;
-    };
+    return () => { ch.unsubscribe(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Suppress unused warning
+  void session;
 
   const firstName = session?.user?.name?.split(' ')[0] ?? 'Kierowco';
 
@@ -240,7 +227,6 @@ export default function HomeScreen({
   return (
     <div className="flex h-full flex-col bg-background">
       <div className="flex-1 overflow-y-auto pb-28">
-        {/* Header */}
         <div className="px-5 pt-14 pb-2">
           <p className="text-xs font-medium uppercase tracking-wider text-muted">
             {dateStr}
@@ -250,10 +236,8 @@ export default function HomeScreen({
           </h1>
         </div>
 
-        {/* Weather widget */}
         {weather && (
           <div className="mx-5 mt-4 flex items-center gap-3 rounded-2xl border border-card-border bg-card-bg px-4 py-3">
-            {/* Weather icon */}
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-input-bg text-foreground">
               <WeatherIcon code={weather.code} isDay={weather.isDay} />
             </div>
@@ -267,7 +251,6 @@ export default function HomeScreen({
           </div>
         )}
 
-        {/* Speed pill - only when moving */}
         {speedKmh > 0 && (
           <div className="mx-5 mt-4 flex items-center gap-3 rounded-2xl border border-blue-500/30 bg-blue-500/10 px-4 py-3">
             <div className="flex h-12 w-12 flex-col items-center justify-center rounded-xl bg-blue-600 text-white">
@@ -294,10 +277,8 @@ export default function HomeScreen({
           </div>
         )}
 
-        {/* Spotify now playing */}
         <SpotifyWidget />
 
-        {/* Map preview */}
         <div className="mx-5 mt-5">
           <button
             onClick={onNavigateToMap}
@@ -329,7 +310,6 @@ export default function HomeScreen({
           </button>
         </div>
 
-        {/* Skróty: Konwój / Znajomi / Trasy */}
         <div className="mx-5 mt-4 grid grid-cols-3 gap-3">
           <ShortcutTile
             onClick={onNavigateToConvoy}
@@ -375,7 +355,6 @@ export default function HomeScreen({
           />
         </div>
 
-        {/* Pending friend requests badge */}
         {stats && stats.pendingRequests > 0 && (
           <button
             onClick={onNavigateToFriends}
@@ -400,7 +379,6 @@ export default function HomeScreen({
           </button>
         )}
 
-        {/* Online friends */}
         {friends.length > 0 && (
           <div className="mt-5 flex items-center gap-2 px-5">
             <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
@@ -433,7 +411,6 @@ export default function HomeScreen({
           </div>
         )}
 
-        {/* Stats cards */}
         <div className="mx-5 mt-6 grid grid-cols-2 gap-3">
           {[
             { label: 'Dystans', value: `${overall.totalKm.toFixed(1)} km` },
@@ -450,7 +427,6 @@ export default function HomeScreen({
           ))}
         </div>
 
-        {/* Nearby reports */}
         {reports.length > 0 && (
           <div className="mt-6">
             <div className="flex items-center justify-between px-5 mb-3">
@@ -497,7 +473,6 @@ export default function HomeScreen({
           </div>
         )}
 
-        {/* Empty state for no reports */}
         {!loading && reports.length === 0 && (
           <div className="mx-5 mt-6 rounded-2xl border border-card-border bg-card-bg px-4 py-6 text-center">
             <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600/15 text-emerald-500">

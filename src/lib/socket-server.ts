@@ -1,13 +1,8 @@
-import type { Server as SocketIOServer } from 'socket.io';
+export { broadcastToChannel as broadcastEvent } from './supabase-broadcast';
 
-declare global {
-  // eslint-disable-next-line no-var
-  var __socketIo: SocketIOServer | undefined;
-}
-
-export function getSocketServer(): SocketIOServer | undefined {
-  if (!global.__socketIo) {
-    console.warn('[socket-server] __socketIo is not set on global — notifications will not be delivered');
-  }
-  return global.__socketIo;
+// Compatibility shim — maps old getSocketServer() call sites to Supabase broadcast.
+// API routes that previously called getSocketServer().to(room).emit(event, payload)
+// should now call broadcastToChannel(room, event, payload) directly.
+export function getSocketServer() {
+  return null;
 }

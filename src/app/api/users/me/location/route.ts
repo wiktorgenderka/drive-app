@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimit";
-import { getSocketServer } from "@/lib/socket-server";
+import { broadcastToChannel } from "@/lib/supabase-broadcast";
 import { z } from "zod";
 
 const LocationPingSchema = z.object({
@@ -33,12 +33,7 @@ export async function POST(request: NextRequest) {
 
     const updatedUser = await prisma.user.update({
       where: { id: me },
-      data: {
-        latitude,
-        longitude,
-        speed: speed ?? null,
-        lastLocationUpdate: new Date(),
-      },
+      data: { latitude, longitude, speed: speed ?? null, lastLocationUpdate: new Date() },
       select: { name: true, image: true },
     });
 
@@ -53,27 +48,25 @@ export async function POST(request: NextRequest) {
       const friendIds = friendships.map((f) =>
         f.requesterId === me ? f.addresseeId : f.requesterId
       );
-      const io = getSocketServer();
-      if (io && friendIds.length > 0) {
-        const payload = {
-          userId: me,
-          name: updatedUser.name,
-          image: updatedUser.image,
-          latitude,
-          longitude,
-          speed: speed ?? null,
-        };
-        for (const friendId of friendIds) {
-          io.to(`user:${friendId}`).emit("friend-location-update", payload);
-        }
-      }
+      const payload = {
+        userId: me,
+        name: updatedUser.name,
+        image: updatedUser.image,
+        latitude,
+        longitude,
+        speed: speed ?? null,
+      };
+      await Promise.all(
+        friendIds.map((friendId) =>
+          broadcastToChannel(`user:${friendId}`, 'friend-location-update', payload)
+        )
+      );
     }
 
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Location ping error:", error);
-    const message =
-      error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -3,25 +3,18 @@ import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimit";
 import { AutoSpotCheckSchema } from "@/lib/schemas";
-import { getSocketServer } from "@/lib/socket-server";
+import { broadcastToChannel } from "@/lib/supabase-broadcast";
 import { haversineMeters } from "@/lib/geo";
-import {
-  FriendshipStatus,
-  SpotKind,
-  SpotVisibility,
-} from "@prisma/client";
+import { FriendshipStatus, SpotKind, SpotVisibility } from "@prisma/client";
 
-// Auto-spot trigger thresholds — keep in sync with useAutoSpotDetection on the client.
 const NEAR_DISTANCE_M = 50;
-const STILL_SPEED_MPS = 2 / 3.6; // 2 km/h
-const FRESH_LOCATION_MS = 5 * 60 * 1000; // 5 min
+const STILL_SPEED_MPS = 2 / 3.6;
+const FRESH_LOCATION_MS = 5 * 60 * 1000;
 const SPOT_EXPIRY_HOURS = 2;
 
 const PARTICIPANT_INCLUDE = {
   where: { leftAt: null },
-  include: {
-    user: { select: { id: true, name: true, image: true } },
-  },
+  include: { user: { select: { id: true, name: true, image: true } } },
 } as const;
 
 async function getFriendIds(userId: string): Promise<string[]> {
@@ -37,16 +30,8 @@ async function getFriendIds(userId: string): Promise<string[]> {
   );
 }
 
-async function emitToCircle(
-  event: string,
-  payload: unknown,
-  userIds: string[]
-) {
-  const io = getSocketServer();
-  if (!io) return;
-  for (const uid of userIds) {
-    io.to(`user:${uid}`).emit(event, payload);
-  }
+async function broadcastToCircle(event: string, payload: unknown, userIds: string[]) {
+  await Promise.all(userIds.map((uid) => broadcastToChannel(`user:${uid}`, event, payload)));
 }
 
 export async function POST(request: NextRequest) {
@@ -72,7 +57,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Cannot pair with self" }, { status: 400 });
     }
 
-    // Verify friendship.
     const friendship = await prisma.friendship.findFirst({
       where: {
         status: FriendshipStatus.ACCEPTED,
@@ -87,69 +71,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Not friends" }, { status: 403 });
     }
 
-    // Persist my own location (so partner sees freshness).
     await prisma.user.update({
       where: { id: me },
-      data: {
-        latitude,
-        longitude,
-        speed,
-        lastLocationUpdate: new Date(),
-      },
+      data: { latitude, longitude, speed, lastLocationUpdate: new Date() },
     });
 
     const partner = await prisma.user.findUnique({
       where: { id: partnerUserId },
-      select: {
-        latitude: true,
-        longitude: true,
-        speed: true,
-        lastLocationUpdate: true,
-      },
+      select: { latitude: true, longitude: true, speed: true, lastLocationUpdate: true },
     });
 
-    if (
-      !partner ||
-      partner.latitude == null ||
-      partner.longitude == null ||
-      partner.speed == null ||
-      !partner.lastLocationUpdate
-    ) {
+    if (!partner?.latitude || !partner.longitude || partner.speed == null || !partner.lastLocationUpdate) {
       return NextResponse.json({ eligible: false, reason: "no-partner-location" });
     }
 
-    const partnerStale =
-      Date.now() - partner.lastLocationUpdate.getTime() > FRESH_LOCATION_MS;
-    if (partnerStale) {
+    if (Date.now() - partner.lastLocationUpdate.getTime() > FRESH_LOCATION_MS) {
       return NextResponse.json({ eligible: false, reason: "partner-stale" });
     }
 
-    const distance = haversineMeters(
-      latitude,
-      longitude,
-      partner.latitude,
-      partner.longitude
-    );
-
-    if (distance > NEAR_DISTANCE_M) {
-      return NextResponse.json({ eligible: false, reason: "too-far", distance });
-    }
+    const distance = haversineMeters(latitude, longitude, partner.latitude, partner.longitude);
+    if (distance > NEAR_DISTANCE_M) return NextResponse.json({ eligible: false, reason: "too-far", distance });
     if (speed > STILL_SPEED_MPS || partner.speed > STILL_SPEED_MPS) {
       return NextResponse.json({ eligible: false, reason: "moving" });
     }
 
-    // Find an existing active AUTO spot containing either of us.
     const existing = await prisma.spot.findFirst({
       where: {
         kind: SpotKind.AUTO,
         closedAt: null,
         expiresAt: { gt: new Date() },
-        participants: {
-          some: {
-            leftAt: null,
-            userId: { in: [me, partnerUserId] },
-          },
-        },
+        participants: { some: { leftAt: null, userId: { in: [me, partnerUserId] } } },
       },
       include: {
         createdBy: { select: { id: true, name: true, image: true } },
@@ -183,9 +134,7 @@ export async function POST(request: NextRequest) {
           longitude: (longitude + partner.longitude) / 2,
           createdById: me,
           expiresAt: new Date(Date.now() + SPOT_EXPIRY_HOURS * 60 * 60 * 1000),
-          participants: {
-            create: [{ userId: me }, { userId: partnerUserId }],
-          },
+          participants: { create: [{ userId: me }, { userId: partnerUserId }] },
         },
       });
       spotId = created.id;
@@ -200,25 +149,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Notify everyone who can see FRIENDS spots of either participant.
     const myFriends = await getFriendIds(me);
     const partnerFriends = await getFriendIds(partnerUserId);
-    const audience = Array.from(
-      new Set([me, partnerUserId, ...myFriends, ...partnerFriends])
-    );
+    const audience = Array.from(new Set([me, partnerUserId, ...myFriends, ...partnerFriends]));
 
     if (action === "created") {
-      await emitToCircle(
-        "spot-created",
-        { ...fullSpot, isOwner: false, isParticipant: false },
-        audience
-      );
+      await broadcastToCircle('spot-created', { ...fullSpot, isOwner: false, isParticipant: false }, audience);
     } else if (action === "joined") {
-      await emitToCircle(
-        "spot-updated",
-        { ...fullSpot, isOwner: false, isParticipant: false },
-        audience
-      );
+      await broadcastToCircle('spot-updated', { ...fullSpot, isOwner: false, isParticipant: false }, audience);
     }
 
     return NextResponse.json({
@@ -232,8 +170,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Auto-spot check error:", error);
-    const message =
-      error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node server.js",
+    "dev": "next dev",
     "build": "next build",
-    "start": "NODE_ENV=production node server.js",
+    "start": "next start",
     "lint": "eslint",
     "test": "vitest",
     "test:run": "vitest run"
@@ -13,6 +13,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.6.0",
     "@prisma/client": "^7.6.0",
+    "@supabase/supabase-js": "^2.105.1",
     "@types/mapbox-gl": "^3.4.1",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
