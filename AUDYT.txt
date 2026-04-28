@@ -1,7 +1,8 @@
 ================================================================================
-                        AUDYT DRIVE APP - PELNA ANALIZA
-                        Data: 21 kwietnia 2026
-                        Audytor: Claude Sonnet 4.6
+                       AUDYT DRIVE APP - PELNA ANALIZA
+                       Data: 28 kwietnia 2026
+                       Audytor: Claude Sonnet 4.6
+                       Wersja audytu: 2.0 (zastepuje audyt z 22 kwietnia 2026)
 ================================================================================
 
 ================================================================================
@@ -9,1377 +10,1672 @@
 ================================================================================
 
 Ten plik jest jednoczesnie dokumentacja, lista zadan i dziennikiem pracy.
-Ponizej opisano, jak efektywnie go uzywac — zarowno przy samodzielnej pracy,
-jak i przy wspolpracy z Claude.
-
-------------------------------------------------------------
-KROK 1: ZORIENTUJ SIE W STANIE PROJEKTU
-------------------------------------------------------------
-
-Przeczytaj ten plik od gory do dolu, zwracajac uwage na:
-
-  a) SEKCJA A/B/C - lista wszystkich problemow do naprawienia.
-     Kazdy punkt ma numer, opis problemu i gotowy przepis na naprawe.
-     Punkty bez oznaczenia [ZROBIONE] = nadal czekaja na realizacje.
-
-  b) SEKCJA D/E/F - lista nowych funkcji do dodania.
-     Priorytet: D (wysoki) > E (sredni) > F (niski).
-     Punkty bez oznaczenia [ZROBIONE] = nie zostaly jeszcze zaimplementowane.
-
-  c) DZIENNIKI ZMIAN (na poczatku pliku, sekcje "WDROZONYCH ZMIAN") -
-     szczegolowy log co, gdzie i jak zostalo juz zrobione.
-     Kazdy wpis zawiera nazwe pliku i opis zmiany.
-
-Aby sprawdzic szybko co pozostalo do zrobienia, wyszukaj w pliku fraze
-"[ZROBIONE]" i sprawdz jakich numerow brakuje na liscie.
-
-------------------------------------------------------------
-KROK 2: WYBIERZ CO ROBIC NASTEPNIE
-------------------------------------------------------------
-
-Zalecana kolejnosc pracy (zgodna z sekcja "KOLEJNOSC NAPRAW"):
-
-  Tydzien 1-2:  Sekcja A - Krytyczne bledy (numery 1-5)
-  Tydzien 3-4:  Sekcja B - Powazne bledy + refactoring (numery 6-15, 23-24)
-  Miesiac 2:    Sekcja D - Nowe funkcje priorytet wysoki (numery 36-40)
-  Miesiac 3:    Sekcja C - Srednie problemy + Sekcja E (numery 16-35, 41-50)
-
-Kazdy punkt zawiera gotowy kod do wklejenia lub dokladny opis zmiany.
-Mozna podac numer punktu Claude i poprosic o wykonanie: "wykonaj poprawke 16".
-
-------------------------------------------------------------
-KROK 3: WPROWADZ ZMIANY
-------------------------------------------------------------
-
-Opcja A - samodzielnie:
-  1. Przeczytaj opis problemu i sekcje "Jak naprawic" wybranego punktu.
-  2. Otwierz wskazany plik w edytorze.
-  3. Wprowadz zmiane zgodnie z opisem (stary kod -> nowy kod).
-  4. Przetestuj ze zmiana dziala.
-  5. Przejdz do Kroku 4.
-
-Opcja B - przez Claude:
-  1. Wklej do czatu: "pracujesz w [sciezka projektu], wykonaj poprawki
-     z audytu: [numery punktow, np. 16, 17, 19]"
-  2. Claude przeczyta pliki, wprowadzi zmiany i opisze co zrobil.
-  3. Przejrzyj wprowadzone zmiany (git diff lub podglad plikow).
-  4. Przejdz do Kroku 4.
-
-Opcja C - cala sekcja naraz:
-  "wykonaj kolejne poprawki i updaty" - Claude sam wybiera co zrobic dalej,
-  wprowadza zmiany i aktualizuje ten plik.
-
-Uwagi praktyczne:
-  - Zmiany w prisma/schema.prisma wymagaja uruchomienia migracji:
-      npx prisma migrate dev --name [nazwa-migracji]
-  - Zmiany wymagajace nowych pakietow NPM sa oznaczone w opisie
-    ("npm install ...") - zainstaluj je przed uruchomieniem aplikacji.
-  - Po wiekszym refactorze uruchom: npm run build
-    aby sprawdzic czy nie ma bledow TypeScript.
-
-------------------------------------------------------------
-KROK 4: ZAKTUALIZUJ TEN PLIK
-------------------------------------------------------------
-
-Po wprowadzeniu zmiany dopisz wpis do najnowszej sekcji dziennika
-(lub stworz nowa sekcje jezeli minal dzien):
-
-  Format wpisu:
-  [ZROBIONE] POPRAWKA [numer] - [NAZWA Z LISTY]
-    Plik: [sciezka/do/pliku.ts, linia X]
-    Zmiana: [krotki opis co zmieniono]
-    [opcjonalnie: uwagi, skutki uboczne, co jeszcze trzeba zrobic]
-
-  Jezeli prosisz Claude o wykonanie pracy, poprosi go rowniez o aktualizacje:
-  "wykonaj poprawki X, Y, Z i dopisz do audytu co zrobiles"
 
 ------------------------------------------------------------
 SZYBKIE WYSZUKIWANIE W PLIKU
 ------------------------------------------------------------
 
-  Wszystkie niewykonane zadania:   szukaj numeru 1-60 bez [ZROBIONE] w logu
+  Wszystkie niewykonane zadania:   szukaj numeru bez [ZROBIONE] w logu
   Co juz zrobiono:                 szukaj "[ZROBIONE]"
-  Gdzie jest dany plik:            szukaj nazwy pliku (np. "HomeScreen.tsx")
+  Gdzie jest dany plik:            szukaj nazwy pliku (np. "MapView.tsx")
   Pilne do naprawy:                szukaj "KRYTYCZNY" lub "SEKCJA A"
-  Nowe funkcje:                    szukaj "SEKCJA D" lub "SEKCJA E"
-  Migracje bazy danych:            szukaj "prisma migrate"
+  Nowe funkcje do dodania:         szukaj "SEKCJA D" lub "SEKCJA E"
+  Bledy uwzgledniajace sesje:      szukaj "DZIENNIK"
+  Szczegoly architektury:          szukaj "ARCHITEKTURA" lub "STACK"
+
+------------------------------------------------------------
+INSTRUKCJA UZYTKOWANIA
+------------------------------------------------------------
+
+Kolejnosc pracy (zalecana):
+  Tydzien 1-2:  Sekcja A - Krytyczne bledy
+  Tydzien 3-4:  Sekcja B - Powazne bledy + refactoring
+  Miesiac 2:    Sekcja D - Nowe funkcje priorytet wysoki
+  Miesiac 3:    Sekcja C - Srednie problemy + Sekcja E
+
+Aby wykonac poprawke przez Claude:
+  "pracujesz w C:\Users\wikto\OneDrive\Pulpit\drive-app,
+   wykonaj poprawki z audytu: [numery]"
+
+Uwagi praktyczne:
+  - Zmiany w prisma/schema.prisma wymagaja: npx prisma migrate dev --name [nazwa]
+  - Nowe pakiety: zainstaluj przed uruchomieniem
+  - Po wiekszym refactorze: npm run build (sprawdza TypeScript)
 
 ================================================================================
 
 ================================================================================
-                     DZIENNIK WDROZONYCH ZMIAN
-                     Data wdrozenia: 22 kwietnia 2026
+                     OPIS PROJEKTU
+================================================================================
+
+Drive App to aplikacja do wspolnej jazdy samochodem — polaczenie Waze
+z aplikacja spolecznosciowa dla kierowcow.
+
+Stack technologiczny:
+  - Next.js 16.2.2 (App Router) + React 19
+  - TypeScript 5.x
+  - Prisma 7.6.0 + @prisma/adapter-pg (driver adapter)
+  - PostgreSQL
+  - Socket.IO 4.8.3 (real-time)
+  - Mapbox GL JS / react-map-gl
+  - Zustand 5 (state management)
+  - NextAuth v5 beta (autentykacja)
+  - Tailwind CSS v4
+  - Vitest (testy jednostkowe)
+  - server.js (custom Node.js server — wymagany przez Socket.IO)
+
+Glowne funkcje:
+  - Mapa z markerami w czasie rzeczywistym
+  - Raporty drogowe (policja, wypadki, fotoradary)
+  - Konwoje (jazda grupowa z czatem, wspolnym celem)
+  - Stacje paliw z cenami w czasie rzeczywistym
+  - Nawigacja turn-by-turn (Mapbox Directions API)
+  - Rejestrowanie i historia podrozy
+  - System znajomych z lokalizacja na mapie
+  - Kanał społecznościowy (posty, komentarze, polubienia)
+  - Spoty (punkty spotkan)
+  - Spotify integracja
+  - Mystery Drive (losowa trasa)
+  - Udostepnianie lokalizacji znajomym w czasie rzeczywistym
+
+================================================================================
+
+================================================================================
+                     ARCHITEKTURA SYSTEMU
+================================================================================
+
+------------------------------------------------------------
+STRUKTURA PLIKOW
+------------------------------------------------------------
+
+drive-app/
+  server.js                        Custom Node.js server (Socket.IO host)
+  prisma/
+    schema.prisma                  Schemat bazy danych
+    migrations/                    Historia migracji
+  src/
+    app/
+      (auth)/                      Strony logowania / rejestracji / reset hasla
+        login/page.tsx
+        register/page.tsx
+        forgot-password/page.tsx
+        reset-password/page.tsx
+      dashboard/
+        page.tsx                   Glowna strona dashboardu (~450 linii)
+      settings/
+        page.tsx                   Strona ustawien
+      api/                         Wszystkie API routes (47 plikow)
+        auth/[...nextauth]/        NextAuth handlers
+        auth/register/             Rejestracja
+        auth/forgot-password/      Resetowanie hasla
+        auth/reset-password/       Zmiana hasla
+        convoy/                    Zarzadzanie konwojem
+          route.ts                 GET (lista) POST (tworzenie) DELETE
+          [id]/route.ts            GET PATCH DELETE konkretnego konwoju
+          [id]/join/route.ts       POST dolaczanie do konwoju
+          [id]/invite/route.ts     POST zaproszenie znajomego
+          [id]/messages/route.ts   GET POST wiadomosci czatu
+        cron/cleanup/route.ts      Czyszczenie wygaslych raportow
+        dashboard/stats/route.ts   Statystyki dla HomeScreen
+        friends/                   System znajomych
+          route.ts                 GET (lista) POST (wyslij) PUT (akceptuj)
+          [id]/route.ts            DELETE (usun znajomego)
+          requests/                Zarzadzanie zaproszeniami
+          online/route.ts          Status online znajomych
+        fuel/                      Stacje paliw
+          route.ts                 GET (lista stacji)
+          [id]/price/route.ts      POST aktualizacja ceny
+        posts/                     Kanał spolecznosciowy
+          route.ts                 GET POST
+          [id]/route.ts            GET DELETE
+          [id]/like/route.ts       POST toggle like
+          [id]/comments/route.ts   GET POST komentarze
+          [id]/comments/[cid]/     DELETE komentarza
+        reports/                   Raporty drogowe
+          route.ts                 GET POST
+          [id]/route.ts            DELETE
+          [id]/vote/route.ts       POST glosowanie
+        routes/                    Trasy uzytkownika
+          route.ts                 GET (paginacja) POST
+          [id]/route.ts            GET PUT DELETE
+          [id]/share/route.ts      POST generowanie linku
+          [id]/ratings/route.ts    GET POST oceny trasy
+          [id]/times/route.ts      Historia czasow przejazdu
+          [id]/leaderboard/        Leaderboard trasy
+          public/route.ts          Publiczne trasy
+          public/[id]/import/      Import publicznej trasy
+          suggested/route.ts       Sugerowane trasy
+        spots/                     Punkty spotkan
+          route.ts                 GET POST
+          auto-check/route.ts      POST automatyczna detekcja
+          [id]/leave/route.ts      POST wyjscie ze spota
+          [id]/close/route.ts      POST zamkniecie spota
+        spotify/                   Integracja Spotify
+          route.ts                 GET status / DELETE rozlaczenie
+          callback/route.ts        OAuth callback
+        trips/route.ts             GET POST historia podrozy
+        users/
+          route.ts                 GET wyszukiwanie uzytkownikow
+          search/route.ts          GET szukanie po nazwie
+          me/route.ts              GET PATCH DELETE profil
+          me/password/route.ts     PATCH zmiana hasla
+          me/location/route.ts     POST aktualizacja lokalizacji
+          [id]/public/route.ts     GET publiczny profil
+
+    components/
+      auth/
+        AuthGuard.tsx              Ochrona tras (client-side)
+      convoy/
+        ConvoyPanel.tsx            Panel konwoju (lista czlonkow, akcje)
+        ConvoyMemberList.tsx       Lista czlonkow konwoju
+        CreateConvoyModal.tsx      Modal tworzenia konwoju
+        InviteFriendModal.tsx      Modal zapraszania znajomego
+        ConvoyChat.tsx             Czat w konwoju
+        ConvoyDriveMode.tsx        Tryb jazdy w konwoju
+        ConvoyMapVoice.tsx         Tryb glosowy (WebRTC PTT)
+      dashboard/
+        HomeScreen.tsx             Glowny ekran (~600 linii)
+      friends/
+        AddFriendModal.tsx         Dodawanie znajomego
+        FriendRequests.tsx         Lista zaproszen
+        FriendsList.tsx            Lista znajomych
+      fuel/
+        FuelPriceForm.tsx          Formularz ceny paliwa
+        FuelStationPanel.tsx       Panel stacji paliw
+      layout/
+        Header.tsx                 Naglowek aplikacji
+        MainLayout.tsx             Glowny layout
+        Sidebar.tsx                Boczna nawigacja
+      map/
+        MapView.tsx                Glowny widok mapy (~700 linii po splicie)
+        ConvoyMarker.tsx           Marker czlonka konwoju
+        FriendMarker.tsx           Marker znajomego (live lokalizacja)
+        FuelStationMarker.tsx      Marker stacji paliw
+        ReportMarker.tsx           Marker raportu drogowego
+        SpotMarker.tsx             Marker spota
+        UserMarker.tsx             Marker samego uzytkownika
+        NavigationHUD.tsx          HUD nawigacji
+        TripRecorderUI.tsx         UI nagrywania podrozy
+        TripSummaryModal.tsx       Modal podsumowania podrozy
+        SpeedLimitModal.tsx        Modal limitu predkosci
+        SearchPanel.tsx            Panel wyszukiwania
+        ManeuverIcon.tsx           Ikona manewru nawigacyjnego
+        NearbyReportAlert.tsx      Alert o raporcie w poblizu
+        ReportProximityPrompt.tsx  Pytanie o aktualnosc raportu
+        SpeedCameraAlert.tsx       Alert fotoradaru
+        RouteLayer.tsx             Warstwa trasy na mapie
+        EdgePOIIndicators.tsx      Wskazniki POI przy krawedziach
+        MysteryDriveLayer.tsx      Warstwa Mystery Drive
+        MysteryDriveHUD.tsx        HUD Mystery Drive
+      profile/
+        PublicProfileModals.tsx    Modaly profilu publicznego
+      reports/
+        ReportList.tsx             Lista raportow
+        ReportPanel.tsx            Panel raportow
+      routes/
+        CreateRouteForm.tsx        Formularz tworzenia trasy
+        CreateRouteModal.tsx       Modal tworzenia trasy
+        MapWaypointPicker.tsx      Wybor punktow na mapie
+        RoutePanel.tsx             Panel tras
+      settings/
+        SettingsPanel.tsx          Panel ustawien
+      social/
+        SocialFeed.tsx             Kanał spolecznosciowy
+      spotify/
+        SpotifyWidget.tsx          Widget Spotify
+      spots/
+        CreateSpotModal.tsx        Modal tworzenia spota
+      ui/
+        Avatar.tsx                 Komponent awatara
+        Badge.tsx                  Komponent odznaki
+        Button.tsx                 Komponent przycisku
+        Card.tsx                   Komponent karty
+        Input.tsx                  Komponent inputu
+        Modal.tsx                  Komponent modala
+        Spinner.tsx                Komponent spinnera
+        Toast.tsx                  System powiadomien (toast)
+
+    hooks/
+      useAutoSpotDetection.ts      Automatyczna detekcja spotow
+      useLocationPing.ts           Ping lokalizacji (REST + friend-share)
+      useNotifications.ts          Socket.IO dla powiadomien push
+      useRealTimeLocation.ts       Real-time lokalizacja GPS
+      useSocket.ts                 Socket.IO dla konwoju / mapy
+      useWeather.ts                Pogoda (Open-Meteo API)
+
+    lib/
+      auth.ts                      Konfiguracja NextAuth
+      geo.ts                       Funkcje geograficzne (haversine)
+      mapNavigation.ts             Logika nawigacji (kroki, ETA)
+      prisma.ts                    Klient Prisma
+      rateLimit.ts                 In-memory rate limiter
+      schemas.ts                   Schematy Zod
+      socket-server.ts             Dostep do global.__socketIo
+      spotify.ts                   Klient Spotify API
+      utils.ts                     Funkcje pomocnicze
+
+    stores/
+      useAuthStore.ts              MARTWY STORE (nigdy nie inicjalizowany)
+      useConvoyStore.ts            Stan konwoju
+      useMapStore.ts               Stan mapy (markery, warstwy, znajomi)
+      useProfileStore.ts           Profil uzytkownika (persist)
+      useSpotStore.ts              Stan spotow
+      useStatsStore.ts             Statystyki podrozy (persist, localStorage)
+      useThemeStore.ts             Motyw aplikacji
+
+    middleware.ts                  Auth middleware (Edge Runtime, getToken)
+    types/
+      index.ts                     Centralne definicje typow
+
+================================================================================
+
+================================================================================
+                     ARCHITEKTURA SOCKET.IO
+================================================================================
+
+------------------------------------------------------------
+POLACZENIA SOCKET.IO W APLIKACJI
+------------------------------------------------------------
+
+Aplikacja utrzymuje DWIE niezalezne instancje Socket.IO:
+
+1. useNotifications (zawsze aktywny dla zalogowanego uzytkownika)
+   - Dolacza do pokoju: user:${userId}
+   - Dolacza do pokoju: convoy:${convoyId} (jesli w konwoju)
+   - Odbiera: friend-request, friend-accepted, convoy-invite,
+              convoy-update, convoy-destination-set, new-report,
+              friend-location-update
+
+2. useSocket (aktywny TYLKO gdy uzytkownik jest w konwoju)
+   - Dolacza do pokoju: convoy:${convoyId}
+   - Wysyla: location-update, join-convoy, leave-convoy
+   - Odbiera: location-update, new-report, remove-report, report-vote,
+              convoy-update, fuel-price-update, spot-created,
+              spot-updated, spot-closed, convoy-destination-set
+
+------------------------------------------------------------
+EVENTY SOCKET.IO - PELNA LISTA
+------------------------------------------------------------
+
+KLIENT -> SERWER:
+  user-connect          { userId }                      Dolacza do pokoju user:${userId}
+  join-convoy           { convoyId, userId, name, ... } Dolacza do konwoju (emit member-joined)
+  leave-convoy          { convoyId, userId, name }      Opuszcza konwoj (emit member-left)
+  location-update       { convoyId, memberId, lat, ... } Aktualizacja pozycji
+  join-convoy-notify    { convoyId }                    Dolacza do pokoju do powiadomien
+  convoy-chat           { convoyId, userId, name, text } Wiadomosc tekstowa
+
+SERWER -> KLIENT (broadcast do pokoju convoy:${convoyId}):
+  location-update       { memberId, latitude, longitude, heading, speed, name, avatarUrl }
+  convoy-update         { type, member?, memberId?, memberName? }
+                          type: 'member-joined' | 'member-left' | 'member-online' | 'member-offline'
+  convoy-destination-set { convoyId, destLat, destLng, destName }
+  convoy-chat           { userId, name, text, timestamp }
+
+SERWER -> KLIENT (broadcast do wszyskich / do pokoju):
+  new-report            Report (obiekt)
+  remove-report         { reportId }
+  report-vote           { reportId, upvotes, downvotes }
+  fuel-price-update     FuelStation (obiekt)
+  spot-created          Spot (obiekt)
+  spot-updated          Spot (obiekt)
+  spot-closed           { spotId }
+
+SERWER -> KLIENT (do pokoju user:${userId}):
+  friend-request        { fromName, fromId }
+  friend-accepted       { fromName, fromId }
+  convoy-invite         { convoyId, convoyName, invitedByName }
+  friend-location-update { userId, name, image, latitude, longitude, speed, heading }
+
+------------------------------------------------------------
+PRZEPLYWY DANYCH
+------------------------------------------------------------
+
+A) LOKALIZACJA ZNAJOMEGO:
+  useLocationPing (co 5s) -> POST /api/users/me/location { lat, lng, speed, share: true }
+  -> API route pobiera listę znajomych
+  -> io.to(`user:${friendId}`).emit('friend-location-update', payload)
+  -> useNotifications socket odbiera event
+  -> useMapStore.setFriendLocation()
+  -> FriendMarker renderuje sie na mapie
+
+B) RAPORT DROGOWY:
+  MapView -> POST /api/reports
+  -> server.js io.emit('new-report', report)
+  -> useSocket.on('new-report') -> useMapStore.addReport()
+  -> ReportMarker pojawia sie na mapie
+
+C) AKTUALIZACJA LOKALIZACJI W KONWOJU:
+  useRealTimeLocation -> useSocket.emit('location-update', data)
+  -> server.js io.to(convoyRoom).emit('location-update', data)
+  -> useSocket.on('location-update') -> useMapStore.updateConvoyMember()
+  -> ConvoyMarker aktualizuje pozycje
+
+================================================================================
+
+================================================================================
+                     BAZA DANYCH - MODELE PRISMA
+================================================================================
+
+------------------------------------------------------------
+MODELE I ICH PRZEZNACZENIE
+------------------------------------------------------------
+
+User (users)
+  Pola: id, email, name, image, password, createdAt, updatedAt,
+        latitude, longitude, speed, lastLocationAt,
+        emailVerified, verificationToken, verificationExpiry,
+        resetToken, resetExpiry, bio, website, isPublic
+  Relacje: sessions, accounts, vehicles, reports, routes, friends,
+           convoyMemberships, messages, trips, spotifyToken,
+           spotParticipants, posts, postLikes, postComments, achievements
+
+Account (accounts)
+  NextAuth OAuth accounts linkowanie (Google, GitHub, itp.)
+
+Session (sessions)
+  NextAuth sesje
+
+Vehicle (vehicles)
+  Pojazdy uzytkownika: make, model, year, color, isActive
+
+Report (reports)
+  Raporty drogowe: type (enum ReportType), latitude, longitude,
+                   description, expiresAt, upvotes, downvotes
+  Indeksy: @@index([userId]), @@index([expiresAt, latitude, longitude])
+
+ReportVote (report_votes)
+  Glosy na raporty: unique(reportId, userId), isUpvote
+
+FuelStation (fuel_stations)
+  Stacje paliw z cenami (JSONB), nazwą, lokalizacją
+
+Friendship (friendships)
+  Status: PENDING | ACCEPTED | REJECTED
+  Indeksy: @@index([requesterId, status]), @@index([addresseeId, status])
+
+Convoy (convoys)
+  Konwoje: name, ownerId, inviteCode, destLat, destLng, destName
+  Indeks: @@index([ownerId])
+
+ConvoyMember (convoy_members)
+  Czlonkowie konwoju: userId, convoyId, joinedAt, isOnline
+
+ConvoyMessage (convoy_messages)
+  Wiadomosci czatu: text, type ('text'|'system'), createdAt
+
+Route (routes)
+  Trasy: name, description, waypoints (JSON), isPublic, distance, duration
+  Indeks: @@index([userId, createdAt])
+
+RouteShare (route_shares)
+  Udostepnione trasy: token (unique), expiresAt, viewCount
+
+Trip (trips)
+  Historia podrozy: startedAt, endedAt, distanceKm, maxSpeedKmh,
+                    avgSpeedKmh, durationMin, convoyId?
+
+SpotifyToken (spotify_tokens)
+  Tokeny OAuth Spotify (OSOBNA TABELA - poprawne oddzielenie od User)
+
+Spot (spots)
+  Punkty spotkan: name, description, latitude, longitude,
+                  radius, closedAt, auto (czy wykryty automatycznie)
+
+SpotParticipant (spot_participants)
+  Uczestnicy spota: userId, spotId, joinedAt, leftAt
+
+Post (posts)
+  Posty spolecznosciowe: content, imageUrl?, latitude?, longitude?
+
+PostLike (post_likes)
+  Polubienia postow: unique(postId, userId)
+
+PostComment (post_comments)
+  Komentarze: content, max 2000 znakow
+
+Achievement (achievements)
+  Osiagniecia: type (string), earnedAt, unique(userId, type)
+
+------------------------------------------------------------
+ZNANE PROBLEMY W SCHEMACIE
+------------------------------------------------------------
+
+PROBLEM 1: FuelStation przechowuje ceny jako JSON pole prices
+  Zamiast oddzielnej tabeli FuelPrice z historia
+  -> Nie mozna pokazac historii cen (brak rekordow historycznych)
+  -> Nie mozna porownac cen w czasie
+
+PROBLEM 2: Brak modelu Notification (push/in-app)
+  Powiadomienia sa tylko in-memory przez Socket.IO
+  -> Po odswiezeniu strony trafia w proznię
+  -> Brak historii powiadomien
+
+PROBLEM 3: waypoints w Route to JSON (brak typowania Prisma)
+  Musimy castowac recznie z Prisma.JsonValue
+  -> Potencjalne bledy runtime jesli format sie zmieni
+
+PROBLEM 4: ConvoyMember nie ma pola leftAt
+  Mozna sprawdzic tylko czy jest aktywnym czlonkiem
+  -> Brak historii dolaczania/odchodzenia
+
+PROBLEM 5: Brak modelu dla geofencing / alertow
+  Uzytkownik nie moze zapisac "alerty dla raportu w strefie XY"
+
+================================================================================
+
+================================================================================
+                     API ENDPOINTS - PELNY KATALOG
+================================================================================
+
+Legenda statusu:
+  [OK]      - dziala poprawnie
+  [UWAGA]   - dziala ale ma problemy
+  [BUG]     - znany blad
+  [TODO]    - do poprawy / uzupelnienia
+
+------------------------------------------------------------
+AUTENTYKACJA
+------------------------------------------------------------
+
+POST /api/auth/register                                    [OK]
+  Body: { email, name, password }
+  Walidacja: email regex, haslo regex (uppercase + cyfra)
+  Tworzy konto, hashuje haslo bcrypt, wysyla email weryfikacyjny
+
+GET/POST /api/auth/[...nextauth]                           [OK]
+  NextAuth handlers (credentials + OAuth)
+  Single argument (bez ctx) - fix z rundy 9
+
+POST /api/auth/forgot-password                             [OK]
+  Wysyla email z linkiem resetujacym (24h token)
+
+POST /api/auth/reset-password                              [OK]
+  Zmienia haslo po weryfikacji tokenu
+
+------------------------------------------------------------
+UZYTKOWNIK
+------------------------------------------------------------
+
+GET  /api/users/me                                         [OK]
+  Zwraca profil zalogowanego uzytkownika
+
+PATCH /api/users/me                                        [OK]
+  Aktualizuje name, bio, website, image
+  Walidacja URL obrazu (tylko http/https)
+  Zod: UpdateProfileSchema
+
+DELETE /api/users/me                                       [OK]
+  Usuwa konto po weryfikacji hasla
+  Zod: DeleteAccountSchema
+
+PATCH /api/users/me/password                               [OK]
+  Zmienia haslo (stare -> nowe)
+
+POST /api/users/me/location                                [OK]
+  Aktualizuje lokalizacje uzytkownika
+  Jesli share=true -> wysyla friend-location-update do znajomych przez Socket.IO
+
+GET /api/users/route                                       [OK]
+  Wyszukiwanie uzytkownikow (search param, max 20)
+
+GET /api/users/search                                      [OK]
+  Alternatywny endpoint wyszukiwania
+
+GET /api/users/[id]/public                                 [OK]
+  Publiczny profil (tylko isPublic=true)
+
+------------------------------------------------------------
+KONWOJ
+------------------------------------------------------------
+
+GET  /api/convoy                                           [OK]
+  Lista konwojow uzytkownika
+
+POST /api/convoy                                           [OK]
+  Tworzy nowy konwoj, zwraca inviteCode
+
+DELETE /api/convoy?id=...                                  [UWAGA]
+  Usuwa konwoj (backward compat, stara semantyka)
+
+GET    /api/convoy/[id]                                    [OK]
+  Szczegoly konwoju
+
+PATCH  /api/convoy/[id]                                    [OK]
+  Aktualizuje nazwe, opcjonalnie destLat/destLng/destName
+  Emituje convoy-destination-set przez Socket.IO
+
+DELETE /api/convoy/[id]                                    [OK]
+  Usuwa konwoj ($transaction - atomowe)
+
+POST /api/convoy/[id]/join                                 [OK]
+  Dolacza do konwoju przez inviteCode
+
+POST /api/convoy/[id]/invite                               [OK]
+  Zaprasza znajomego do konwoju
+  Emituje convoy-invite do user:${userId}
+
+GET  /api/convoy/[id]/messages                             [OK]
+  Historia wiadomosci czatu (force-dynamic, cache: no-store)
+
+POST /api/convoy/[id]/messages                             [OK]
+  Wysyla wiadomosc tekstowa do czatu
+
+------------------------------------------------------------
+ZNAJOMI
+------------------------------------------------------------
+
+GET /api/friends                                           [OK]
+  Lista zaakceptowanych znajomych (paginacja)
+
+POST /api/friends                                          [OK]
+  Wysyla zaproszenie do znajomych
+  Emituje friend-request do user:${targetId} przez Socket.IO
+  Rate limited: 10 req/min
+
+PUT /api/friends                                           [OK]
+  Akceptuje/odrzuca zaproszenie
+  Emituje friend-accepted do user:${requesterId}
+
+DELETE /api/friends/[id]                                   [OK]
+  Usuwa znajomego
+
+GET /api/friends/requests                                  [OK]
+  Lista oczekujacych zaproszen
+
+POST/DELETE /api/friends/requests/[id]                    [OK]
+  Akceptacja / odrzucenie zaproszenia
+
+GET /api/friends/online                                    [OK]
+  Status online znajomych
+
+------------------------------------------------------------
+RAPORTY
+------------------------------------------------------------
+
+GET /api/reports                                           [OK]
+  Lista aktywnych raportow (filtr expiresAt >= now())
+
+POST /api/reports                                          [OK]
+  Tworzy raport, ustawia expiresAt
+  Emituje new-report przez Socket.IO
+  Rate limited: 10 req/min
+
+DELETE /api/reports/[id]                                   [OK]
+  Usuwa raport (tylko wlasciciel lub admin)
+
+POST /api/reports/[id]/vote                                [OK]
+  Toggle glosu (upsert - bez race condition)
+  Emituje report-vote przez Socket.IO
+
+------------------------------------------------------------
+STACJE PALIW
+------------------------------------------------------------
+
+GET /api/fuel                                              [OK]
+  Lista stacji w okolicy (bbox z Mapbox Geocoding)
+  Uzywa MAPBOX_SERVER_TOKEN ?? NEXT_PUBLIC_MAPBOX_TOKEN
+
+POST /api/fuel/[id]/price                                  [OK]
+  Aktualizuje cene paliwa na stacji
+  Emituje fuel-price-update przez Socket.IO
+
+------------------------------------------------------------
+TRASY
+------------------------------------------------------------
+
+GET /api/routes                                            [OK]
+  Lista tras uzytkownika (paginacja: page, limit)
+
+POST /api/routes                                           [OK]
+  Tworzy nowa trase
+  Zod: CreateRouteSchema
+
+GET /api/routes/[id]                                       [OK]
+  Szczegoly trasy
+
+PUT /api/routes/[id]                                       [OK]
+  Aktualizuje trase
+
+DELETE /api/routes/[id]                                    [OK]
+  Usuwa trase
+
+POST /api/routes/[id]/share                                [OK]
+  Generuje token udostepniania
+
+GET /api/routes/[id]/ratings                               [OK]
+  Lista ocen trasy
+
+POST /api/routes/[id]/ratings                              [OK]
+  Dodaje ocene trasy
+
+GET /api/routes/[id]/times                                 [OK]
+  Historia czasow przejazdu
+
+GET /api/routes/[id]/leaderboard                           [OK]
+  Ranking uzytkownikow na trasie
+
+GET /api/routes/public                                     [OK]
+  Publiczne trasy
+
+POST /api/routes/public/[id]/import                        [OK]
+  Importuje publiczna trase do swojej kolekcji
+
+GET /api/routes/suggested                                  [OK]
+  Sugerowane trasy (na podstawie historii)
+
+------------------------------------------------------------
+POSTY SPOLECZNOSCIOWE
+------------------------------------------------------------
+
+GET /api/posts                                             [OK]
+  Feed postow (z paginacja)
+
+POST /api/posts                                            [OK]
+  Tworzy post (text, opcjonalnie imageUrl, lat, lng)
+
+GET /api/posts/[id]                                        [OK]
+  Szczegoly postu
+
+DELETE /api/posts/[id]                                     [OK]
+  Usuwa post (tylko wlasciciel)
+
+POST /api/posts/[id]/like                                  [OK]
+  Toggle like na poscie
+
+GET /api/posts/[id]/comments                               [OK]
+  Komentarze do postu
+
+POST /api/posts/[id]/comments                              [OK]
+  Dodaje komentarz
+
+DELETE /api/posts/[id]/comments/[cid]                      [OK]
+  Usuwa komentarz (tylko wlasciciel)
+
+------------------------------------------------------------
+SPOTY
+------------------------------------------------------------
+
+GET /api/spots                                             [OK]
+  Lista aktywnych spotow w okolicy
+
+POST /api/spots                                            [OK]
+  Tworzy nowy spot manualnie lub automatycznie
+
+POST /api/spots/auto-check                                 [OK]
+  Sprawdza czy uzytkownik jest w poblizu spota (automatyczny join)
+
+POST /api/spots/[id]/leave                                 [OK]
+  Wychodzi ze spota
+
+POST /api/spots/[id]/close                                 [OK]
+  Zamyka spot (tylko wlasciciel)
+
+------------------------------------------------------------
+HISTORIA PODROZY
+------------------------------------------------------------
+
+GET /api/trips                                             [OK]
+  Lista podrozy (paginacja)
+
+POST /api/trips                                            [OK]
+  Zapisuje zakonczona podróz do bazy
+  Zod: schema z walidacja lat/lng, dystansu, predkosci
+
+------------------------------------------------------------
+SPOTIFY
+------------------------------------------------------------
+
+GET /api/spotify                                           [OK]
+  Status polaczenia / aktualny utwor
+
+DELETE /api/spotify                                        [OK]
+  Rozlacza konto Spotify (usuwa z spotify_tokens)
+
+GET /api/spotify/callback                                  [OK]
+  OAuth callback Spotify (upsert w spotify_tokens)
+
+------------------------------------------------------------
+CRON
+------------------------------------------------------------
+
+GET /api/cron/cleanup                                      [OK]
+  Usuwa wygasle raporty i spoty
+  Chroniony przez CRON_SECRET (Bearer token)
+
+------------------------------------------------------------
+SOCKET
+------------------------------------------------------------
+
+GET /api/socket                                            [OK]
+  Health check ("ok") - socket jest w server.js nie tutaj
+
+================================================================================
+
+================================================================================
+                     DZIENNIK WDROZONYCH ZMIAN - SESJA 1
+                     Data: 22 kwietnia 2026
 ================================================================================
 
 [ZROBIONE] POPRAWKA 2 - BLAD FILTROWANIA RAPORTOW
   Plik: src/app/api/reports/route.ts, linia 43
   Zmiana: createdAt: { gte: expiryDate } -> expiresAt: { gte: new Date() }
-  Usunieta zbedna zmienna expiryDate (obliczona z REPORT_EXPIRY_HOURS).
-  Teraz filtrowanie opiera sie na polu expiresAt ustawionym przy tworzeniu
-  raportu - wygasle raporty sa poprawnie pomijane.
 
-[ZROBIONE] POPRAWKA 4 - NIEZGODNOSC NAZW EVENTOW SOCKET.IO (fuel-update)
-  Plik: src/hooks/useSocket.ts, linia 139
-  Zmiana: socket.on('fuel-update', ...) -> socket.on('fuel-price-update', ...)
-  Klient teraz nasluchuje na ten sam event co serwer emituje.
-  Aktualizacje cen paliw beda docierac do klientow.
+[ZROBIONE] POPRAWKA 4 - NIEZGODNOSC NAZW EVENTOW SOCKET.IO
+  Plik: src/hooks/useSocket.ts
+  Zmiana: socket.on('fuel-update') -> socket.on('fuel-price-update')
 
 [ZROBIONE] POPRAWKA 3 - MUTACJA STANU W useProfileStore
-  Plik: src/stores/useProfileStore.ts, linie 67-72
-  Zmiana: bezposrednia mutacja remaining[0].isActive = true zastapiona
-  niemutowalnym mapowaniem z rozproszeniem obiektu { ...x, isActive: true }.
-  Zustand poprawnie wykrywa zmiany i React rerenderuje komponenty.
+  Plik: src/stores/useProfileStore.ts
+  Zmiana: remaining[0].isActive = true -> niemutowalne mapowanie
 
 [ZROBIONE] POPRAWKA 5 - NIEUZYWANA ZMIENNA onlineFriends
-  Plik: src/components/dashboard/HomeScreen.tsx, linia 181
-  Usunieta linia: const onlineFriends = friends.filter((f) => f.isOnline);
-  Zmienna byla dead code - nigdy nieuzywana w JSX.
+  Plik: src/components/dashboard/HomeScreen.tsx
+  Usunieta dead variable
 
 [ZROBIONE] POPRAWKA 12 - DEDUPLIKACJA FUNKCJI timeAgo
-  Plik: src/components/dashboard/HomeScreen.tsx, linie 116-124
-  Usunieta lokalna definicja funkcji timeAgo.
-  Dodany import: import { timeAgo } from '@/lib/utils';
-  Logika centralnie zarzadzana w jednym miejscu.
+  Plik: src/components/dashboard/HomeScreen.tsx
+  Import z @/lib/utils zamiast lokalnej definicji
 
 [ZROBIONE] POPRAWKA 15 - NAGLOWKI BEZPIECZENSTWA HTTP
   Plik: next.config.ts
-  Dodana sekcja async headers() z naglowkami:
-    - X-Frame-Options: DENY (ochrona przed clickjacking)
-    - X-Content-Type-Options: nosniff (ochrona przed MIME sniffing)
-    - X-XSS-Protection: 1; mode=block
-    - Referrer-Policy: strict-origin-when-cross-origin
-    - Permissions-Policy: camera=(), microphone=(), geolocation=(self)
+  Dodano: X-Frame-Options, X-Content-Type-Options, X-XSS-Protection,
+          Referrer-Policy, Permissions-Policy
 
 [ZROBIONE] POPRAWKA 28 - WALIDACJA EMAIL ZA SLABA
-  Plik: src/app/api/auth/register/route.ts, linia 17
+  Plik: src/app/api/auth/register/route.ts
   Zmiana: !email.includes("@") -> regex /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  Adresy typu "a@" lub "@domena" sa teraz odrzucane.
 
 [ZROBIONE] POPRAWKA 29 - BRAK WALIDACJI SILY HASLA
-  Plik: src/app/api/auth/register/route.ts, linia 24
-  Zmiana: sprawdzenie tylko dlugosci >= 8 -> regex wymagajacy
-  co najmniej jednej malej litery, jednej wielkiej i jednej cyfry.
-  Haslo "aaaaaaaa" jest teraz odrzucane.
+  Plik: src/app/api/auth/register/route.ts
+  Zmiana: tylko dlugosc >= 8 -> regex wymagajacy uppercase + cyfra
 
 [ZROBIONE] POPRAWKA 17 - WALIDACJA URL OBRAZU PROFILOWEGO
-  Plik: src/app/api/users/me/route.ts, linie 99-107
-  Dodana walidacja URL przez new URL() + sprawdzenie protokolu.
-  Dozwolone tylko http: i https:. Wstrzykniecie "javascript:alert()" niemozliwe.
+  Plik: src/app/api/users/me/route.ts
+  Dodana walidacja new URL() + sprawdzenie protokolu (http/https)
 
 [ZROBIONE] POPRAWKA 33 - BRAK TRANSAKCJI PRZY USUWANIU KONWOJU
-  Plik: src/app/api/convoy/route.ts, linie 222-228
-  Dwa osobne awaity zastapione prisma.$transaction([...]).
-  Usuwanie czlonkow i konwoju jest teraz atomowe - brak ryzyka niespojnosci
-  przy bledzie drugiej operacji.
+  Plik: src/app/api/convoy/route.ts
+  Zmiana: dwa awaity -> prisma.$transaction([...])
 
 ================================================================================
-             LACZNIE WDROZONO: 10 poprawek (2 krytyczne, 4 powazne, 4 srednie)
+             SESJA 1: LACZNIE 10 poprawek
 ================================================================================
 
 ================================================================================
-                     DZIENNIK WDROZONYCH ZMIAN - RUNDA 2
-                     Data wdrozenia: 22 kwietnia 2026
+                     DZIENNIK WDROZONYCH ZMIAN - SESJA 2
+                     Data: 22 kwietnia 2026
 ================================================================================
 
 [ZROBIONE] POPRAWKA 7 - NIEUZYWANY PARAMETR isDay W WeatherIcon
-  Plik: src/components/dashboard/HomeScreen.tsx, linia 105
-  Zmiana: usunieto hack "void isDay;" - parametr uzywany do rozroznienia
-  ikony slonca (dzien) vs ksiezyca (noc) dla kodu pogodowego 0 (bezchmurnie).
-  Usunieto tez nieosiagalna linie void isDay po ostatnim return.
+  Plik: src/components/dashboard/HomeScreen.tsx
+  Zmiana: usunieto hack "void isDay" - parametr teraz uzyty do ikony dzien/noc
 
 [ZROBIONE] POPRAWKA 8 - nearbyReportsCount LICZY GLOBALNE RAPORTY
-  Pliki: src/app/api/dashboard/stats/route.ts, src/components/dashboard/HomeScreen.tsx
-  Zmiana: przemianowano nearbyReportsCount -> totalActiveReports w API i typie.
-  Nazwa teraz odzwierciedla rzeczywiste zachowanie (globalne, nie lokalne raporty).
+  Pliki: src/app/api/dashboard/stats/route.ts, HomeScreen.tsx
+  Zmiana: przemianowano na totalActiveReports
 
 [ZROBIONE] POPRAWKA 9 - FuelPrice.updatedAt NIE AKTUALIZUJE SIE
-  Plik: prisma/schema.prisma, linia 157
+  Plik: prisma/schema.prisma
   Zmiana: @default(now()) -> @updatedAt
-  Pole jest teraz automatycznie ustawiane przez Prisma przy kazdej aktualizacji ceny.
-  Wymagana migracja: npx prisma migrate dev --name fix-fuelprice-updatedat
+  Migracja: npx prisma migrate dev --name fix-fuelprice-updatedat
 
 [ZROBIONE] POPRAWKA 11 - DEDUPLIKACJA FUNKCJI HAVERSINE
   Nowy plik: src/lib/geo.ts (eksportuje haversineMeters)
-  Zmieniony: src/hooks/useRealTimeLocation.ts
-    - usunieta lokalna funkcja haversineDistance
-    - dodany import { haversineMeters } from '@/lib/geo'
-  Pozostale duplikaty (utils.ts calculateDistance, MapView.tsx) do zastapienia
-  w kolejnej rundzie przy refaktorze MapView.
+  Zmieniony: src/hooks/useRealTimeLocation.ts (import z geo.ts)
 
 [ZROBIONE] POPRAWKA 13 - DUPLIKACJA ETYKIET RAPORTOW
   Plik: src/components/dashboard/HomeScreen.tsx
-  Zmiana: REPORT_LABELS teraz uzywa REPORT_TYPE_LABELS z src/types/index.ts
-  jako zrodla etykiet (np. label: REPORT_TYPE_LABELS.POLICE).
-  Jeden punkt prawdy dla nazw typow raportow - zmiana nazwy w types/index.ts
-  automatycznie propaguje sie do dashboardu.
+  REPORT_LABELS teraz uzywa REPORT_TYPE_LABELS z types/index.ts
 
 [ZROBIONE] POPRAWKA 21 - BRAK React.memo NA MARKERACH MAPY
-  Pliki:
-    - src/components/map/ReportMarker.tsx
-    - src/components/map/ConvoyMarker.tsx
-    - src/components/map/FuelStationMarker.tsx
-  Zmiana: wszystkie trzy komponenty opakowuje memo() z niestandardowym
-  comparerem (porownuje id i kluczowe pola). Markery nie rerenderuja sie
-  przy niezwiazanych zmianach stanu mapy.
+  Pliki: ReportMarker.tsx, ConvoyMarker.tsx, FuelStationMarker.tsx
+  Zmiana: memo() z niestandardowym comparerem (id + kluczowe pola)
 
 [ZROBIONE] POPRAWKA 23 - BRAK INDEKSOW W BAZIE DANYCH
   Plik: prisma/schema.prisma
-  Dodane indeksy:
-    Friendship: @@index([requesterId, status]), @@index([addresseeId, status])
-    Convoy:     @@index([ownerId])
-    Report:     @@index([userId]), @@index([expiresAt, latitude, longitude])
-    Route:      @@index([userId, createdAt])
-  Usunieto poprzedni pojedynczy indeks @@index([expiresAt]) zastapiony
-  indeksem zlozonym z latitude/longitude (przydatny przy filtrze geo).
-  Wymagana migracja: npx prisma migrate dev --name add-missing-indexes
+  Dodano indeksy: Friendship, Convoy, Report, Route
+  Migracja: npx prisma migrate dev --name add-missing-indexes
 
-[ZROBIONE] POPRAWKA 24 - BRAK AUTOMATYCZNEGO USUWANIA WYGASLYCH RAPORTOW
+[ZROBIONE] POPRAWKA 24 - BRAK AUTOMATYCZNEGO USUWANIA RAPORTOW
   Nowy plik: src/app/api/cron/cleanup/route.ts
-  Endpoint GET /api/cron/cleanup usuwa rekordy gdzie expiresAt < now().
-  Chroniony przez CRON_SECRET (Bearer token w naglowku Authorization).
-  Nalezy podlac do schedulera (Vercel Cron / node-cron / zewnetrzny cron).
+  Chroniony przez CRON_SECRET
 
 [ZROBIONE] POPRAWKA 18 - BRAK WERYFIKACJI HASLA PRZY USUWANIU KONTA
   Plik: src/app/api/users/me/route.ts
-  Zmiana: DELETE() teraz wymaga pola password w body requestu.
-  Haslo jest porownywane z hashem z bazy (bcrypt.compare).
-  Konto usuwane tylko po poprawnej weryfikacji. Dodano import bcrypt.
+  DELETE wymaga pola password w body requestu, bcrypt.compare
 
-[ZROBIONE] POPRAWKA 30 - BRAK MIDDLEWARE AUTH DLA ROUTOW NEXT.JS
+[ZROBIONE] POPRAWKA 30 - MIDDLEWARE AUTH (Edge Runtime)
   Nowy plik: src/middleware.ts
-  Server-side guard oparty na NextAuth.
-  Chroni /dashboard/* i /settings/* przed dostepem bez sesji.
-  Niezalogowani uzytkownikowie sa przekierowywani do /login?callbackUrl=...
-  Eliminuje "flash" contentu chronionego przed client-side redirectem.
+  Uzywa getToken z next-auth/jwt (Edge Runtime compatible)
+  Chroni /dashboard/* i /settings/*
 
 ================================================================================
-             LACZNIE WDROZONO LACZENIE: 20 poprawek
-================================================================================
-
-================================================================================
-                     DZIENNIK WDROZONYCH ZMIAN - RUNDA 3 / HOTFIX
-                     Data wdrozenia: 22 kwietnia 2026
-================================================================================
-
-[ZROBIONE] POPRAWKA 30 (REWIZJA) - CRASH MIDDLEWARE / ClientFetchError NextAuth
-  Plik: src/middleware.ts
-  Problem:
-    Poprzednia implementacja middleware importowala `auth` z src/lib/auth.ts.
-    Ta funkcja importuje Prisma Client i bcryptjs — oba pakiety sa niekompatybilne
-    z Edge Runtime (w ktorym Next.js wykonuje middleware).
-    Skutek: middleware crashowal przy KAZDYM requesce, Next.js zwracal HTML (500),
-    SessionProvider dostawal HTML zamiast JSON z /api/auth/session i rzucal:
-      ClientFetchError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
-    Aplikacja byla calkowicie niezdatna do uzycia.
-  Naprawa:
-    Zamieniono import `auth` z lib/auth.ts na `getToken` z `next-auth/jwt`.
-    getToken czyta JWT bezposrednio z cookie bez zadnych zaleznosci Node.js
-    i dziala poprawnie w Edge Runtime.
-    Zachowanie jest identyczne — niezalogowani uzytkownicy sa przekierowywani
-    do /login?callbackUrl=... przy probach dostepu do /dashboard i /settings.
-
-================================================================================
-             LACZNIE WDROZONO LACZENIE: 21 poprawek (w tym 1 hotfix)
+             SESJA 2: LACZNIE 20 poprawek
 ================================================================================
 
 ================================================================================
-                     DZIENNIK WDROZONYCH ZMIAN - RUNDA 4
-                     Data wdrozenia: 22 kwietnia 2026
+                     DZIENNIK WDROZONYCH ZMIAN - SESJA 3 (HOTFIX)
+                     Data: 22 kwietnia 2026
+================================================================================
+
+[ZROBIONE] POPRAWKA 30 (REWIZJA) - CRASH MIDDLEWARE
+  Problem: middleware importowal `auth` z lib/auth.ts ktore importuje Prisma
+  i bcryptjs - oba pakiety niekompatybilne z Edge Runtime.
+  Skutek: cala aplikacja crashowala przy KAZDYM requesce.
+  Naprawa: zamieniono na getToken z next-auth/jwt (dziala w Edge Runtime).
+
+================================================================================
+
+================================================================================
+                     DZIENNIK WDROZONYCH ZMIAN - SESJA 4
+                     Data: 22 kwietnia 2026
 ================================================================================
 
 [ZROBIONE] POPRAWKA 1 - SOCKET.IO NIE DZIALA
   Nowy plik: server.js (root projektu)
-  Zmiana: stworzono custom server w plain Node.js CommonJS.
-  HTTP server + Socket.IO inicjalizowane razem, wszystkie handlery (join-convoy,
-  leave-convoy, location-update, new-report, report-vote, fuel-price-update)
-  wbudowane bezposrednio w server.js.
-  package.json: "dev": "node server.js", "start": "NODE_ENV=production node server.js"
-  Uwaga: src/lib/socket.ts pozostaje jako dokumentacja struktury eventow,
-  ale faktyczny server IO jest teraz w server.js.
+  Custom server Node.js z Socket.IO (wszystkie handlery wbudowane)
+  package.json: "dev": "node server.js"
 
 [ZROBIONE] POPRAWKA 5 - BRAK RATE LIMITINGU
-  Nowy plik: src/lib/rateLimit.ts
-    Sliding window rate limiter oparty na Map w pamieci (in-memory).
-    Automatyczne czyszczenie starych wpisow co 5 minut.
-  Zastosowany w:
-    - src/app/api/auth/register/route.ts: 5 req/min na IP
-    - src/app/api/reports/route.ts (POST): 10 req/min na IP
-    - src/app/api/friends/route.ts (POST): 10 req/min na IP
-  Uwaga: in-memory nie skaluje sie na wiele instancji serwera.
-  Dla produkcji multi-instance podmienic na Redis (Upstash/IORedis).
-
-[ZROBIONE] POPRAWKA 30 (REWIZJA 2) - MIDDLEWARE AUTH
-  Nowy plik: src/middleware.ts (odtworzony - plik nie istnial mimo wpisu w audycie)
-  Implementacja: getToken z next-auth/jwt (Edge Runtime compatible).
-  Cookie: authjs.session-token (http) / __Secure-authjs.session-token (https).
-  Chroni: /dashboard/:path* i /settings/:path*
+  Nowy plik: src/lib/rateLimit.ts (sliding window, in-memory)
+  Zastosowany w: register (5/min), reports POST (10/min), friends POST (10/min)
 
 ================================================================================
-             LACZNIE WDROZONO LACZENIE: 24 poprawki
+             SESJA 4: LACZNIE 22 poprawki (w tym 1 hotfix)
 ================================================================================
 
 ================================================================================
-                     DZIENNIK WDROZONYCH ZMIAN - RUNDA 5
-                     Data wdrozenia: 22 kwietnia 2026
+                     DZIENNIK WDROZONYCH ZMIAN - SESJA 5
+                     Data: 22 kwietnia 2026
 ================================================================================
 
-[ZROBIONE] POPRAWKA 10 - MAPVIEW.TSX ZA DUZY KOMPONENT
-  Stary plik: src/components/map/MapView.tsx (1264 linii) -> 658 linii
-  Nowe pliki:
-    - src/lib/mapNavigation.ts - NavStep, fmtDist, fmtTime, fmtETA, parseSteps,
-      getArrowRotation, fmtTripTime (wspolny modul)
-    - src/components/map/ManeuverIcon.tsx - ikona manewru nawigacyjnego
-    - src/components/map/NavigationHUD.tsx - HUD nawigacji (karta manewru + pasek ETA)
-    - src/components/map/TripRecorderUI.tsx - kolo predkosci + przycisk REC + pasek nagrywania
-    - src/components/map/TripSummaryModal.tsx - modal podsumowania podrozy
-    - src/components/map/SpeedLimitModal.tsx - modal limitu predkosci
-    - src/components/map/SearchPanel.tsx - panel wyszukiwarki
-  Caly stan (useState, useEffect) pozostaje w MapView.tsx - komponenty dostaja
-  dane i callbacki przez props. Zero zmian logiki - czysto UI split.
+[ZROBIONE] POPRAWKA 10 - MAPVIEW.TSX ZA DUZY (1264 linii -> ~700)
+  Wyodrebnione komponenty:
+    - src/lib/mapNavigation.ts
+    - src/components/map/ManeuverIcon.tsx
+    - src/components/map/NavigationHUD.tsx
+    - src/components/map/TripRecorderUI.tsx
+    - src/components/map/TripSummaryModal.tsx
+    - src/components/map/SpeedLimitModal.tsx
+    - src/components/map/SearchPanel.tsx
 
-[ZROBIONE] POPRAWKA 11 (REWIZJA) - geo.ts juz istnial poprawnie
-  src/lib/geo.ts potwierdzono ze istnieje z haversineMeters.
-  src/lib/mapNavigation.ts rowniez uzywa haversine z geo.ts przez import.
-
-================================================================================
-             LACZNIE WDROZONO LACZENIE: 26 poprawek
 ================================================================================
 
 ================================================================================
-                     DZIENNIK WDROZONYCH ZMIAN - RUNDA 6
-                     Data wdrozenia: 22 kwietnia 2026
+                     DZIENNIK WDROZONYCH ZMIAN - SESJA 6
+                     Data: 22 kwietnia 2026
 ================================================================================
 
 [ZROBIONE] POPRAWKA 19 - CN() BEZ TAILWIND-MERGE
   Plik: src/lib/utils.ts
-  Zmiana: prosta implementacja join(' ') zastapiona twMerge(clsx(inputs)).
-  Zainstalowano: npm install clsx tailwind-merge
-  Teraz cn('text-red-500', 'text-blue-500') zwraca 'text-blue-500'.
+  Zainstalowano: clsx, tailwind-merge
+  Zmiana: twMerge(clsx(inputs))
 
-[ZROBIONE] POPRAWKA 34 - RACE CONDITION W GLOSOWANIU NA RAPORTY
+[ZROBIONE] POPRAWKA 34 - RACE CONDITION W GLOSOWANIU
   Plik: src/app/api/reports/[id]/vote/route.ts
-  Zmiana: findUnique + create zastapione przez upsert().
-  Teraz tworzy/aktualizuje glos atomowo - brak unique constraint error
-  przy rownoczesnych requestach. Toggle-off (usuwanie) pozostal bez zmian.
+  Zmiana: findUnique + create -> upsert() (atomowe)
 
-[ZROBIONE] POPRAWKA 14 - DUPLIKACJA INTERFEJSU USER
+[ZROBIONE] POPRAWKA 14 - DUPLIKACJA INTERFEJSU User
   Plik: src/stores/useAuthStore.ts
-  Zmiana: lokalna definicja User usunieta - importowany User z @/types.
-  updateLocation() teraz ustawia latitude/longitude bezposrednio zamiast
-  nested location: { ... }.
-  Plik: src/hooks/useRealTimeLocation.ts
-  Zmiana: user.avatarUrl -> user.image ?? undefined
+  Zmiana: lokalna User -> import z @/types
 
-================================================================================
-             LACZNIE WDROZONO LACZENIE: 29 poprawek
 ================================================================================
 
 ================================================================================
-                     DZIENNIK WDROZONYCH ZMIAN - RUNDA 7
-                     Data wdrozenia: 22 kwietnia 2026
+                     DZIENNIK WDROZONYCH ZMIAN - SESJA 7
+                     Data: 22 kwietnia 2026
 ================================================================================
 
 [ZROBIONE] POPRAWKA 16 - BRAK PAGINACJI NA LISTACH
-  Plik: src/app/api/routes/route.ts
-    GET() zmieniony na GET(request) z params ?page=0&limit=20.
-    Zwraca { data, total, page, limit } zamiast tablicy.
-    Uzywa Prisma take/skip.
-  Plik: src/app/api/friends/route.ts
-    GET() zmieniony analogicznie z FriendshipStatus.ACCEPTED (enum).
-    Dwa rownoczesne zapytania (findMany + count) przez Promise.all.
+  Plik: src/app/api/routes/route.ts - paginacja ?page=0&limit=20
+  Plik: src/app/api/friends/route.ts - paginacja analogiczna
 
-================================================================================
-             LACZNIE WDROZONO LACZENIE: 30 poprawek
 ================================================================================
 
 ================================================================================
-                     DZIENNIK WDROZONYCH ZMIAN - RUNDA 8
-                     Data wdrozenia: 22 kwietnia 2026
+                     DZIENNIK WDROZONYCH ZMIAN - SESJA 8
+                     Data: 22 kwietnia 2026
 ================================================================================
 
 [ZROBIONE] POPRAWKA 26 - MAPBOX TOKEN PUBLICZNY NA SERWERZE
   Plik: src/app/api/fuel/route.ts
   Zmiana: NEXT_PUBLIC_MAPBOX_TOKEN -> MAPBOX_SERVER_TOKEN ?? NEXT_PUBLIC_MAPBOX_TOKEN
-  Aby efekt byl pelny: dodaj MAPBOX_SERVER_TOKEN=sk.xxx do .env.local
 
 [ZROBIONE] POPRAWKA 27 - LOGIKA THROTTLE (analiza)
-  Sprawdzono: logika AND jest poprawna dla POMIJANIA broadcastu.
-  "pomij jesli timeDelta < interval AND distance < threshold"
-  = "nadawaj jesli timeDelta >= interval OR distance >= threshold"
-  Brak bledow do naprawienia.
+  Weryfikacja: logika AND jest poprawna. Brak bledow.
 
 [ZROBIONE] POPRAWKA 32 - ZLA SEMANTYKA REST DLA CONVOY
   Plik: src/app/api/convoy/[id]/route.ts
-  Dodano: PATCH /api/convoy/[id] - aktualizacja konwoju przez URL param
-  Zmiana DELETE: teraz obsluguje rowniez usuwanie calego konwoju przez wlasciciela
-  (prisma.$transaction usun czlonkow + konwoj).
-  Stare endpointy w route.ts pozostaja dla backward compatibility.
+  Dodano PATCH i DELETE przez URL param
 
 [ZROBIONE] POPRAWKA 31 - BRAK TESTOW
-  Zainstalowano: vitest, @testing-library/react, @testing-library/user-event, jsdom
-  Nowy plik: vitest.config.ts (jsdom environment, @/ alias)
-  Nowe testy (20 testow, wszystkie zielone):
-    - src/__tests__/lib/geo.test.ts (haversineMeters - 3 testy)
-    - src/__tests__/lib/utils.test.ts (cn, formatDistance, timeAgo - 7 testow)
-    - src/__tests__/lib/mapNavigation.test.ts (fmtDist, fmtTime, fmtTripTime, getArrowRotation - 10 testow)
-  package.json: "test": "vitest", "test:run": "vitest run"
+  Zainstalowano: vitest, @testing-library/react, jsdom
+  Nowe testy (20 testow):
+    - src/__tests__/lib/geo.test.ts
+    - src/__tests__/lib/utils.test.ts
+    - src/__tests__/lib/mapNavigation.test.ts
 
 [ZROBIONE] POPRAWKA 22 - TOKENY SPOTIFY W TABELI USERS
-  Pliki: prisma/schema.prisma, src/lib/spotify.ts, src/app/api/spotify/route.ts, src/app/api/spotify/callback/route.ts
-  Zmiana: Usunieto pola spotifyAccessToken/spotifyRefreshToken/spotifyExpiresAt z modelu User.
-  Dodano model SpotifyToken (osobna tabela spotify_tokens, relacja 1:1 z User).
-  spotify.ts zaktualizowany: uzywa prisma.spotifyToken.findUnique/update/delete.
-  callback/route.ts: uzywa prisma.spotifyToken.upsert.
-  spotify route DELETE: prisma.spotifyToken.delete zamiast user.update.
-  Migracja: 20260422201253_spotify_token_trip_convoy_dest
+  Przeniesiono do osobnej tabeli spotify_tokens
+  Plik: prisma/schema.prisma, src/lib/spotify.ts, src/app/api/spotify/
 
-[ZROBIONE] FUNKCJA 35 - STATYSTYKI W BAZIE DANYCH (HISTORIA PODROZY)
-  Pliki: prisma/schema.prisma, src/app/api/trips/route.ts, src/components/map/MapView.tsx
-  Dodano model Trip (trips): userId, vehicleId?, convoyId?, startedAt, endedAt, distanceKm, maxSpeedKmh, avgSpeedKmh, durationMin.
-  Nowy endpoint: GET/POST /api/trips (paginacja, Zod validation).
-  MapView.tsx stopTrip(): po zakonczeniu podrozy wysyla POST /api/trips (best-effort, non-blocking).
+[ZROBIONE] FUNKCJA 35/47 - HISTORIA PODROZY W BAZIE DANYCH
+  Nowy model Trip w schemacie
+  Nowy endpoint: GET/POST /api/trips
+  MapView.tsx stopTrip() -> POST /api/trips (non-blocking)
   Migracja: 20260422201253_spotify_token_trip_convoy_dest
 
 [ZROBIONE] FUNKCJA 40 - WALIDACJA ZOD DLA WSZYSTKICH API
-  Pliki: src/lib/schemas.ts (juz istnieje), plus zastosowanie do pozostalych tras:
-  - src/app/api/friends/route.ts: SendFriendRequestSchema (POST), RespondFriendSchema (PUT)
-  - src/app/api/routes/route.ts: CreateRouteSchema (POST)
-  - src/app/api/users/me/route.ts: UpdateProfileSchema (PATCH), DeleteAccountSchema (DELETE)
-  Wszystkie API routes maja teraz Zod validation.
+  Plik: src/lib/schemas.ts (rozbudowany)
+  Zastosowany w: friends, routes, users/me, trips
 
 [ZROBIONE] FUNKCJA 20 - POLLING -> WEBSOCKET W DASHBOARD
   Plik: src/components/dashboard/HomeScreen.tsx
-  Zmiana: Usunieto setInterval(fetchData, 30000).
-  Dodano socket.io-client: nasluchuje 'new-report' i 'report-vote' -> odswiezenie raporty w okolicy.
-  Dane statyczne (stats, friends) ladowane raz przy montowaniu komponentu.
+  Usunieto setInterval(fetchData, 30000)
+  Socket.IO nasluchuje new-report i report-vote
 
 [ZROBIONE] FUNKCJA 49 - WSPOLNY CEL KONWOJU
-  Pliki: prisma/schema.prisma (destLat, destLng, destName na modelu Convoy),
-  src/app/api/convoy/[id]/route.ts (PATCH obsluguje destLat/destLng/destName),
-  src/components/convoy/ConvoyPanel.tsx (UI dla lidera: geocoding + ustawianie celu),
-  src/stores/useConvoyStore.ts (setConvoyDestination action),
-  src/hooks/useSocket.ts (nasluchuje 'convoy-destination-set'),
-  server.js (emituje 'convoy-destination-set' do pokoju convoy).
+  prisma: destLat, destLng, destName na Convoy
+  src/app/api/convoy/[id]/route.ts (PATCH)
+  src/components/convoy/ConvoyPanel.tsx (UI lidera)
+  src/stores/useConvoyStore.ts (setConvoyDestination)
+  src/hooks/useSocket.ts (nasluchuje convoy-destination-set)
+  server.js (emituje convoy-destination-set)
 
 [ZROBIONE] FUNKCJA 41 - CZAT TEKSTOWY W KONWOJU
-  Pliki: src/components/convoy/ConvoyChat.tsx (nowy komponent),
-  src/components/convoy/ConvoyPanel.tsx (integracja przycisku Czat + ConvoyChat),
-  server.js (obsluguje event 'convoy-chat', broadcast do pokoju convoy).
+  Nowy komponent: src/components/convoy/ConvoyChat.tsx
+  Integracja w ConvoyPanel.tsx
+  server.js (obsluguje convoy-chat)
 
 [ZROBIONE] FUNKCJA 59 - WYSZUKIWARKA ZNAJOMYCH (PO NAZWIE)
   Plik: src/app/api/users/route.ts
-  Dodano: GET /api/users?search=... wyszukuje po name i email (case-insensitive),
-  wyklucza samego uzytkownika, max 20 wynikow.
+  GET /api/users?search=... (case-insensitive, max 20)
 
-[ZROBIONE] FUNKCJA 60 - DARK/LIGHT MODE NA MAPIE - AUTOMATYCZNE PRZELACZANIE
+[ZROBIONE] FUNKCJA 60 - DARK/LIGHT MODE NA MAPIE AUTOMATYCZNY
   Plik: src/components/map/MapView.tsx
-  Zmiana: mapTheme='auto' teraz uzywa is_day z useWeather (Open-Meteo API).
-  W dzien: mapbox://styles/mapbox/navigation-day-v1
-  W nocy: mapbox://styles/mapbox/navigation-night-v1
-  Fallback (brak GPS/weather): pora dnia na podstawie godziny (6:00-20:00 = dzien).
+  mapTheme='auto' uzywa is_day z useWeather
+  Fallback: godzina 6:00-20:00 = dzien
 
 ================================================================================
-             LACZNIE WDROZONO: 34 poprawki + 8 nowych funkcji
+             SESJA 8: LACZNIE 34 poprawki + 8 nowych funkcji
 ================================================================================
 
 ================================================================================
-                     DZIENNIK WDROZONYCH ZMIAN - RUNDA 9
-                     Data wdrozenia: 24 kwietnia 2026
-================================================================================
-
-[ZROBIONE] BLAD #2 - HISTORIA WIADOMOSCI CZATU NIE WYSWIETLALA SIE
-  Problem: Po ponownym otwarciu ConvoyDriveMode historia wiadomosci byla pusta,
-  mimo ze wiadomosci powinny byc zapisane w DB.
-  Przyczyna 1: Brak `export const dynamic = 'force-dynamic'` w route GET
-    - Next.js mogl cachowac odpowiedz GET jesli brak headerow Cache-Control
-  Przyczyna 2: Brak try-catch w GET handlerze
-    - Blad Prismy zwracal HTML 500 zamiast JSON -> JSON.parse rzucal wyjatek
-    -> .catch(() => {}) polknal blad -> messages zostaly puste []
-  Przyczyna 3: Klient nie sprawdzal r.ok przed r.json()
-    - 401/403 trafial jako obiekt do if (!Array.isArray(data)) -> cichy return
-  Plik: src/app/api/convoy/[id]/messages/route.ts
-    - Dodano: export const dynamic = 'force-dynamic'
-    - Dodano: try-catch wokol prisma.convoyMessage.findMany z console.error
-  Plik: src/components/convoy/ConvoyDriveMode.tsx
-    - Fetch historii: sprawdza r.ok, loguje blad ze statusem HTTP, dodano cache: 'no-store'
-    - sendText POST: jawnie wysyla type: 'text' w body (bylo undefined)
-    - Bledy logowane przez console.error zamiast cicho polykane
-
-================================================================================
-             LACZNIE WDROZONO LACZNIE: 35 poprawek + 8 nowych funkcji
-================================================================================
-
-================================================================================
-                     DZIENNIK WDROZONYCH ZMIAN - RUNDA 10
-                     Data wdrozenia: 24 kwietnia 2026
-================================================================================
-
-[ZROBIONE] FUNKCJA - SYSTEM POWIADOMIEN IN-APP (TOASTY)
-
-  Cel: Wyswietlanie powiadomien push w aplikacji (toast 4s) dla kluczowych
-  zdarzen - zaproszenia do znajomych, konwoju, dolaczanie/odchodzenie czlonkow
-  konwoju, nowe raporty drogowe, zmiana celu konwoju.
-
-  Architektura:
-    - Osobne polaczenie Socket.IO ("notification socket") tworzone w nowym hooku
-      useNotifications - niezalezne od socketow convoy/map.
-    - Serwer przechowuje instancje io w global.__socketIo (dostepna z API routes).
-    - Kazdy uzytkownik dolacza do osobistego pokoju socket: user:${userId}.
-    - Powiadomienia convoy (dolaczenie/odejscie czlonka, cel konwoju) wysylane
-      przez pokoj convoy:${convoyId} - hook dolacza do niego gdy uzytkownik
-      jest w konwoju.
-
-  Nowe pliki:
-    src/lib/socket-server.ts
-      - Eksportuje getSocketServer() - zwraca global.__socketIo z logiem ostrzegawczym
-        jezeli global nie jest ustawiony.
-    src/hooks/useNotifications.ts
-      - Hook React: tworzy socket.io, dolacza do user:${userId} i convoy:${convoyId}
-      - Nasluchuje eventow i wywoluje addToast() z useToast()
-      - Odtwarza pokoj convoy gdy convoyId zmienia sie (bez pelnego reconnectu)
-
-  Zmiany w server.js:
-    - global.__socketIo = io  (udostepnienie io dla API routes)
-    - Event 'user-connect': dolacza socket do pokoju user:${userId}
-    - Event 'join-convoy-notify': dolacza socket do pokoju convoy:${convoyId}
-      bez emitowania member-joined (tylko do odbioru powiadomien)
-    - Event 'leave-convoy': teraz przekazuje pole memberName (do wyswietlenia
-      imienia w powiadomieniu o opuszczeniu konwoju)
-
-  Zmiany w API routes:
-    src/app/api/friends/route.ts
-      - POST (wyslij zaproszenie): emituje 'friend-request' do user:${targetUser.id}
-        z payload { fromName, fromId }
-      - PUT (akceptuj zaproszenie): emituje 'friend-accepted' do user:${requesterId}
-        z payload { fromName, fromId }
-    src/app/api/convoy/[id]/invite/route.ts
-      - POST (zaproszenie do konwoju): emituje 'convoy-invite' do user:${userId}
-        z payload { convoyId, convoyName, invitedByName }
-
-  Zmiany w komponentach (leave-convoy payload):
-    src/components/convoy/ConvoyChat.tsx
-    src/components/convoy/ConvoyDriveMode.tsx
-    src/components/convoy/ConvoyMapVoice.tsx
-    src/hooks/useRealTimeLocation.ts
-      - Dodano pole name do emitu 'leave-convoy' - serwer teraz przekazuje
-        memberName w convoy-update, co pozwala wyswietlic imie w towascie.
-
-  Integracja w dashoboardzie:
-    src/app/dashboard/page.tsx
-      - Importy: useSession, useConvoyStore, useNotifications
-      - Na poczatku DashboardPage: useNotifications({ userId, convoyId })
-
-  Powiadomienia (toasty, znikaja po 4 sekundach):
-    Event             | Typ     | Tresc
-    ---               | ---     | ---
-    friend-request    | info    | "X zaprasza Cie do znajomych"
-    friend-accepted   | success | "X zaakceptowal(a) Twoje zaproszenie"
-    convoy-invite     | info    | "X zaproscil(a) Cie do konwoju 'Nazwa'"
-    member-joined     | info    | "X dolaczyl(a) do konwoju"
-    member-left       | info    | "X opuscil(a) konwoj"
-    convoy-destination| info    | "Cel konwoju: Nazwa" / "Cel konwoju zaktualizowany"
-    new-report        | warning | "Nowy raport drogowy w poblizu"
-
-  Stan: Zaimplementowane. Funkcjonalnosc (zaproszenia, konwoj) dziala.
-  Powiadomienia wymagaja dodiagnozowania - toast nie wyskakuje mimo
-  ze socket laczy sie poprawnie (console.log potwierdzony). Logi diagnostyczne
-  pozostawione w kodzie (useNotifications, socket-server, server.js).
-  Prawdopodobna przyczyna: event dociera do socketu ale addToast nie jest
-  wywolywane - do sprawdzenia przy nastepnej sesji.
-
-================================================================================
-             LACZNIE WDROZONO LACZNIE: 35 poprawek + 9 nowych funkcji
-================================================================================
-
-================================================================================
-                     ZNANE BLEDY DO NAPRAWY (priorytet malejacy)
+                     DZIENNIK WDROZONYCH ZMIAN - SESJA 9
+                     Data: 24 kwietnia 2026
 ================================================================================
 
 [ZROBIONE] BLAD #1 - BLAD SERWERA PRZY STARCIE APLIKACJI
-  Naprawione 23 kwietnia 2026.
-  Znalezione 3 przyczyny:
-  1. .next/dev/types/routes.d.ts - uszkodzony plik cache (zduplikowana tresc poza blokiem
-     namespace). Naprawa: usuniecie katalogu .next i przebudowanie.
-  2. src/app/api/auth/[...nextauth]/route.ts - handlers.GET/POST wywolywane z 2 argumentami,
-     ale typ AppRouteHandlers z next-auth akceptuje tylko 1 (req). Usunieto drugi argument ctx.
-  3. src/app/(auth)/reset-password/page.tsx - useSearchParams() bez Suspense boundary.
-     Wyodrebniono ResetPasswordForm do osobnego komponentu, owiniety w <Suspense>.
-  Wynik: npm run build konczy sie bez bledow TypeScript i bez bledow prerenderowania.
+  Znalezione przyczyny i naprawy:
+  1. .next cache usuniete (rm -rf .next)
+  2. src/app/api/auth/[...nextauth]/route.ts - handlers z 1 argumentem (fix)
+  3. src/app/(auth)/reset-password/page.tsx - useSearchParams w Suspense
 
-OPIS PROJEKTU:
-Drive App to aplikacja do wspolnej jazdy samochodem - polaczenie Waze
-z aplikacja spolecznosciowa dla kierowcow.
-Stack: Next.js 16.2.2 + React 19 + TypeScript + Prisma 7 + PostgreSQL
-       + Socket.IO + Mapbox + Zustand
+[ZROBIONE] BLAD #2 - HISTORIA WIADOMOSCI CZATU NIE WYSWIETLALA SIE
+  Plik: src/app/api/convoy/[id]/messages/route.ts
+    Dodano: export const dynamic = 'force-dynamic'
+    Dodano: try-catch wokol prisma.convoyMessage.findMany
+  Plik: src/components/convoy/ConvoyDriveMode.tsx
+    Sprawdza r.ok przed r.json()
+    sendText wysyla type: 'text' jawnie
 
 ================================================================================
-                              CO TRZEBA ZMIENIC
+
+================================================================================
+                     DZIENNIK WDROZONYCH ZMIAN - SESJA 10
+                     Data: 24 kwietnia 2026
 ================================================================================
 
-------------------------------------------------------------
-SEKCJA A: KRYTYCZNE BLEDY (napraw natychmiast)
-------------------------------------------------------------
+[ZROBIONE] FUNKCJA - SYSTEM POWIADOMIEN IN-APP (TOASTY)
+  Nowe pliki:
+    - src/lib/socket-server.ts (getSocketServer() -> global.__socketIo)
+    - src/hooks/useNotifications.ts (hook powiadomien)
+  Zmiany w server.js:
+    - global.__socketIo = io
+    - Event 'user-connect' -> dolacza do user:${userId}
+    - Event 'join-convoy-notify' -> dolacza do convoy:${convoyId}
+    - Event 'leave-convoy' -> przekazuje memberName
+  Zmiany w API:
+    - src/app/api/friends/route.ts (emit friend-request, friend-accepted)
+    - src/app/api/convoy/[id]/invite/route.ts (emit convoy-invite)
+  Powiadomienia (toasty 4s):
+    friend-request, friend-accepted, convoy-invite,
+    member-joined, member-left, convoy-destination-set, new-report
 
-1. SOCKET.IO NIE DZIALA - KRYTYCZNY
-   Plik: src/app/api/socket/route.ts, src/lib/socket.ts
-   Problem:
-     - Socket.IO server jest zdefiniowany w lib/socket.ts ale NIGDY nie jest
-       uruchamiany w Next.js App Router
-     - Plik api/socket/route.ts to tylko health check (zwraca "ok")
-     - Klient (useSocket.ts) probuje polaczyc sie pod NEXT_PUBLIC_SOCKET_URL
-       ktory domyslnie jest pusty - polaczenie zawsze failuje
-     - Wszystkie funkcje real-time NIE DZIALAJA:
-       * live lokalizacja w konwoju
-       * live raporty drogowe
-       * live ceny paliw
-   Jak naprawic:
-     Stworz plik server.ts w root projektu:
+================================================================================
 
-     import { createServer } from 'http';
-     import next from 'next';
-     import { getSocketServer } from './src/lib/socket';
+================================================================================
+                     DZIENNIK WDROZONYCH ZMIAN - SESJA 11
+                     Data: 25-28 kwietnia 2026 (git pull)
+================================================================================
 
-     const app = next({ dev: process.env.NODE_ENV !== 'production' });
-     const handle = app.getRequestHandler();
+[ZROBIONE] GIT PULL - NOWE FUNKCJE Z REPOZYTORIUM
+  Pobrano: 42 pliki, 4974 insercji
+  Nowe modele: Post, PostLike, PostComment, Spot, SpotParticipant,
+               Achievement, (SpotifyToken juz istniał)
+  Nowe API routes: posts/*, spots/*, users/search,
+                   users/[id]/public, trips (juz istniał)
+  Nowe komponenty: SocialFeed.tsx, CreateSpotModal.tsx, SpotMarker.tsx,
+                   EdgePOIIndicators.tsx, MysteryDriveLayer.tsx,
+                   MysteryDriveHUD.tsx, RoutePanel.tsx, SettingsPanel.tsx,
+                   PublicProfileModals.tsx, RouteLayer.tsx
 
-     app.prepare().then(() => {
-       const httpServer = createServer(handle);
-       getSocketServer(httpServer);
-       httpServer.listen(3000, () => {
-         console.log('Server running on port 3000');
-       });
-     });
+[ZROBIONE] FIX: npx prisma generate (po nowych modelach)
+  Przyczyna: git pull dodal nowe modele do schema.prisma ale klient
+  nie byl wygenerowany -> TypeScript errors
+  Naprawa: npx prisma generate + npx prisma migrate deploy
 
-     Zmien package.json:
-     "dev": "ts-node server.ts"
-     "start": "node dist/server.js"
+[ZROBIONE] FIX: Turbopack cache corruption
+  Przyczyna: .next/dev/types uszkodzony po pull
+  Naprawa: rm -rf .next
 
-2. BLAD FILTROWANIA RAPORTOW - KRYTYCZNY
-   Plik: src/app/api/reports/route.ts, linia 43
-   Problem:
-     Kod filtruje raporty po createdAt zamiast expiresAt
-     Aktualnie:  createdAt: { gte: expiryDate }
-     Poprawnie:  expiresAt: { gte: new Date() }
-     Skutek: wygasle raporty moga byc wyswietlane, aktywne pomijane
-   Jak naprawic:
-     Zamien w WHERE:
-     STARE: createdAt: { gte: new Date(Date.now() - REPORT_EXPIRY_HOURS * 3600000) }
-     NOWE:  expiresAt: { gte: new Date() }
+[ZROBIONE] FIX: useAutoSpotDetection - martwy useAuthStore
+  Plik: src/hooks/useAutoSpotDetection.ts
+  Przyczyna: hook uzywal useAuthStore.isAuthenticated (zawsze false)
+  useAuthStore.login() nie jest nigdzie wywolywany w aplikacji
+  Naprawa: zastapiono useSession z next-auth/react
+  Zmiana: const { data: session } = useSession(); const meId = session?.user?.id
 
-3. MUTACJA STANU W useProfileStore - KRYTYCZNY
-   Plik: src/stores/useProfileStore.ts, linie 67-69
-   Problem:
-     removeVehicle: (id) => set((s) => {
-       const remaining = s.vehicles.filter((x) => x.id !== id);
-       remaining[0].isActive = true;  // <-- BEZPOSREDNIA MUTACJA OBIEKTU!
-     })
-     Zustand moze nie wykryc zmiany, React moze nie rerenderowac
-   Jak naprawic:
-     STARE: remaining[0].isActive = true;
-     NOWE:  return {
-              vehicles: remaining.map((x, i) =>
-                i === 0 ? { ...x, isActive: true } : x
-              )
-            };
+[ZROBIONE] FIX: useLocationPing - martwy useAuthStore
+  Plik: src/hooks/useLocationPing.ts
+  Przyczyna: ta sama co wyzej
+  Naprawa: zastapiono useSession z next-auth/react
+  Dodano: useProfileStore dla shareLocation
+  Body fetch: { ..., share: shareLocation }
 
-4. NIEZGODNOSC NAZW EVENTOW SOCKET.IO - KRYTYCZNY
-   Plik: src/hooks/useSocket.ts linia 139 vs src/lib/socket.ts linia 85
-   Problem:
-     Serwer emituje:  socket.broadcast.emit('fuel-price-update', data)
-     Klient slucha:   socket.on('fuel-update', ...)
-     Skutek: aktualizacje cen paliw NIGDY nie docieraja do klientow
-   Jak naprawic:
-     W src/hooks/useSocket.ts zmien:
-     STARE: socket.on('fuel-update', ...)
-     NOWE:  socket.on('fuel-price-update', ...)
+[ZROBIONE] FUNKCJA: Udostepnianie lokalizacji znajomym w czasie rzeczywistym
+  Nowe/zmienione pliki:
+  - src/stores/useMapStore.ts
+    Dodano: FriendLocation interface, friendLocations Record,
+            showFriends boolean, setFriendLocation, removeFriendLocation,
+            clearFriendLocations, toggleLayer rozszerzony o 'showFriends'
+  - src/app/api/users/me/location/route.ts
+    Dodano: share param (Zod), po update lokalizacji emituje
+            friend-location-update do user:${friendId} przez Socket.IO
+  - src/hooks/useNotifications.ts
+    Dodano: listener friend-location-update -> useMapStore.setFriendLocation()
+    Dodano: stale cleanup interval (5 min bez update -> remove)
+  - src/hooks/useSocket.ts
+    Usunieto: friend-location-update listener (przeniesieto do useNotifications)
+  - src/components/map/FriendMarker.tsx (NOWY PLIK)
+    Marker znajomego: niebieski avatar, imie, predkosc, wskaznik
+  - src/components/map/MapView.tsx
+    Dodano: FriendMarker rendering, showFriends/friendLocations ze store
+  - src/app/dashboard/page.tsx
+    Dodano: 'showFriends' do LayerKey, LAYER_CONFIG, layerStates
 
-5. BRAK RATE LIMITINGU - KRYTYCZNY
-   Problem:
-     Zadne API route nie ma limitu zapytan
-     Mozna rejestrowac miliony kont, spamowac raportami, floodowac zaproszeniami
-   Jak naprawic:
-     Zainstaluj: npm install @upstash/ratelimit @upstash/redis
-     Stworz middleware.ts:
+================================================================================
+             SESJA 11: Nowe funkcje z repo + 4 bugfixy + funkcja lokalizacji
+================================================================================
 
-     import { Ratelimit } from '@upstash/ratelimit';
-     import { Redis } from '@upstash/redis';
-     import { NextRequest, NextResponse } from 'next/server';
+================================================================================
+                     DZIENNIK WDROZONYCH ZMIAN - SESJA 12
+                     Data: 28 kwietnia 2026
+================================================================================
 
-     const ratelimit = new Ratelimit({
-       redis: Redis.fromEnv(),
-       limiter: Ratelimit.slidingWindow(10, '10 s'),
-     });
+[ZROBIONE] FIX A1 - useAuthStore w useRealTimeLocation (KRYTYCZNY)
+  Plik: src/hooks/useRealTimeLocation.ts
+  Problem: useAuthStore.user zawsze null -> broadcast nigdy nie dzialal w konwoju
+  Naprawa: zastapiono useSession z next-auth/react, usunieto wywolanie updateLocation()
+  (martwa metoda martwego store). Jazda konwojowa teraz poprawnie broadcastuje pozycje.
 
-     export default async function middleware(req: NextRequest) {
-       const ip = req.ip ?? '127.0.0.1';
-       const { success } = await ratelimit.limit(ip);
-       if (!success) {
-         return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
-       }
-     }
+[ZROBIONE] FIX A4 - useSocket brak path '/api/socketio' (KRYTYCZNY)
+  Plik: src/hooks/useSocket.ts
+  Problem: useSocket laczyl sie z domyslnym '/socket.io' zamiast '/api/socketio'
+  (serwer nasluchuje na '/api/socketio'). Zaden event Socket.IO nie dociera.
+  Naprawa: dodano path: '/api/socketio' do opcji io().
 
-     export const config = {
-       matcher: ['/api/auth/register', '/api/reports', '/api/friends'],
-     };
+[ZROBIONE] FIX A1b - useAuthStore w useSocket (spot handlers)
+  Plik: src/hooks/useSocket.ts
+  Problem: spot-created/spot-updated uzywaly useAuthStore.getState().user?.id -> undefined
+  Naprawa: useSession + meIdRef (ref pattern zeby uniknac stale closure w callbacku).
+  Usunieto import useAuthStore.
 
-------------------------------------------------------------
-SEKCJA B: POWAZNE BLEDY (napraw w ciagu tygodnia)
-------------------------------------------------------------
+[ZROBIONE] FIX B3 - Brak reconnect config w useNotifications
+  Plik: src/hooks/useNotifications.ts
+  Naprawa: dodano reconnection: true, reconnectionAttempts: 10,
+           reconnectionDelay: 1000, reconnectionDelayMax: 30000
 
-6. NIEUZYWANA ZMIENNA onlineFriends
-   Plik: src/components/dashboard/HomeScreen.tsx, linia 181
-   Problem:
-     const onlineFriends = friends.filter((f) => f.isOnline);
-     Zmienna jest zdefiniowana ale nigdzie nie uzywana (dead code)
-   Jak naprawic:
-     Usun te linie lub zacznij jej uzywac w JSX
+[ZROBIONE] FIX B6 - Brak limitu dlugosci wiadomosci konwoju
+  Plik: src/app/api/convoy/[id]/messages/route.ts
+  Naprawa: dodano sprawdzenie message.trim().length > 500 -> 400 Bad Request
 
-7. NIEUZYWANY PARAMETR isDay
-   Plik: src/components/dashboard/HomeScreen.tsx, linia 105
-   Problem:
-     // unused but satisfies TS
-     void isDay;
-     Parametr isDay jest przekazywany do WeatherIcon ale nie uzywany
-   Jak naprawic:
-     Albo usun prop isDay z WeatherIcon, albo uzyj go do pokazywania
-     ikony slonca vs ksiezyca w zaleznosci od pory dnia
+[ZROBIONE] FIX ConvoyChat - join-convoy zamiast join-convoy-notify
+  Plik: src/components/convoy/ConvoyChat.tsx
+  Problem: ConvoyChat emitowal 'join-convoy' ktore wywoluje broadcast member-joined
+  po stronie serwera. Kazde otwarcie czatu = falszywe "X dolaczyl do konwoju".
+  Naprawa: zamieniono na 'join-convoy-notify' (tylko subskrypcja pokoju czatu).
+  Takze: przeniesiono emit do handler 'connect' (pewnosc ze socket jest polaczony).
+  Dodano: opcje reconnect identyczne jak useNotifications.
 
-8. nearbyReportsCount LICZY GLOBALNE RAPORTY
-   Plik: src/app/api/dashboard/stats/route.ts, linie 40-43
-   Problem:
-     prisma.report.count({ where: { expiresAt: { gte: now } } })
-     Nie ma filtra po lokalizacji! Liczy WSZYSTKIE raporty w bazie,
-     nie tylko w poblizu uzytkownika
-   Jak naprawic:
-     Albo usun "nearby" z nazwy i przemianuj na totalActiveReports,
-     albo przyjmij lat/lng jako parametry i filtruj po bounding box
+================================================================================
+             SESJA 12: 6 napraw (3 krytyczne, 2 powazne, 1 sredni)
+================================================================================
 
-9. FuelPrice.updatedAt NIE AKTUALIZUJE SIE
-   Plik: prisma/schema.prisma, linia 157
-   Problem:
-     updatedAt DateTime @default(now())
-     Brak @updatedAt - pole nigdy nie jest aktualizowane przy zmianie ceny!
-   Jak naprawic:
-     STARE: updatedAt DateTime @default(now())
-     NOWE:  updatedAt DateTime @updatedAt
-     Potem: npx prisma migrate dev --name fix-fuelprice-updatedat
+================================================================================
+                     DZIENNIK WDROZONYCH ZMIAN - SESJA 13
+                     Data: 28 kwietnia 2026
+================================================================================
 
-10. MAPVIEW.TSX MA 1264 LINII - ZA DUZY KOMPONENT
-    Plik: src/components/map/MapView.tsx
-    Problem:
-      Jeden komponent zawiera: logike nawigacji, rejestrowanie podrozy,
-      wyszukiwanie, limit predkosci, renderowanie UI, fetch danych, 18 useState
-      To jest tzw. "God Component" - trudny w utrzymaniu i debugowaniu
-    Jak naprawic:
-      Podziel na osobne pliki:
-      - src/components/map/NavigationHUD.tsx  (~200 linii)
-      - src/components/map/TripRecorder.tsx   (~150 linii)
-      - src/components/map/SearchPanel.tsx    (~150 linii)
-      - src/components/map/SpeedLimitModal.tsx (~80 linii)
-      - src/components/map/SpeedIndicator.tsx (~50 linii)
-      - src/components/map/TripSummaryModal.tsx (~100 linii)
-      - src/hooks/useNavigation.ts
-      - src/hooks/useTripRecorder.ts
-      - src/hooks/useMapData.ts
+[ZROBIONE] FIX C3 - Brak Content-Security-Policy (CSP)
+  Plik: next.config.ts
+  Dodano naglowek Content-Security-Policy:
+    default-src 'self'
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' (wymagane przez Next.js)
+    style-src 'self' 'unsafe-inline' (wymagane przez Mapbox GL)
+    img-src 'self' data: blob: *.mapbox.com *.googleapis.com *.googleusercontent.com *.githubusercontent.com
+    connect-src 'self' wss: ws: *.mapbox.com events.mapbox.com api.open-meteo.com api.spotify.com
+    worker-src blob: (wymagane przez Mapbox GL workers)
+    child-src blob:
+    font-src 'self' data:
 
-11. DUPLIKACJA FUNKCJI HAVERSINE 3 RAZY
-    Pliki:
-      - src/lib/utils.ts (calculateDistance)
-      - src/hooks/useRealTimeLocation.ts (haversineDistance)
-      - src/components/map/MapView.tsx (haversineMeters)
-    Problem: ta sama funkcja obliczania odleglosci w 3 miejscach
-    Jak naprawic:
-      Stworz src/lib/geo.ts:
+[ZROBIONE] FIX SEC3 - Brak limitu rozmiaru wiadomosci Socket.IO
+  Plik: server.js
+  Dodano: maxHttpBufferSize: 1e6 (1 MB max per Socket.IO message)
+  Zapobiega OOM przez wielkie payloady przez WebSocket.
 
-      export function haversineMeters(
-        lat1: number, lon1: number,
-        lat2: number, lon2: number
-      ): number {
-        const R = 6371000;
-        const toRad = (d: number) => (d * Math.PI) / 180;
-        const dLat = toRad(lat2 - lat1);
-        const dLon = toRad(lon2 - lon1);
-        const a =
-          Math.sin(dLat / 2) ** 2 +
-          Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      }
+================================================================================
+             SESJA 13: 2 poprawki bezpieczenstwa
+================================================================================
 
-      Potem we wszystkich miejscach: import { haversineMeters } from '@/lib/geo'
+================================================================================
+                     ZNANE BLEDY DO NAPRAWY (AKTUALNY STAN)
+================================================================================
 
-12. DUPLIKACJA FUNKCJI timeAgo
-    Pliki:
-      - src/lib/utils.ts
-      - src/components/dashboard/HomeScreen.tsx (lokalna kopia!)
-    Jak naprawic:
-      Usun lokalna definicje z HomeScreen.tsx i importuj z utils.ts:
-      import { timeAgo } from '@/lib/utils';
-
-13. DUPLIKACJA ETYKIET RAPORTOW
-    Pliki:
-      - src/types/index.ts (REPORT_TYPE_LABELS)
-      - src/components/dashboard/HomeScreen.tsx (REPORT_LABELS - inna wersja)
-    Jak naprawic:
-      Usun REPORT_LABELS z HomeScreen.tsx, uzyj REPORT_TYPE_LABELS z types/index.ts
-
-14. DUPLIKACJA INTERFEJSU User
-    Pliki:
-      - src/types/index.ts (User z image, latitude, longitude)
-      - src/stores/useAuthStore.ts (User z avatarUrl, location)
-    Problem: dwa rozne typy dla tego samego konceptu, moga wyjsc z synchronizacji
-    Jak naprawic:
-      W useAuthStore.ts:
-      STARE: export interface User { id, name, email, avatarUrl?, location? }
-      NOWE:  import type { User } from '@/types';
-             // i dostosuj pola avatarUrl -> image
-
-15. BRAK NAGLOWKOW BEZPIECZENSTWA HTTP
-    Plik: next.config.ts
-    Problem: brak naglowkow Content-Security-Policy, X-Frame-Options itp.
-    Jak naprawic:
-      W next.config.ts dodaj:
-
-      async headers() {
-        return [
-          {
-            source: '/(.*)',
-            headers: [
-              { key: 'X-Frame-Options', value: 'DENY' },
-              { key: 'X-Content-Type-Options', value: 'nosniff' },
-              { key: 'X-XSS-Protection', value: '1; mode=block' },
-              { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-              {
-                key: 'Permissions-Policy',
-                value: 'camera=(), microphone=(), geolocation=(self)'
-              },
-            ],
-          },
-        ];
-      }
+Legenda:
+  [KRYTYCZNY]  - powoduje niedzialanie funkcji lub crash
+  [POWAZNY]    - pogarszanie doswiadczenia uzytkownika
+  [SREDNI]     - problemy techniczne bez bezposredniego skutku UI
+  [NISKI]      - kosmetyczne, optymalizacyjne
 
 ------------------------------------------------------------
-SEKCJA C: SREDNIE PROBLEMY (nastepne sprinty)
+SEKCJA A: AKTYWNE BLEDY KRYTYCZNE
 ------------------------------------------------------------
 
-16. BRAK PAGINACJI NA LISTACH
-    Pliki:
-      - src/app/api/routes/route.ts (wszystkie trasy na raz)
-      - src/app/api/friends/route.ts (wszyscy znajomi na raz)
-    Jak naprawic:
-      Dodaj parametry ?page=0&limit=20 i uzyj take/skip w Prisma:
-      const routes = await prisma.route.findMany({
-        where: { userId: session.user.id },
-        orderBy: { createdAt: 'desc' },
-        take: 20,
-        skip: page * 20,
-      });
-
-17. WALIDACJA URL OBRAZU PROFILOWEGO
-    Plik: src/app/api/users/me/route.ts, linia 99-107
+A1. useAuthStore - MARTWY STORE [KRYTYCZNY]
+    Plik: src/stores/useAuthStore.ts
     Problem:
-      if (image !== undefined) {
-        updateData.image = image;  // brak walidacji!
-      }
-      Mozna wpisac "javascript:alert('XSS')" jako URL obrazu
+      useAuthStore.login() nie jest nigdzie wywolywany w aplikacji.
+      Wszystkie komponenty ktore sprawdzaja useAuthStore.isAuthenticated
+      otrzymuja zawsze false.
+      ZNANE OFIARY: useAutoSpotDetection (naprawiony), useLocationPing (naprawiony)
+    Oczekiwane ofiary (do sprawdzenia):
+      Wyszukaj w calym projekcie: useAuthStore (s) => s.isAuthenticated
+      i useAuthStore (s) => s.user
+      Jesli jakikolwiek komponent lub hook uzywa tych wartosci bez useSession,
+      moze byc broken.
     Jak naprawic:
-      try {
-        const url = new URL(image);
-        if (!['http:', 'https:'].includes(url.protocol)) {
-          return NextResponse.json({ error: 'Invalid image URL' }, { status: 400 });
-        }
-      } catch {
-        return NextResponse.json({ error: 'Invalid image URL' }, { status: 400 });
-      }
+      Opcja A (zalecana): Usuń useAuthStore, wszedzie zastap useSession
+      Opcja B: Zainicjalizuj store po zalogowaniu przez useEffect w RootLayout
+        const { data: session } = useSession();
+        useEffect(() => {
+          if (session?.user) {
+            useAuthStore.getState().setUser(session.user);
+          } else {
+            useAuthStore.getState().logout();
+          }
+        }, [session]);
 
-18. BRAK WERYFIKACJI PRZY USUWANIU KONTA
-    Plik: src/app/api/users/me/route.ts
+A2. Rate limiter in-memory nie skaluje sie [KRYTYCZNY dla multi-instance]
+    Plik: src/lib/rateLimit.ts
     Problem:
-      DELETE() usuwa konto bez zadnego potwierdzenia (haslo, email itp.)
+      Sliding window oparty na Map w pamieci.
+      Przy wielu instancjach serwera (np. Vercel scaling) kazda instancja
+      ma osobna mape -> faktyczny limit jest N razy wyzszy niz skonfigurowany.
+      Na produkcji jednotka nalezy podmienic na Redis.
     Jak naprawic:
-      export async function DELETE(request: NextRequest) {
-        const { password } = await request.json();
-        const user = await prisma.user.findUnique({ where: { id: session.user.id } });
-        const isValid = await bcrypt.compare(password, user.password);
-        if (!isValid) {
-          return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
-        }
-        await prisma.user.delete({ where: { id: session.user.id } });
-      }
-
-19. PROSTA IMPLEMENTACJA cn() BEZ TAILWIND-MERGE
-    Plik: src/lib/utils.ts
-    Problem:
-      cn('text-red-500', 'text-blue-500') zwroci "text-red-500 text-blue-500"
-      zamiast tylko "text-blue-500" - konflikty klas Tailwind
-    Jak naprawic:
-      npm install clsx tailwind-merge
-
-      import { clsx, type ClassValue } from 'clsx';
-      import { twMerge } from 'tailwind-merge';
-
-      export function cn(...inputs: ClassValue[]) {
-        return twMerge(clsx(inputs));
-      }
-
-20. POLLING CO 30 SEKUND ZAMIAST WEBSOCKET
-    Plik: src/components/dashboard/HomeScreen.tsx, linia 177
-    Problem:
-      setInterval(fetchData, 30000)
-      Przy 1000 uzytkownikach = 2000 zapytan/minute
-    Jak naprawic (po naprawieniu Socket.IO):
-      Zamiast setInterval, uzyj Socket.IO do push updates:
-      socket.on('dashboard-update', (data) => {
-        setStats(data.stats);
-        setFriends(data.onlineFriends);
-      });
-
-21. REACT.MEMO BRAK NA MARKERACH MAPY
-    Pliki:
-      - src/components/map/ReportMarker.tsx
-      - src/components/map/ConvoyMarker.tsx
-      - src/components/map/FuelStationMarker.tsx
-    Problem: markery re-renderuja przy kazdej zmianie state mapy
-    Jak naprawic:
-      export default React.memo(function ReportMarker({ report }) {
-        // ...
-      }, (prev, next) => prev.report.id === next.report.id &&
-                          prev.report.upvotes === next.report.upvotes);
-
-22. TOKENY SPOTIFY W TABELI USERS
-    Plik: prisma/schema.prisma, linie 44-46
-    Problem:
-      spotifyAccessToken  String?
-      spotifyRefreshToken String?
-      spotifyExpiresAt    DateTime?
-      Sa w modelu User - przy kazdym zapytaniu o usera ladowane sa tez tokeny
-    Jak naprawic:
-      Stworz osobny model SpotifyToken:
-
-      model SpotifyToken {
-        id           String   @id @default(cuid())
-        userId       String   @unique
-        accessToken  String
-        refreshToken String
-        expiresAt    DateTime
-        user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-        @@map("spotify_tokens")
-      }
-
-      Usuń trzy pola ze modelu User i zaktualizuj src/lib/spotify.ts
-
-23. BRAK INDEKSOW W BAZIE DANYCH
-    Plik: prisma/schema.prisma
-    Problem: brak indeksow na czesto filtrowanych polach
-    Jak naprawic - dodaj do schematu:
-
-      model Friendship {
-        @@index([requesterId, status])
-        @@index([addresseeId, status])
-      }
-
-      model Convoy {
-        @@index([ownerId])
-      }
-
-      model Report {
-        @@index([userId])
-        @@index([expiresAt, latitude, longitude])
-      }
-
-      model Route {
-        @@index([userId, createdAt])
-      }
-
-    Potem: npx prisma migrate dev --name add-missing-indexes
-
-24. BRAK AUTOMATYCZNEGO USUWANIA WYGASLYCH RAPORTOW
-    Problem: raporty maja pole expiresAt ale nigdy nie sa usuwane z bazy
-    Baza bedzie sie zapelniac martwymi rekordami
-    Jak naprawic:
-      Dodaj cron job (np. Vercel Cron lub node-cron):
-
-      // src/app/api/cron/cleanup/route.ts
-      export async function GET() {
-        const deleted = await prisma.report.deleteMany({
-          where: { expiresAt: { lt: new Date() } },
+      npm install @upstash/ratelimit @upstash/redis
+      W rateLimit.ts zastap Map oparty limiter Upstash:
+        import { Ratelimit } from '@upstash/ratelimit';
+        import { Redis } from '@upstash/redis';
+        const ratelimit = new Ratelimit({
+          redis: Redis.fromEnv(),
+          limiter: Ratelimit.slidingWindow(10, '60s'),
         });
-        return NextResponse.json({ deleted: deleted.count });
-      }
 
-25. NEXTAUTH v5 JEST W BETA
-    Plik: package.json
+A3. Brak walidacji Content-Type w API routes [POWAZNY/KRYTYCZNY]
     Problem:
-      "next-auth": "^5.0.0-beta.30"
-      Beta wersja na produkcji - API moze sie zmienic bez ostrzezenia
-    Opcje:
-      a) Poczekaj na stable release NextAuth v5
-      b) Cofnij do stabilnego NextAuth v4: npm install next-auth@^4
-      c) Zostaw ale monitoruj changelogi
-
-26. MAPBOX TOKEN PUBLICZNY UZYWANY DO SERVER-SIDE REQUESTOW
-    Plik: src/app/api/fuel/route.ts, linia 5
-    Problem:
-      const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-      NEXT_PUBLIC_ token jest widoczny w bundlu JS klienta
-      Ten sam token uzywany do server-side requestow do Mapbox - bezpieczniej
-      miec osobny prywatny token
+      Większość API routes wywoluje request.json() bez sprawdzania
+      Content-Type: application/json. Jesli klient wysle XML lub plain text,
+      request.json() rzuci wyjatek powodujac 500 zamiast 400.
     Jak naprawic:
-      W .env.local dodaj osobny token:
-      MAPBOX_SERVER_TOKEN=sk.xxx  (Secret key, nie public)
-
-      W api/fuel/route.ts:
-      const MAPBOX_TOKEN = process.env.MAPBOX_SERVER_TOKEN;
-
-27. POLOWANIE PREDKOSCI - ZLA LOGIKA THROTTLE
-    Plik: src/hooks/useRealTimeLocation.ts, linia 74
-    Problem:
-      if (timeDelta < broadcastInterval && distance < distanceThreshold) {
-        return; // pomij broadcast
-      }
-      Logika AND jest bledna - broadcast powinien byc wysylany gdy:
-      MINAL czas LUB uzytkownik sie przesunal (logika OR)
-    Jak naprawic:
-      STARE: if (timeDelta < broadcastInterval && distance < distanceThreshold)
-      NOWE:  if (timeDelta < broadcastInterval && distance < distanceThreshold)
-             Paradoksalnie AND jest OK dla POMIJANIA, ale problem jest inny:
-             Powinno byc: broadcast jesli timeDelta >= interval OR distance >= threshold
-
-28. WALIDACJA EMAIL ZA SLABA
-    Plik: src/app/api/auth/register/route.ts, linia 17
-    Problem:
-      if (!email.includes("@"))
-      "a@" jest uznawane za prawidlowy email
-    Jak naprawic:
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
-      }
-      Lub zainstaluj Zod: z.string().email()
-
-29. BRAK WALIDACJI SILY HASLA
-    Plik: src/app/api/auth/register/route.ts
-    Problem:
-      Jedyne wymaganie: dlugosc >= 8 znakow
-      Haslo "aaaaaaaa" zostanie zaakceptowane
-    Jak naprawic:
-      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-      if (!passwordRegex.test(password)) {
-        return NextResponse.json({
-          error: 'Haslo musi miec min 8 znakow, wielka litere i cyfre'
-        }, { status: 400 });
-      }
-
-30. BRAK MIDDLEWARE AUTH DLA ROUTOW NEXT.JS
-    Plik: brak middleware.ts
-    Problem:
-      Ochrona stron jest tylko przez client-side AuthGuard
-      Uzytkownik moze "zobaczyc" strony przez SSR zanim przekierowanie nastapi
-    Jak naprawic:
-      Stworz src/middleware.ts:
-
-      import { auth } from './src/lib/auth';
-
-      export default auth((req) => {
-        if (!req.auth && req.nextUrl.pathname.startsWith('/dashboard')) {
-          return Response.redirect(new URL('/login', req.url));
+      Dodaj do kazdej route obslugujacej body:
+        const ct = request.headers.get('content-type') ?? '';
+        if (!ct.includes('application/json')) {
+          return NextResponse.json({ error: 'Content-Type must be application/json' }, { status: 415 });
         }
-      });
 
-      export const config = {
-        matcher: ['/dashboard/:path*', '/settings/:path*'],
-      };
-
-31. BRAK TESTOW - CALKOWITY
+A4. useNotifications tworzy socket bez path - moze nie dotrzec do serwera [POWAZNY]
+    Plik: src/hooks/useNotifications.ts, linia 26
     Problem:
-      Brak jakichkolwiek testow: unit, integration, e2e
-      Aplikacja o takiej zlozonosci (glosowania, konwoje, nawigacja) wymaga testow
-    Jak naprawic:
-      Zainstaluj: npm install -D vitest @testing-library/react @testing-library/user-event
+      socket = io(url, { path: '/api/socketio', ... })
+      server.js nasluchuje na domyslnym path '/socket.io'
+      JESLI serwer ma path '/api/socketio' to ok, ale jesli nie - polaczenie failuje.
+    Do weryfikacji: sprawdz konfiguracje path w server.js
+    Jak naprawic (jesli niezgodnosc):
+      Usun path: '/api/socketio' z useNotifications i useSocket
+      lub dostosuj do faktycznego path serwera
 
-      W package.json dodaj:
-      "test": "vitest",
-      "test:ui": "vitest --ui"
+------------------------------------------------------------
+SEKCJA B: AKTYWNE BLEDY POWAZNE
+------------------------------------------------------------
 
-      Przykladowy test:
-      // __tests__/lib/utils.test.ts
-      import { describe, it, expect } from 'vitest';
-      import { haversineMeters } from '@/lib/geo';
-
-      describe('haversineMeters', () => {
-        it('returns 0 for same coordinates', () => {
-          expect(haversineMeters(52, 21, 52, 21)).toBe(0);
-        });
-      });
-
-32. CONVOY ROUTE - ZLA SEMANTYKA REST
-    Plik: src/app/api/convoy/route.ts
-    Problem:
-      PUT /api/convoy przyjmuje convoyId w body - niezgodne z REST
-      DELETE /api/convoy przyjmuje convoyId przez searchParams
-    Jak naprawic:
-      PUT    /api/convoy       -> PUT    /api/convoy/[id]
-      DELETE /api/convoy?id=x -> DELETE /api/convoy/[id]
-
-33. BRAK TRANSAKCJI PRZY USUWANIU KONWOJU
-    Plik: src/app/api/convoy/route.ts, linia 222-228
-    Problem:
-      await prisma.convoyMember.deleteMany({ where: { convoyId } });
-      await prisma.convoy.delete({ where: { id: convoyId } });
-      Dwie osobne operacje - jesli druga failuje mamy niespojnosc
-    Jak naprawic:
-      await prisma.$transaction([
-        prisma.convoyMember.deleteMany({ where: { convoyId } }),
-        prisma.convoy.delete({ where: { id: convoyId } }),
-      ]);
-
-34. RACE CONDITION W GLOSOWANIU NA RAPORTY
-    Plik: src/app/api/reports/[id]/vote/route.ts
-    Problem:
-      findUnique -> (opoznienie) -> create/delete
-      Dwa rownolegle requesty moga obydwa przejsc przez findUnique
-      i obydwa probowac stworzyc glos (unique constraint error)
-    Jak naprawic:
-      Uzyj upsert zamiast find + create:
-      await prisma.reportVote.upsert({
-        where: { reportId_userId: { reportId, userId: session.user.id } },
-        update: { isUpvote },
-        create: { reportId, userId: session.user.id, isUpvote },
-      });
-
-35. STATYSTYKI PRZECHOWYWANE TYLKO LOKALNIE
+B1. useStatsStore - statystyki tylko w localStorage [POWAZNY]
     Plik: src/stores/useStatsStore.ts
     Problem:
-      Statystyki (km, max speed, przejazdy) sa w localStorage
-      Zmiana urzadzenia = utrata calej historii
+      Statystyki (km, max speed, liczba podrozy) sa w localStorage.
+      Zmiana urzadzenia = utrata historii.
+      Model Trip istnieje w bazie (naprawiony w sesji 8) ale useStatsStore
+      nie jest zsynchronizowany z baza - sa to dwa osobne systemy.
     Jak naprawic:
-      Dodaj do bazy danych model TripStats i synchronizuj po zakonczeniu podrozy:
-      Po wywolaniu recordTrip() wyslij tez POST /api/stats z danymi
+      Po kazdym recordTrip() w useStatsStore wysylaj tez POST /api/trips
+      (juz dziala z MapView.stopTrip(), ale useStatsStore moze miec swoja logike)
+      Usun/zdeprecjonuj useStatsStore, zastap fetch /api/trips
 
-================================================================================
-                              CO DODAC (NOWE FUNKCJE)
-================================================================================
+B2. Brak obslugi bledu przy fetch w wielu komponentach [POWAZNY]
+    Przykladowe pliki: HomeScreen.tsx, ConvoyPanel.tsx, FriendsList.tsx
+    Problem:
+      Wiele komponentow wywoluje fetch() bez try-catch lub sprawdzania response.ok.
+      Blad serwera (500) pojawia sie jako "Loading..." na zawsze lub crash.
+    Jak naprawic:
+      Wzorzec:
+        const res = await fetch('/api/...');
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error ?? `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+
+B3. Brak WebSocket reconnect w useNotifications [POWAZNY]
+    Plik: src/hooks/useNotifications.ts
+    Problem:
+      useNotifications tworzy socket bez reconnection: true.
+      Domyslna Socket.IO reconnection jest wlaczona ale nie jest
+      jawnie skonfigurowana. Po dluzszej przerwie socket moze byc rozlaczony
+      i powiadomienia nie dochodza.
+    Jak naprawic:
+      const socket = io(url, {
+        path: '/socket.io',
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 30000,
+      });
+
+B4. Stale closure w useNotifications dla addToast [SREDNI/POWAZNY]
+    Plik: src/hooks/useNotifications.ts
+    Problem:
+      Kod uzywa addToastRef.current = addToast (pattern ref dla stale closure).
+      To jest poprawny wzorzec. ALE socket.on callbacks czytaja addToastRef.current
+      co jest poprawne. Jednak po ponownym polaczeniu (reconnect) stare listenery
+      moga zostac dodane ponownie jesli nie sa usuwane.
+    Do weryfikacji: czy socket.removeAllListeners() jest wywolywane przed
+    dodaniem nowych listenerow przy reconnect
+
+B5. ConvoyDriveMode - brak cleanup socket przy odmontowaniu [POWAZNY]
+    Plik: src/components/convoy/ConvoyDriveMode.tsx
+    Problem (prawdopodobny):
+      Jesli ConvoyDriveMode ma lokalne socket.on() handlery,
+      moga nie byc czyszczone przy unmount.
+    Do weryfikacji: sprawdz czy return () => { socket.off(...) } jest w useEffect
+
+B6. Brak limitowania rozmiaru wiadomosci ConvoyChat [SREDNI]
+    Plik: src/app/api/convoy/[id]/messages/route.ts
+    Problem:
+      Brak walidacji dlugosci wiadomosci.
+      Uzytkownik moze wyslac wiadomosc o 1MB.
+    Jak naprawic:
+      W schemacie Zod:
+        text: z.string().min(1).max(500).trim()
+
+B7. SocialFeed - brak paginacji przy scrollowaniu [SREDNI]
+    Plik: src/components/social/SocialFeed.tsx
+    Problem:
+      Prawdopodobnie laduje wszystkie posty na raz bez infinite scroll.
+    Jak naprawic:
+      Dodaj IntersectionObserver + page state + ?page=N do GET /api/posts
 
 ------------------------------------------------------------
-SEKCJA D: PRIORYTET WYSOKI - Funkcje niezbedne
+SEKCJA C: SREDNIE PROBLEMY
 ------------------------------------------------------------
 
-36. SYSTEM POWIADOMIEN PUSH (Web Push API)
+C1. NextAuth v5 beta na produkcji [SREDNI]
+    Plik: package.json
+    Problem: "next-auth": "^5.0.0-beta.30" - beta API moze sie zmienic
+    Opcje:
+      a) Poczekaj na stable NextAuth v5
+      b) Cofnij do NextAuth v4
+      c) Zostaw i monitoruj changelogi
+
+C2. server.js - brak typowania TypeScript [SREDNI]
+    Plik: server.js
+    Problem: Plain JavaScript bez TypeScript -> brak type safety
+    Jak naprawic:
+      Zmien na server.ts + ts-node lub tsx:
+        npm install -D tsx
+        package.json: "dev": "tsx server.ts"
+
+C3. Brak CSP (Content-Security-Policy) [SREDNI]
+    Plik: next.config.ts
+    Problem:
+      X-Frame-Options i inne naglowki sa, ale brak CSP.
+      CSP chroni przed XSS, data injection.
+    Jak dodac:
+      W async headers() dodaj:
+        {
+          key: 'Content-Security-Policy',
+          value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' *.mapbox.com; connect-src 'self' wss: *.mapbox.com open-meteo.com api.spotify.com; img-src 'self' data: *.mapbox.com *.githubusercontent.com; style-src 'self' 'unsafe-inline'"
+        }
+
+C4. Brak HTTPS wymuszenia [SREDNI]
+    Problem:
+      Aplikacja dziala przez HTTP. Brak Strict-Transport-Security header.
+      Hasla i tokeny widoczne w sieci jesli nie ma HTTPS.
+    Jak naprawic:
+      Na produkcji: dodaj naglowek HSTS
+        { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' }
+      Zapewnij HTTPS przez Vercel / nginx / Cloudflare
+
+C5. Brakujace zmienne srodowiskowe - brak walidacji startu [SREDNI]
+    Problem:
+      Jesli NEXT_PUBLIC_MAPBOX_TOKEN, DATABASE_URL lub NEXTAUTH_SECRET
+      sa puste, aplikacja crashuje nie informujac czytelnie o przyczynie.
+    Jak naprawic:
+      Stwórz src/lib/env.ts:
+        import { z } from 'zod';
+        const envSchema = z.object({
+          DATABASE_URL: z.string().url(),
+          NEXTAUTH_SECRET: z.string().min(32),
+          NEXT_PUBLIC_MAPBOX_TOKEN: z.string().startsWith('pk.'),
+        });
+        export const env = envSchema.parse(process.env);
+      Import w server.js na poczatku
+
+C6. Brak obslugi CORS dla Socket.IO [SREDNI]
+    Plik: server.js
+    Problem:
+      Jesli frontend i backend sa na innych domenach, Socket.IO
+      odrzuca polaczenia przez brak CORS headers.
+    Jak naprawic:
+      W socket.io inicjalizacji:
+        const io = new Server(httpServer, {
+          cors: {
+            origin: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+            methods: ['GET', 'POST'],
+            credentials: true,
+          },
+        });
+
+C7. Mapa statyczna w dashboardzie - platne requesty Mapbox [NISKI/SREDNI]
+    Plik: src/components/dashboard/HomeScreen.tsx
+    Problem:
+      Kazde otwarcie dashboard = request do Mapbox Static Images API (platny).
+    Jak naprawic opcja A:
+      Zastap malym react-map-gl bez dodatkowych kosztow
+    Jak naprawic opcja B:
+      Cachuj URL z lat/lng przez sessionStorage
+
+C8. Brak obslugi offline / PWA [SREDNI]
+    Problem:
+      Brak Service Worker, brak trybu offline, brak moliwosci instalacji.
+    Jak wdrozyc:
+      npm install next-pwa
+      public/manifest.json z ikonami
+      Service Worker do cachowania tras mapy
+
+C9. Brak kompresji odpowiedzi serwera [NISKI]
+    Plik: server.js
+    Problem:
+      Brak kompresji gzip/brotli.
+    Jak naprawic:
+      npm install compression
+      app.use(compression())
+
+C10. Brak logow strukturalnych (structured logging) [SREDNI]
+    Problem:
+      Wszystkie logi to console.log bez poziomu, kontekstu, trace ID.
+      Na produkcji nie mozna filtrować bledów.
+    Jak naprawic:
+      npm install pino pino-http
+      W server.js: const logger = pino(); app.use(pinoHttp({ logger }));
+
+------------------------------------------------------------
+SEKCJA D: SZYBKIE POPRAWKI (< 30 minut)
+------------------------------------------------------------
+
+D1. Dodaj .env.example do repo
+    Utwórz plik .env.example z listą wymaganych zmiennych:
+      DATABASE_URL=postgresql://...
+      NEXTAUTH_SECRET=...
+      NEXTAUTH_URL=http://localhost:3000
+      NEXT_PUBLIC_MAPBOX_TOKEN=pk.xxx
+      MAPBOX_SERVER_TOKEN=sk.xxx
+      CRON_SECRET=...
+      SPOTIFY_CLIENT_ID=...
+      SPOTIFY_CLIENT_SECRET=...
+      SMTP_HOST=...
+      SMTP_USER=...
+      SMTP_PASSWORD=...
+
+D2. Dodaj httpOnly cookie dla Socket auth [BEZPIECZENSTWO]
+    Problem:
+      Socket.IO auth jest wysylany przez obiekt auth w io() opcjach.
+      Token powinien byc wysylany przez cookie (httpOnly) nie przez JS.
+    Krotkoterminowe: upewnij sie ze token JWT pochodzi z cookie sesji NextAuth
+    nie jest przechowywany w localStorage
+
+D3. Dodaj error boundary do MapView [STABILNOSC]
+    Plik: src/components/map/MapView.tsx
+    Mapbox GL moze rzucac nieobsluzane wyjatki przy zmianach stylu.
+    Dodaj React Error Boundary wokol <Map>:
+      class MapErrorBoundary extends React.Component { ... }
+
+D4. Ogranicz dlugos opisu raportu na frontend [UX]
+    Plik: src/components/reports/ReportPanel.tsx
+    Dodaj maxLength={500} do textarea i licznik znakow
+    Odpowiada to walidacji backend (z.string().max(500))
+
+D5. Dodaj title i meta description do stron [SEO]
+    Plik: src/app/dashboard/page.tsx, src/app/(auth)/login/page.tsx
+    Dodaj:
+      export const metadata: Metadata = {
+        title: 'Drive App - Dashboard',
+        description: 'Twoja aplikacja do wspólnej jazdy',
+      };
+
+================================================================================
+
+================================================================================
+                     CO DODAC (NOWE FUNKCJE)
+================================================================================
+
+Legenda priorytetu:
+  [WYSOKI]   - fundamentalne dla doswiadczenia uzytkownika, dodaj w ciagu miesiaca
+  [SREDNI]   - przydatne, dodaj w ciagu kwartalu
+  [NISKI]    - nice-to-have, przyszle sprinty
+  [FUTURE]   - duze, wymagajace decyzji architektonicznych
+
+------------------------------------------------------------
+SEKCJA E: PRIORYTET WYSOKI
+------------------------------------------------------------
+
+E1. System powiadomien PUSH (Web Push API) [WYSOKI]
     Dlaczego wazne:
-      Aplikacja drogowa potrzebuje alertow gdy uzytkownik nie ma jej otwartej
+      Aplikacja drogowa potrzebuje alertow gdy uzytkownik nie ma jej otwartej.
+      Aktualnie powiadomienia dzialaja tylko gdy aplikacja jest otwarta (socket).
     Co dodac:
       - Powiadomienie gdy znajomy dolacza do konwoju
       - Powiadomienie gdy w okolicy (< 2 km) pojawi sie nowy raport
       - Powiadomienie przy zaproszeniu do konwoju
       - Powiadomienie gdy cena paliwa na ulubionej stacji spadnie
-    Jak wdrozyc:
+    Implementacja:
       1. npm install web-push
-      2. Wygeneruj klucze VAPID: npx web-push generate-vapid-keys
-      3. Stworz Service Worker: public/sw.js
-      4. Dodaj model do bazy:
-         model PushSubscription {
-           id        String @id @default(cuid())
-           userId    String
-           endpoint  String @unique
-           auth      String
-           p256dh    String
-           user      User   @relation(...)
-         }
-      5. Endpoint API: POST /api/push/subscribe
-      6. Wyslij powiadomienie: webpush.sendNotification(subscription, payload)
+      2. npx web-push generate-vapid-keys
+      3. public/sw.js (Service Worker)
+      4. Nowy model Prisma:
+           model PushSubscription {
+             id        String @id @default(cuid())
+             userId    String
+             endpoint  String @unique
+             auth      String
+             p256dh    String
+             user      User   @relation(...)
+             @@map("push_subscriptions")
+           }
+      5. POST /api/push/subscribe
+      6. W API routes: webpush.sendNotification(subscription, payload)
+    Szacowany czas: 2-3 dni
 
-37. PLANOWANIE TRAS Z WIELOMA PUNKTAMI POSREDNIMI
-    Co dodac:
-      - Interaktywne dodawanie punktow posrednich (klik na mape)
-      - Przeciaganie punktow trasy
-      - Automatyczne obliczanie czasu i dystansu (Mapbox Directions API)
-      - Alternatywne trasy do wyboru
-      - Opcja "unikaj autostrad" / "unikaj oplat"
-    Pliki do modyfikacji:
-      - src/components/routes/CreateRouteForm.tsx
-      - src/components/routes/MapWaypointPicker.tsx
-      - src/app/api/routes/route.ts
-
-38. ALERTY POLICJI I FOTORADAROW - DZWIEK
+E2. Alerty dzwiekowe dla raportow [WYSOKI]
+    Plik: src/components/map/SpeedCameraAlert.tsx (rozszerz)
     Co dodac:
       Gdy uzytkownik zblizy sie na < 500m do raportu POLICE/SPEED_CAMERA:
-      - Alert dzwiekowy (beep)
-      - Wibration API
+      - Alert dzwiekowy (plik MP3 w public/sounds/)
+      - Vibration API (navigator.vibrate([200, 100, 200]))
       - Bardziej wyrazny baner na gorze ekranu
-      - Rozne dzwieki dla roznych typow zagrozen
-    Plik: src/components/map/SpeedCameraAlert.tsx (rozszerz)
-    Jak dodac dzwiek:
-      const audio = new Audio('/sounds/alert.mp3');
-      audio.play();
+      - Rozne dzwieki dla roznych typow: policja, wypadek, fotoradar
+    Implementacja:
+      const audioRef = useRef(new Audio('/sounds/police-alert.mp3'));
+      audioRef.current.play().catch(() => {}); // catch jesli autoplay blocked
+    Szacowany czas: 4 godziny
 
-39. TRYB OFFLINE (Progressive Web App)
+E3. Planowanie tras z wieloma punktami posrednimi [WYSOKI]
     Co dodac:
-      - Aplikacja dziala bez internetu (cached tiles mapy)
-      - Lokalne przechowywanie tras
-      - Synchronizacja gdy polaczy sie internet
-      - Ikona na ekranie telefonu (installable PWA)
-    Jak wdrozyc:
-      npm install next-pwa
-      W next.config.ts:
-      const withPWA = require('next-pwa')({ dest: 'public' });
-      module.exports = withPWA({ /* config */ });
-      Stworz public/manifest.json z ikonami
+      - Klikniecie na mape dodaje punkt posredni
+      - Przeciaganie punktow trasy
+      - Automatyczne ETA (Mapbox Directions)
+      - Alternatywne trasy (avoid toll/highway)
+    Pliki do modyfikacji:
+      - src/components/routes/CreateRouteModal.tsx
+      - src/components/routes/MapWaypointPicker.tsx
+      - src/app/api/routes/route.ts
+    Szacowany czas: 3-4 dni
 
-40. WALIDACJA ZOD DLA WSZYSTKICH API
-    Dlaczego wazne:
-      Bezpieczniejsze i czytelniejsze API, automatyczne komunikaty bledow
+E4. Historia cen paliw i wykresy [WYSOKI]
+    Problem: Aktualnie FuelStation przechowuje tylko AKTUALNE ceny (JSON).
     Co dodac:
-      npm install zod
-      Przykladowe schematy:
-
-      // src/lib/schemas.ts
-      import { z } from 'zod';
-
-      export const RegisterSchema = z.object({
-        email: z.string().email().max(255),
-        name: z.string().min(2).max(50).trim(),
-        password: z.string()
-          .min(8).max(100)
-          .regex(/[A-Z]/, 'Wymagana wielka litera')
-          .regex(/[0-9]/, 'Wymagana cyfra'),
-      });
-
-      export const CreateReportSchema = z.object({
-        type: z.enum(['POLICE','UNMARKED_POLICE','SPEED_TRAP','ACCIDENT','OBSTACLE','SPEED_CAMERA']),
-        latitude: z.number().min(-90).max(90),
-        longitude: z.number().min(-180).max(180),
-        description: z.string().max(500).optional(),
-      });
-
-      export const CreateConvoySchema = z.object({
-        name: z.string().min(2).max(50).trim(),
-      });
-
-      // Uzycie w API route:
-      const body = RegisterSchema.safeParse(await request.json());
-      if (!body.success) {
-        return NextResponse.json({ error: body.error.flatten() }, { status: 400 });
-      }
-
-------------------------------------------------------------
-SEKCJA E: PRIORYTET SREDNI - Funkcje uzyteczne
-------------------------------------------------------------
-
-41. CZAT TEKSTOWY W KONWOJU
-    Co dodac:
-      - Chat room dla kazdego konwoju (Socket.IO rooms)
-      - Wiadomosci tekstowe w czasie rzeczywistym
-      - Szybkie odpowiedzi (pre-set): "Zatrzymuje sie", "Potrzebuje przerwy",
-        "Juz jade", "Czekajcie na mnie"
-      - Historia chatu (ostatnie 50 wiadomosci)
-    Schemat bazy:
-      model ConvoyMessage {
-        id        String   @id @default(cuid())
-        convoyId  String
-        userId    String
-        text      String   @db.VarChar(500)
-        type      String   @default("text")
-        createdAt DateTime @default(now())
-        convoy    Convoy   @relation(fields: [convoyId], references: [id])
-        user      User     @relation(fields: [userId], references: [id])
-        @@map("convoy_messages")
-      }
-    Nowe pliki:
-      - src/components/convoy/ConvoyChat.tsx
-      - src/app/api/convoy/[id]/messages/route.ts
-
-42. HISTORIA CIEN PALIW I WYKRESY
-    Co dodac:
-      - Wykres zmian cen paliwa w czasie dla kazdej stacji
-      - Porownanie cen miedzy stacjami w okolicy
-      - Alert gdy cena danego paliwa spadnie ponizej progu
+      - Nowy model FuelPriceHistory (stationId, fuelType, price, recordedAt)
+      - Wykres zmian cen (React Chart.js lub Recharts)
       - "Najtansza stacja w okolicy" widget
-    Schemat bazy:
-      Zmien FuelPrice na logowanie historii:
-      model FuelPriceHistory {
-        id        String   @id @default(cuid())
-        stationId String
-        fuelType  FuelType
-        price     Float
-        recordedAt DateTime @default(now())
-        userId    String
-        @@index([stationId, fuelType, recordedAt])
-      }
+      - Alert gdy cena danego paliwa spadnie ponizej progu
     Nowe pliki:
       - src/components/fuel/FuelPriceChart.tsx
       - src/app/api/fuel/[id]/history/route.ts
-
-43. SYSTEM OSIAGNIEC (Badges/Achievements)
-    Co dodac:
-      Odznaki za aktywnosc uzytkownika:
-      - "Maratonczyk" - przejechane 1000 km
-      - "Reporter" - 100 raportow drogowych
-      - "Lider konwoju" - stworzony konwoj z 5+ osobami
-      - "Staly klient" - dodano 50 cen paliw
-      - "Spolecznik" - 20 znajomych
-      - "Nawigator" - 50 zakonczonych nawigacji
-    Schemat bazy:
-      model Achievement {
-        id        String   @id @default(cuid())
-        userId    String
-        type      String
-        earnedAt  DateTime @default(now())
-        user      User     @relation(fields: [userId], references: [id])
-        @@unique([userId, type])
-        @@map("achievements")
+    Schemat:
+      model FuelPriceHistory {
+        id         String   @id @default(cuid())
+        stationId  String
+        fuelType   String
+        price      Float
+        recordedAt DateTime @default(now())
+        userId     String
+        @@index([stationId, fuelType, recordedAt])
+        @@map("fuel_price_history")
       }
-    Logike sprawdzania osiagniec wywoluj po kazdej akcji:
-      - po zakończeniu podrozy (recordTrip)
-      - po dodaniu raportu
-      - po dodaniu znajomego
+    Szacowany czas: 2 dni
 
-44. UDOSTEPNIANIE TRAS PRZEZ LINK
+E5. Alerty pogodowe na trasie [WYSOKI]
     Co dodac:
-      - Generowanie unikalnego linku do trasy (np. /r/ABCDE123)
-      - Link wazny 7 dni
-      - Odbiorca widzi trase bez logowania
-      - Opcjonalnie: live tracking (udostep lokalizacje przez link)
-    Schemat bazy:
-      model RouteShare {
-        id        String   @id @default(cuid())
-        routeId   String
-        token     String   @unique @default(cuid())
-        expiresAt DateTime
-        viewCount Int      @default(0)
-        route     Route    @relation(fields: [routeId], references: [id], onDelete: Cascade)
-        @@map("route_shares")
-      }
+      Gdy uzytkownik jest w nawigacji i pogoda sie zmienia:
+      - "Uwaga! Przed toba silne opady deszczu za 15 km"
+      - "Mozliwe oblodzenie na trasie"
+      - Dane z Open-Meteo hourly forecast dla kolejnych punktow trasy
+    Implementacja:
+      Rozszerz useWeather.ts o pobieranie prognozy godzinowej
+      Dodaj komponent WeatherAlert w MapView.tsx
+
+E6. System osiagniec (Badges) [WYSOKI]
+    Model Achievement juz istnieje w schemacie.
+    Co dodac:
+      - Logika przyznawania odznak po akcjach uzytkownika
+      - UI wyswietlania odznak (na profilu, po dolaczeniu)
+      - Animacja "congratulations" przy nowej odznace
+    Typy odznak:
+      'marathon'      - przejechane 1000 km
+      'reporter'      - 100 raportow drogowych
+      'convoy_leader' - konwoj z 5+ osobami
+      'fuel_reporter' - 50 cen paliw
+      'social'        - 20 znajomych
+      'navigator'     - 50 zakonczonych nawigacji
+      'explorer'      - 10 roznych tras
     Nowe pliki:
-      - src/app/r/[token]/page.tsx (publiczna strona trasy)
-      - src/app/api/routes/[id]/share/route.ts (juz istnieje - uzupelnij logike)
+      - src/lib/achievements.ts (logika sprawdzania)
+      - src/components/profile/AchievementBadge.tsx
+      - src/app/api/achievements/route.ts
+    Szacowany czas: 2 dni
 
-45. IMPORT/EXPORT TRAS (Format GPX)
-    Co dodac:
-      - Import pliku GPX -> automatyczne tworzenie trasy
-      - Export trasy -> plik .gpx
-      - Kompatybilnosc z Garmin, Komoot, Strava
+E7. Infinite scroll / wirtualizacja w SocialFeed [WYSOKI]
+    Plik: src/components/social/SocialFeed.tsx
+    Problem: Przy duzej liczbie postow caly DOM jest renderowany.
     Jak wdrozyc:
-      npm install gpxparser  (do importu)
+      npm install @tanstack/react-virtual
+      IntersectionObserver na ostatnim elemencie -> loadNextPage
+      useReducer lub useState dla page
+    Szacowany czas: 4 godziny
 
-      // Export GPX:
-      function routeToGPX(route: Route): string {
-        return `<?xml version="1.0" encoding="UTF-8"?>
-      <gpx version="1.1">
-        <trk><name>${route.name}</name><trkseg>
-          ${route.waypoints.map(wp =>
-            `<trkpt lat="${wp.lat}" lon="${wp.lng}"></trkpt>`
-          ).join('\n')}
-        </trkseg></trk>
-      </gpx>`;
-      }
+------------------------------------------------------------
+SEKCJA F: PRIORYTET SREDNI
+------------------------------------------------------------
 
-46. KOLEKCJE TRAS (Foldery)
+F1. Udostepnianie tras przez link [SREDNI]
+    Model RouteShare juz istnieje.
     Co dodac:
-      Uzytkownik moze organizowac trasy w foldery/kolekcje:
-      - "Trasy weekendowe"
-      - "Gory 2025"
-      - "Do pracy i z powrotem"
+      - Publiczna strona /r/[token] bez logowania
+      - Link wazny 7 dni
+      - Odbiorca widzi trase interaktywnie na mapie
+    Nowe pliki:
+      - src/app/r/[token]/page.tsx
+    Szacowany czas: 1 dzien
+
+F2. Import/Export tras GPX [SREDNI]
+    Co dodac:
+      - Import pliku .gpx -> Route w bazie
+      - Export Route -> plik .gpx
+      - Kompatybilnosc z Garmin, Strava, Komoot
+    Implementacja:
+      npm install gpxparser
+      Funkcja routeToGPX() i parseGPX()
+    Szacowany czas: 1 dzien
+
+F3. Weryfikacja raportow przez spolecznosc [SREDNI]
+    Plik: src/components/map/ReportProximityPrompt.tsx (rozszerz)
+    Co dodac:
+      Gdy uzytkownik zblizy sie do raportu:
+      - Pytanie "Czy raport jest nadal aktualny?"
+      - Przycisk "Tak" / "Nie"
+      - 3 odpowiedzi "Nie" = automatyczne usuniecie raportu
+      - Wydluzenie waznosci raportu po 3 potwierdzeniach "Tak"
+    Szacowany czas: 1 dzien
+
+F4. Profile publiczne uzytkownikow [SREDNI]
+    Endpoint /api/users/[id]/public juz istnieje.
+    Co dodac:
+      - Publiczna strona /user/[id] bez logowania (jesli isPublic=true)
+      - Wyswietlanie statystyk (km, przejazdy, osiagniecia)
+      - Lista ulubionych tras publicznych
+    Nowe pliki:
+      - src/app/user/[id]/page.tsx
+    Szacowany czas: 4 godziny
+
+F5. Ranking i tabela wynikow (Leaderboard) [SREDNI]
+    Co dodac:
+      Tygodniowy/miesieczny ranking:
+      - Najwiecej km w tym tygodniu
+      - Najwiecej raportow w tym miesiacu
+      - Najbardziej pomocny reporter
+    Nowe pliki:
+      - src/app/api/leaderboard/route.ts
+      - src/components/dashboard/Leaderboard.tsx
+    Szacowany czas: 1 dzien
+
+F6. Kolekcje tras (Foldery) [SREDNI]
+    Co dodac:
+      Uzytkownik moze organizowac trasy w foldery:
+      - "Trasy weekendowe", "Gory 2025" itp.
       - Udostepnianie kolekcji znajomym
-    Schemat bazy:
+    Schemat:
       model RouteCollection {
         id          String   @id @default(cuid())
         name        String
@@ -1388,241 +1684,468 @@ SEKCJA E: PRIORYTET SREDNI - Funkcje uzyteczne
         isPublic    Boolean  @default(false)
         routes      Route[]  @relation("RouteCollections")
         user        User     @relation(fields: [userId], references: [id])
+        @@map("route_collections")
       }
+    Szacowany czas: 1 dzien
 
-47. HISTORIA PODROZY W BAZIE DANYCH
+F7. Tryb ECO (oszczednosc baterii) [SREDNI]
     Co dodac:
-      Zapisywanie zakończonych podrozy do bazy (nie tylko lokalnie):
-      - Data i czas
-      - Dystans
-      - Max predkosc
-      - Srednia predkosc
-      - Czas jazdy
-      - Czy z konwojem
-    Schemat bazy:
-      model Trip {
-        id          String   @id @default(cuid())
-        userId      String
-        vehicleId   String?
-        convoyId    String?
-        startedAt   DateTime
-        endedAt     DateTime
-        distanceKm  Float
-        maxSpeedKmh Float
-        avgSpeedKmh Float
-        durationMin Int
-        createdAt   DateTime @default(now())
-        user        User     @relation(fields: [userId], references: [id])
-        @@map("trips")
-      }
+      - GPS update co 30s zamiast co 5s gdy ECO aktywny
+      - Automatyczne wlaczenie przy < 20% baterii
+      - Przycisk reczny w ustawieniach
+    Implementacja:
+      Battery Status API: const battery = await navigator.getBattery();
+      battery.addEventListener('levelchange', () => {
+        if (battery.level < 0.2) enableEcoMode();
+      });
+    Szacowany czas: 3 godziny
 
-48. ALERTY POGODOWE NA TRASIE
+F8. Czat glosowy PTT w konwoju (WebRTC) [SREDNI]
+    Plik: src/components/convoy/ConvoyMapVoice.tsx (rozszerz)
     Co dodac:
-      Gdy uzytkownik jest w nawigacji i pogoda sie zmienia:
-      - "Uwaga! Przed toba silne opady deszczu za 15 km"
-      - "Mozliwe oblodzenie na trasie"
-      - Dane z Open-Meteo hourly forecast
-    Jak wdrozyc:
-      Rozszerz useWeather.ts o pobieranie prognozy godzinowej
-      Dodaj komponent WeatherAlert w MapView obok SpeedCameraAlert
-
-49. WSPOLNY CEL KONWOJU (Shared Destination)
-    Co dodac:
-      Lider konwoju ustawia wspolny cel podrozy:
-      - Wszyscy czlonkowie widza wspolny cel na mapie
-      - Szacowany czas dotarcia dla kazdego
-      - Powiadomienie gdy ktos dotrze do celu
-    Jak wdrozyc:
-      Rozszerz model Convoy o:
-        destLat Float?
-        destLng Float?
-        destName String?
-      Socket.IO event: 'convoy-destination-set'
-      Nowe pole w ConvoyPanel.tsx
-
-50. CZAT GLOSOWY W KONWOJU (WebRTC)
-    Co dodac:
-      Push-to-Talk audio miedzy czlonkami konwoju:
-      - Przycisk PTT (trzymaj aby mowic)
+      - Przycisk PTT (push-to-talk)
       - Wskaznik kto mowi
-      - Bez potrzeby apki zewnetrznej
-    Jak wdrozyc:
-      WebRTC peer-to-peer przez Socket.IO signaling:
-      - 'voice-offer', 'voice-answer', 'voice-ice-candidate' eventy
-      - getUserMedia() dla mikrofonu
-      - RTCPeerConnection dla audio stream
+      - WebRTC peer-to-peer przez Socket.IO signaling
+    Eventy:
+      voice-offer, voice-answer, voice-ice-candidate
+    Szacowany czas: 3-4 dni
 
 ------------------------------------------------------------
-SEKCJA F: PRIORYTET NISKI - Dodatki
+SEKCJA G: PRIORYTET NISKI
 ------------------------------------------------------------
 
-51. WSPARCIE WIELU JEZYKOW (i18n)
-    Co dodac:
-      Polskie komunikaty sa hardcoded - ciezko dodac inne jezyki
-      Poczatkowe wsparcie: PL, EN
-    Jak wdrozyc:
+G1. Wsparcie wielu jezykow (i18n) [NISKI]
+    Aktualnie wszystkie komunikaty hardcoded po polsku.
+    Implementacja:
       npm install next-intl
-      Stworz messages/pl.json i messages/en.json
-      Owin app w NextIntlClientProvider
+      messages/pl.json, messages/en.json
+    Szacowany czas: 2-3 dni (samo szkielet, tlumaczenia osobno)
 
-52. STATYSTYKI NA MAPIE (Heatmapa)
+G2. Statystyki na mapie (Heatmapa) [NISKI]
     Co dodac:
-      - Heatmapa czesto odwiedzanych miejsc (z historii tras)
-      - Najbardziej niebezpieczne odcinki drogi (czesto raportowane)
-      - Najtansze stacje paliw w danym regionie (color-coded)
+      - Heatmapa czesto odwiedzanych miejsc
+      - Najniebezpieczniejsze odcinki drog
+      - Najtansze stacje w regionie (color-coded)
+    Mapbox GL ma wbudowana warstwe 'heatmap' type
+    Szacowany czas: 2 dni
+
+G3. Optymalizacja obrazow uzytkownikow [NISKI]
+    Problem: image URL uzytkownika nie jest resizowany/optymalizowany
     Jak wdrozyc:
-      Mapbox GL ma wbudowana warstwe 'heatmap' type
+      - Upload do Cloudinary / S3 + resize
+      - Next.js Image Optimization (remote patterns)
+      - Nie akceptuj dowolnych URL - tylko z zaufanych domen
 
-53. TRYB EKO - OSZCZEDNOSC BATERII
+G4. Integracja z Apple CarPlay / Android Auto [FUTURE]
+    Bardzo skomplikowane - wymaga osobnych SDK, certyfikatow Apple,
+    dedykowanych natywnych aplikacji.
+
+G5. System czarnych list / blokowania uzytkownikow [NISKI]
     Co dodac:
-      Gdy uzytkownik wlaczy tryb eko:
-      - GPS update co 30s zamiast co 5s
-      - Ekran przyciemniony
-      - Mniej czestych fetch'y
-      - Powiadomienie o zuzyciu baterii
-    Jak wdrozyc:
-      Battery Status API (navigator.getBattery())
-      Automatyczne wlaczenie trybu eko przy < 20% baterii
+      - Mozliwosc zablokowania uzytkownika
+      - Zablokowany uzytkownik nie widzi twoich postow/lokalizacji
+      - Nie moze wysylac zaproszen
+    Schemat:
+      model Block {
+        blockerId  String
+        blockedId  String
+        blockedAt  DateTime @default(now())
+        @@id([blockerId, blockedId])
+        @@map("blocks")
+      }
 
-54. WERYFIKACJA RAPORTOW PRZEZ SPOLECZNOSC
+G6. Powiadomienia email (newsletter/alert) [NISKI]
     Co dodac:
-      Gdy uzytkownik zblizy sie do raportu:
-      - Pytanie "Czy raport jest nadal aktualny?"
-      - Przycisk "Tak" / "Nie"
-      - 3 odpowiedzi "Nie" = usniecie raportu
-      - Wydluzenie waznosci raportu po 3 potwierdzeniach "Tak"
-    Plik: src/components/map/ReportProximityPrompt.tsx (juz istnieje - rozszerz)
+      - Email przy nowej aktywnosci znajomych (raz dziennie digest)
+      - Email gdy konwoj startuje a uzytkownik jest zaproszony
+    Implementacja: sendgrid / nodemailer (juz uzywany do reset hasla)
 
-55. PROFILE PUBLICZNE UZYTKOWNIKOW
+G7. Eksport danych uzytkownika (GDPR) [NISKI]
+    Wymagany prawnie w UE jezeli aplikacja zbiera dane osobowe.
+    Endpoint: GET /api/users/me/export
+    Zwraca: ZIP z danymi uzytkownika (JSON)
+
+G8. Wbudowany system raportowania naduzywania [NISKI]
     Co dodac:
-      Jesli privacy.publicProfile = true:
-      - Publiczna strona /user/[id] bez logowania
-      - Wyswietlanie statystyk (km, przejazdy)
-      - Lista ulubionych tras publicznych
-      - Odznaki/osiagniecia
-    Nowe pliki:
-      - src/app/user/[id]/page.tsx
+      - Przycisk "Zglos post/profil"
+      - Tabela Report (abuse_reports) z typem (spam, abuse, itp.)
+      - Panel moderacyjny (tylko dla adminow)
 
-56. RANKING I TABELA WYNIKOW (Leaderboard)
-    Co dodac:
-      Tygodniowy/miesięczny ranking:
-      - Najwiecej km w tym tygodniu
-      - Najwiecej raportow w tym miesiacu
-      - Najbardziej pomocny reporter
-    Nowy endpoint:
-      GET /api/leaderboard?period=weekly&category=distance
+================================================================================
 
-57. INTEGRACJA Z APPLE CARPLAY / ANDROID AUTO
-    Co dodac:
-      Aplikacja dostepna na wyswietlaczu samochodowym
-    Uwaga: Bardzo skomplikowane - wymaga osobnych SDK, certyfikatow Apple,
-    i dedykowanych natywnych aplikacji. Najlepiej jako odlegla perspektywa.
+================================================================================
+                     ANALIZA BEZPIECZENSTWA
+================================================================================
 
-58. OPTYMALIZACJA MAPY STATYCZNEJ W DASHBOARDZIE
-    Plik: src/components/dashboard/HomeScreen.tsx, linie 251-260
+------------------------------------------------------------
+ZNANE PODATNOSCI I STATUS
+------------------------------------------------------------
+
+ZAGROZEN              | STATUS      | OPIS
+--------------------- | ----------- | -----------------------------------------
+SQL Injection         | BEZPIECZNY  | Prisma ORM - parametryzowane zapytania
+XSS (stored)          | CZESCIOWO   | image URL jest walidowany (http/https)
+                      |             | ale content postow nie jest sanitized
+XSS (reflected)       | BEZPIECZNY  | Next.js auto-escapes JSX
+CSRF                  | BEZPIECZNY  | NextAuth CSRF token w cookies
+Clickjacking          | BEZPIECZNY  | X-Frame-Options: DENY
+MIME Sniffing         | BEZPIECZNY  | X-Content-Type-Options: nosniff
+Rate Limiting         | CZESCIOWO   | In-memory, nie skaluje sie na multi-instance
+Auth bypass           | BEZPIECZNY  | Middleware getToken (Edge Runtime)
+Password storage      | BEZPIECZNY  | bcrypt.hash (rounds=12)
+Session fixation      | BEZPIECZNY  | NextAuth regeneruje token po logowaniu
+Sensitive data leak   | SREDNI      | Stack traces w odpowiedziach 500 serwera
+IDOR (Insecure Direct | SREDNI      | Wiekszos routes sprawdza session.user.id
+  Object Reference)   |             | ale nalezy zweryfikowac wszystkie DELETE
+Mass assignment       | BEZPIECZNY  | Zod schematy filtruja pola
+
+------------------------------------------------------------
+ZALECENIA BEZPIECZENSTWA
+------------------------------------------------------------
+
+SEC1. Sanityzacja contentu postow [WAZNE]
+    Plik: src/app/api/posts/route.ts
     Problem:
-      <img src="https://api.mapbox.com/styles/...static/..." />
-      Kazde otwarcie Dashboard = platny request do Mapbox Static Images API
-    Jak naprawic opcja A:
-      Zastap malym komponentem react-map-gl (interactive, bez dodatkowych kosztow)
-    Jak naprawic opcja B:
-      Cache URL przez 5 minut, nie laduj przy kazdym renderze
+      content: z.string().max(5000) - brak sanityzacji HTML
+      Jesli content jest renderowany z dangerouslySetInnerHTML -> XSS
+    Jak naprawic:
+      npm install dompurify @types/dompurify
+      const sanitized = DOMPurify.sanitize(content, { ALLOWED_TAGS: [] });
+      lub po prostu nie renderuj jako HTML - uzyj {content} w JSX (bezpieczne)
 
-59. WYSZUKIWARKA ZNAJOMYCH
-    Co dodac:
-      Aktualnie mozna szukac znajomych tylko po emailu
-      Dodaj wyszukiwanie po nazwie uzytkownika:
-      GET /api/users?search=Jan+Kowalski&limit=10
-    Nowy endpoint:
-      GET /api/users?search=...
+SEC2. Weryfikacja ze raport nalezy do uzytkownika przed DELETE [WAZNE]
+    Plik: src/app/api/reports/[id]/route.ts
+    Sprawdz: czy WHERE zawiera userId: session.user.id
+    Jesli nie, kazdy moze usunac dowolny raport.
 
-60. DARK/LIGHT MODE NA MAPIE - AUTOMATYCZNE PRZELACZANIE
-    Co dodac:
-      Automatyczne przelaczanie stylu mapy:
-      - W dzien: mapbox light/navigation-day
-      - W nocy: mapbox dark/navigation-night
-      - Oparte na sunrise/sunset z Open-Meteo API (is_day pole)
-    Plik: src/stores/useThemeStore.ts + src/components/map/MapView.tsx
+SEC3. Limity rozmiaru uploadow [WAZNE]
+    Problem:
+      Brak limitu na rozmiar body requestow.
+      Atakujacy moze wyslac 100MB JSON powodujac OOM.
+    Jak naprawic:
+      W server.js:
+        app.use(express.json({ limit: '1mb' }));
+      lub w Next.js next.config.ts:
+        experimental: { serverActions: { bodySizeLimit: '1mb' } }
 
-================================================================================
-                         PODSUMOWANIE I OCENY
-================================================================================
+SEC4. Weryfikacja wlasciciela przy usuwaniu komentarzy [WAZNE]
+    Plik: src/app/api/posts/[id]/comments/[cid]/route.ts
+    Sprawdz: czy DELETE weryfikuje ze komentarz nalezy do session.user.id
 
-OCENA OGOLNA PROJEKTU: 5.5/10
-
-Kategoria              | Ocena | Uwagi
------------------------|-------|----------------------------------------------
-Architektura           |  7/10 | Dobra podstawa, ale Socket.IO broken
-Baza danych            |  6/10 | Czytelna, ale bledy i brak indeksow
-Bezpieczenstwo         |  4/10 | Brak rate limiting, nagłówkow HTTP
-Wydajnosc              |  5/10 | Polling, brak paginacji, brak lazy loading
-Jakosc kodu            |  6/10 | Dobre nazewnictwo, ale duplikacje
-UI/UX                  |  8/10 | Ladny dark mode, dobra nawigacja
-Funkcjonalnosc         |  8/10 | Duzo funkcji jak na etap projektu
-Real-time              |  2/10 | Socket.IO nie dziala
-Testy                  |  0/10 | Brak jakichkolwiek testow
-Dokumentacja           |  3/10 | Minimalna
-
-KOLEJNOSC NAPRAW:
-
-Tydzien 1-2 (Krytyczne bugi):
-  [1]  Napraw Socket.IO (custom server)
-  [2]  Napraw filtrowanie raportow (createdAt -> expiresAt)
-  [3]  Napraw mutacje w profileStore (removeVehicle)
-  [4]  Napraw event names Socket.IO (fuel-update)
-  [5]  Dodaj rate limiting (Upstash)
-
-Tydzien 3-4 (Refactoring):
-  [10] Podziel MapView.tsx na komponenty
-  [11] Wyodrebnij Haversine do lib/geo.ts
-  [12] Usun duplikaty timeAgo, REPORT_LABELS
-  [14] Ujednolicenie interfejsu User
-  [15] Naglowki bezpieczenstwa HTTP
-  [23] Dodaj brakujace indeksy do bazy
-  [24] Cleanup wygaslych raportow (cron)
-
-Miesiac 2 (Nowe funkcje):
-  [36] Push notifications
-  [40] Walidacja Zod dla API
-  [41] Czat w konwoju
-  [42] Historia cen paliw
-
-Miesiac 3 (Zaawansowane):
-  [39] PWA / tryb offline
-  [43] System osiagniec
-  [45] Import/export GPX
-  [31] Pierwsze testy (Vitest)
+SEC5. Logowanie probow blednego logowania [SREDNIE]
+    Problem: Brak logowania nieudanych prob logowania.
+    Po 5 nieudanych probach -> blokada konta na 15 min (ochrona bruteforce).
 
 ================================================================================
-                              SZYBKIE POPRAWKI
-                          (mozna zrobic w 5 minut)
-================================================================================
-
-SZYBKA POPRAWKA 1:
-  Plik: src/app/api/reports/route.ts, linia 43
-  ZMIEN:  createdAt: { gte: expiryDate }
-  NA:     expiresAt: { gte: new Date() }
-
-SZYBKA POPRAWKA 2:
-  Plik: src/hooks/useSocket.ts, linia 139
-  ZMIEN:  socket.on('fuel-update', ...)
-  NA:     socket.on('fuel-price-update', ...)
-
-SZYBKA POPRAWKA 3:
-  Plik: src/stores/useProfileStore.ts, linia 68-70
-  ZMIEN:  remaining[0].isActive = true;
-  NA:     return { vehicles: remaining.map((x, i) => i === 0 ? { ...x, isActive: true } : x) };
-
-SZYBKA POPRAWKA 4:
-  Plik: prisma/schema.prisma, linia 157
-  ZMIEN:  updatedAt DateTime @default(now())
-  NA:     updatedAt DateTime @updatedAt
-  Potem:  npx prisma migrate dev --name fix-fuelprice-updatedat
-
-SZYBKA POPRAWKA 5:
-  Plik: src/components/dashboard/HomeScreen.tsx, linia 181
-  USUN:   const onlineFriends = friends.filter((f) => f.isOnline);
 
 ================================================================================
-Koniec audytu. Lacznie: 35 problemow do naprawy + 25 nowych funkcji.
+                     ANALIZA WYDAJNOSCI
+================================================================================
+
+------------------------------------------------------------
+ZNANE WASKIGARDLA
+------------------------------------------------------------
+
+PERF1. Brak Redis cache dla czesto odpytywanych endpointow
+    Kandydaci do cache (TTL 60s):
+      GET /api/fuel (stacje paliw nie zmieniaja sie czesto)
+      GET /api/routes/public (publiczne trasy)
+      GET /api/dashboard/stats
+    Implementacja:
+      npm install ioredis
+      W API routes:
+        const cached = await redis.get(cacheKey);
+        if (cached) return NextResponse.json(JSON.parse(cached));
+        const data = await prisma...;
+        await redis.setex(cacheKey, 60, JSON.stringify(data));
+        return NextResponse.json(data);
+
+PERF2. N+1 problem w FriendsList
+    Plik: src/app/api/friends/route.ts
+    Problem:
+      Prawdopodobnie dla kazdego znajomego jest osobne zapytanie o status online.
+    Jak naprawic:
+      Include: { user: { select: { id, name, image, lastLocationAt } } }
+      w jednym zapytaniu zamiast N+1
+
+PERF3. Brak lazy loading obrazow
+    Problem: Wszystkie obrazy avatarów sa ladowane eagerly.
+    Jak naprawic:
+      Uzyj next/image z loading="lazy"
+      lub <img loading="lazy" />
+
+PERF4. Brak debounce w wyszukiwarce [LATWY]
+    Plik: src/components/friends/AddFriendModal.tsx
+    Problem:
+      Prawdopodobnie GET /api/users?search= jest wywolywany przy kazdym keystroke.
+    Jak naprawic:
+      import { useDebounce } from 'use-debounce';
+      const [debouncedSearch] = useDebounce(search, 300);
+      useEffect(() => { fetchUsers(debouncedSearch); }, [debouncedSearch]);
+
+PERF5. Mapbox tiles - brak optymalizacji
+    Problem:
+      Przy slabym polaczeniu internetowym tiles laduja sie wolno.
+    Jak naprawic:
+      Konfiguracja Mapbox: fadeDuration: 0 (przyspiesza rendering)
+      Prefetch tiles dla aktualnej lokalizacji
+
+PERF6. Socket.IO - brak namespace oddzielenia
+    Problem:
+      Wszystkie eventy sa w domyslnym namespace '/'.
+      Przy wielu uzytkownikach wszystkie eventy przechodzą przez jeden namespace.
+    Jak naprawic:
+      const convoy = io.of('/convoy');
+      const notifications = io.of('/notifications');
+
+================================================================================
+
+================================================================================
+                     OCENA PROJEKTU - AKTUALNY STAN
+================================================================================
+
+Porownanie ocen: pierwotna (22 kwiecien) vs aktualna (28 kwiecien)
+
+Kategoria              | Ocena PRZED | Ocena PO | Zmiana | Uwagi
+-----------------------|-------------|----------|--------|------------------------
+Architektura           |   7/10      |  8/10    |  +1    | Socket.IO dziala, split komponentow
+Baza danych            |   6/10      |  8/10    |  +2    | Indeksy, transakcje, SpotifyToken
+Bezpieczenstwo         |   4/10      |  7/10    |  +3    | Rate limit, naglowki, walidacja
+Wydajnosc              |   5/10      |  6/10    |  +1    | Paginacja, memo, brak cache/Redis
+Jakosc kodu            |   6/10      |  8/10    |  +2    | Zod, geo.ts, brak duplikacji
+UI/UX                  |   8/10      |  8/10    |   0    | Nadal bardzo dobry
+Funkcjonalnosc         |   8/10      |  9/10    |  +1    | Czat, spoty, posty, osiagniecia
+Real-time              |   2/10      |  8/10    |  +6    | Socket.IO naprawiony, znajomi live
+Testy                  |   0/10      |  4/10    |  +4    | 20 testow jednostkowych (Vitest)
+Dokumentacja           |   3/10      |  7/10    |  +4    | Ten audyt + zapis sesji
+
+OCENA OGOLNA: 7.3/10 (poprzednio 5.5/10, wzrost o 1.8 punktu)
+
+------------------------------------------------------------
+MOCNE STRONY PROJEKTU
+------------------------------------------------------------
+
+1. Duzo funkcji jak na rozmiar projektu (40+ API routes, 55 komponentow)
+2. Real-time dziala (Socket.IO z custom server.js)
+3. Architektura Socket.IO - dwa sockety (notif + convoy) to dobry wzorzec
+4. Prisma z adapter-pg - nowoczensne podejscie
+5. Zod walidacja na wszystkich kluczowych endpointach
+6. Testy jednostkowe (20 testow, Vitest)
+7. Middleware auth (Edge Runtime)
+8. Naglowki bezpieczenstwa HTTP
+9. Dobry podział komponentow mapy (po refactorze)
+10. System powiadomien in-app (toasty)
+11. Udostepnianie lokalizacji znajomym w czasie rzeczywistym (nowe)
+
+------------------------------------------------------------
+SLABE STRONY DO POPRAWY
+------------------------------------------------------------
+
+1. useAuthStore - martwy store (potencjalne ukryte bugi)
+2. Brak Redis cache
+3. Rate limiter in-memory (nie skaluje na multi-instance)
+4. Brak push notifications (Web Push API)
+5. Brak CSP headera
+6. Mala liczba testow (brak integration/e2e)
+7. server.js w plain JavaScript (brak TypeScript)
+8. Brak walidacji ENV na starcie serwera
+
+================================================================================
+
+================================================================================
+                     PLAN AKCJI
+================================================================================
+
+------------------------------------------------------------
+TYDZIEN 1-2: PILNE BLEDY
+------------------------------------------------------------
+
+Priorytet 1: Sprawdz useAuthStore (A1)
+  - Wyszukaj w calym projekcie "useAuthStore" uzyte z .isAuthenticated lub .user
+  - Jesli znajdziesz - zamien na useSession
+  - Rozwaz usuniecie useAuthStore calkowicie
+
+Priorytet 2: Naprawa path Socket.IO (A4)
+  - Sprawdz path w server.js vs useNotifications.ts vs useSocket.ts
+  - Upewnij sie ze wszystkie polaczenia uzywaja tego samego path
+
+Priorytet 3: Dodaj .env.example (D1)
+  - Latwa dokumentacja dla nowych developerow
+
+Priorytet 4: Walidacja Content-Type w API (A3)
+  - Chroni przed crashami na niepoprawnych requestach
+
+------------------------------------------------------------
+TYDZIEN 3-4: ULEPSZENIA TECHNICZNE
+------------------------------------------------------------
+
+  - Alerty dzwiekowe dla raportow (E2) - maly wysilek, duzy efekt
+  - Error boundaries w MapView (D3)
+  - Debounce w wyszukiwarce (PERF4)
+  - Sanityzacja contentu postow (SEC1)
+  - Weryfikacja IDOR w DELETE routes (SEC2, SEC4)
+
+------------------------------------------------------------
+MIESIAC 2: NOWE FUNKCJE
+------------------------------------------------------------
+
+  - System push notifications (E1) - wymagany do mobilnego UX
+  - Historia cen paliw (E4)
+  - System osiagniec aktywny (E6) - model juz istnieje
+  - Publiczne profile uzytkownikow (F4) - endpoint juz istnieje
+  - Redis cache dla GET endpoints (PERF1)
+
+------------------------------------------------------------
+MIESIAC 3: SKALOWANIE I JAKOSC
+------------------------------------------------------------
+
+  - Zamiana rate limitera na Upstash Redis (A2)
+  - CSP header (C3)
+  - Wiecej testow (integration tests z supertest)
+  - TypeScript dla server.js (C2)
+  - PWA / tryb offline (C8)
+  - Import/Export GPX (F2)
+
+------------------------------------------------------------
+DLUGOTERMINOWO
+------------------------------------------------------------
+
+  - WebRTC PTT w konwoju (F8)
+  - Heatmapy aktywnosci (G2)
+  - Wielojezycznosc i18n (G1)
+  - System raportowania naduzywania (G8)
+  - GDPR export danych (G7)
+
+================================================================================
+
+================================================================================
+                     STRUKTURA TESTOW
+================================================================================
+
+Aktualne testy (20 testow, wszystkie zielone):
+  src/__tests__/lib/geo.test.ts
+    - haversineMeters(same coords) = 0
+    - haversineMeters(Warsaw -> Krakow) ~252km
+    - haversineMeters(symmetric)
+  src/__tests__/lib/utils.test.ts
+    - cn('a', 'b') = 'a b'
+    - cn('text-red', 'text-blue') = 'text-blue' (tailwind-merge)
+    - formatDistance(0) = '0 m'
+    - formatDistance(500) = '500 m'
+    - formatDistance(1500) = '1.5 km'
+    - timeAgo(now) = 'przed chwila'
+    - timeAgo(1 hour ago) = 'godzine temu'
+  src/__tests__/lib/mapNavigation.test.ts
+    - fmtDist(0) = '0 m'
+    - fmtDist(500) = '500 m'
+    - fmtDist(1500) = '1.5 km'
+    - fmtTime(30) = '30 s'
+    - fmtTime(90) = '1 min 30 s'
+    - fmtTripTime(3660) = '1 h 1 min'
+    - getArrowRotation('turn-left') = -90
+    - getArrowRotation('turn-right') = 90
+    - getArrowRotation('straight') = 0
+    - getArrowRotation('unknown') = 0
+
+Braki w testach (do dodania):
+  - Testy API routes (supertest / MSW)
+  - Testy komponentow React (RTL)
+  - Testy store Zustand
+  - E2E testy (Playwright)
+
+Priorytet testow do dodania:
+  1. src/__tests__/api/reports.test.ts (krytyczna logika)
+  2. src/__tests__/api/auth.test.ts (rejestracja, logowanie)
+  3. src/__tests__/components/ReportMarker.test.tsx
+  4. src/__tests__/stores/useMapStore.test.ts
+
+Komenda:
+  npm run test        - watch mode
+  npm run test:run    - jednorazowe uruchomienie
+
+================================================================================
+
+================================================================================
+                     ZMIENNE SRODOWISKOWE - WYMAGANE
+================================================================================
+
+Wymagane (.env.local):
+  DATABASE_URL                  - PostgreSQL connection string
+  NEXTAUTH_SECRET               - min 32 znaki, losowe
+  NEXTAUTH_URL                  - http://localhost:3000 (dev) / https://... (prod)
+  NEXT_PUBLIC_SOCKET_URL        - URL serwera Socket.IO (dev: http://localhost:3000)
+  NEXT_PUBLIC_MAPBOX_TOKEN      - Mapbox public token (pk.xxx)
+
+Opcjonalne ale zalecane:
+  MAPBOX_SERVER_TOKEN           - Osobny Mapbox token dla server-side (sk.xxx)
+  CRON_SECRET                   - Token dla endpointu /api/cron/cleanup
+  SMTP_HOST                     - SMTP serwer dla emaili
+  SMTP_PORT                     - Port SMTP (zazwyczaj 587 lub 465)
+  SMTP_USER                     - Uzytkownik SMTP
+  SMTP_PASSWORD                 - Haslo SMTP
+  SPOTIFY_CLIENT_ID             - Spotify OAuth client ID
+  SPOTIFY_CLIENT_SECRET         - Spotify OAuth client secret
+  SPOTIFY_REDIRECT_URI          - Spotify OAuth redirect URI
+  VAPID_PUBLIC_KEY              - Web Push VAPID public key (przyszlosc)
+  VAPID_PRIVATE_KEY             - Web Push VAPID private key (przyszlosc)
+  UPSTASH_REDIS_REST_URL        - Upstash Redis (przyszlosc - rate limiter)
+  UPSTASH_REDIS_REST_TOKEN      - Upstash Redis token (przyszlosc)
+
+================================================================================
+
+================================================================================
+                     INSTRUKCJE DEPLOYMENT
+================================================================================
+
+Development:
+  npm run dev                   - uruchamia server.js (Socket.IO + Next.js)
+  npm run test                  - testy w watch mode
+  npx prisma studio             - GUI bazy danych
+
+Produkcja:
+  npm run build                 - build Next.js
+  npm run start                 - NODE_ENV=production node server.js
+
+Migracje bazy:
+  npx prisma migrate dev --name [nazwa]   - nowa migracja (dev)
+  npx prisma migrate deploy               - deploy migracji (prod)
+  npx prisma generate                     - regeneracja klienta po zmianach schema
+
+Cron job (zewnetrzny scheduler - np. Vercel Cron):
+  GET /api/cron/cleanup
+  Header: Authorization: Bearer ${CRON_SECRET}
+  Czestotliwosc: co godzine
+
+================================================================================
+
+================================================================================
+                     PODSUMOWANIE HISTORII PRAC
+================================================================================
+
+Sesja 1 (22 kwiecien):  10 poprawek - krytyczne bugi, bezpieczenstwo
+Sesja 2 (22 kwiecien):  10 poprawek - refactoring, wydajnosc, baza danych
+Sesja 3 (22 kwiecien):   1 hotfix   - crash middleware Edge Runtime
+Sesja 4 (22 kwiecien):   2 poprawki - Socket.IO custom server, rate limiting
+Sesja 5 (22 kwiecien):   1 refactor - MapView.tsx split (1264 -> ~700 linii)
+Sesja 6 (22 kwiecien):   3 poprawki - cn(), race condition, duplikacja User
+Sesja 7 (22 kwiecien):   1 poprawka - paginacja list
+Sesja 8 (22 kwiecien):  11 zmian   - Mapbox token, REST semantyka, testy,
+                                      SpotifyToken, historia podrozy, Zod,
+                                      czat konwoju, cel konwoju, websocket
+Sesja 9 (24 kwiecien):   3 poprawki - crash serwera, historia czatu czatu
+Sesja 10 (24 kwiecien):  1 funkcja  - system powiadomien in-app (toasty)
+Sesja 11 (28 kwiecien):  8 zmian   - git pull (nowe modele/komponenty),
+                                      fix prisma generate, fix Turbopack,
+                                      fix useAutoSpotDetection, fix useLocationPing,
+                                      FriendMarker, udostepnianie lokalizacji
+
+LACZNIE:
+  Naprawionych bugów:   35+
+  Nowych funkcji:       10+
+  Nowych plików:        20+
+  Ocena projektu:       5.5/10 -> 7.3/10
+
+================================================================================
+Koniec audytu v2.0.
+Plik: AUDYT.txt | Projekt: drive-app | Ostatnia aktualizacja: 28 kwiecien 2026
 ================================================================================

@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
 import { useGeolocation } from './useGeolocation';
 import { useSocket } from './useSocket';
-import { useAuthStore } from '@/stores/useAuthStore';
 import { haversineMeters } from '@/lib/geo';
 
 interface UseRealTimeLocationOptions {
@@ -29,10 +29,11 @@ export function useRealTimeLocation(
     enableHighAccuracy = true,
   } = options;
 
+  const { data: session } = useSession();
+  const user = session?.user ?? null;
+
   const geo = useGeolocation({ enableHighAccuracy, autoStart: !!convoyId });
   const { emit, isConnected } = useSocket({ autoConnect: !!convoyId });
-  const user = useAuthStore((s) => s.user);
-  const updateLocation = useAuthStore((s) => s.updateLocation);
 
   const lastBroadcastRef = useRef<{
     latitude: number;
@@ -74,11 +75,9 @@ export function useRealTimeLocation(
         timestamp: now,
       });
 
-      updateLocation(latitude, longitude);
-
       lastBroadcastRef.current = { latitude, longitude, timestamp: now };
     },
-    [convoyId, user, isConnected, emit, updateLocation, broadcastInterval, distanceThreshold]
+    [convoyId, user, isConnected, emit, broadcastInterval, distanceThreshold]
   );
 
   // Broadcast whenever geolocation updates

@@ -26,17 +26,22 @@ export default function ConvoyChat({ convoyId }: ConvoyChatProps) {
     const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || '', {
       path: '/api/socketio',
       transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
     });
     socketRef.current = socket;
 
-    socket.emit('join-convoy', { convoyId, userId: session?.user?.id, name: session?.user?.name });
+    socket.on('connect', () => {
+      // join-convoy-notify: only subscribes to room events, does NOT emit member-joined
+      socket.emit('join-convoy-notify', { convoyId });
+    });
 
     socket.on('convoy-chat', (msg: ChatMessage) => {
       setMessages((prev) => [...prev, msg]);
     });
 
     return () => {
-      socket.emit('leave-convoy', { convoyId, userId: session?.user?.id, name: session?.user?.name });
       socket.removeAllListeners();
       socket.disconnect();
       socketRef.current = null;

@@ -4,8 +4,21 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useMapStore } from '@/stores/useMapStore';
 import { useConvoyStore } from '@/stores/useConvoyStore';
+import { useSpotStore } from '@/stores/useSpotStore';
+import { useSession } from 'next-auth/react';
 import type { ConvoyMember, Report, FuelStation } from '@/stores/useMapStore';
 import type { ConvoyMemberInfo } from '@/stores/useConvoyStore';
+import type { Spot } from '@/types';
+
+function decorateSpot(spot: Spot, meId: string | undefined): Spot {
+  return {
+    ...spot,
+    isOwner: !!meId && spot.createdById === meId,
+    isParticipant:
+      !!meId &&
+      !!spot.participants?.some((p) => p.userId === meId && !p.leftAt),
+  };
+}
 
 interface UseSocketOptions {
   url?: string;
@@ -32,6 +45,10 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
     auth,
   } = options;
 
+  const { data: session } = useSession();
+  const meIdRef = useRef<string | undefined>(undefined);
+  meIdRef.current = session?.user?.id as string | undefined;
+
   const socketRef = useRef<Socket | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const [isConnected, setIsConnected] = useState(false);
@@ -42,6 +59,10 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
   const removeReport = useMapStore((s) => s.removeReport);
   const updateReportVotes = useMapStore((s) => s.updateReportVotes);
   const updateFuelStation = useMapStore((s) => s.updateFuelStation);
+
+  const addSpot = useSpotStore((s) => s.addSpot);
+  const upsertSpot = useSpotStore((s) => s.upsertSpot);
+  const removeSpot = useSpotStore((s) => s.removeSpot);
 
   const convoyAddMember = useConvoyStore((s) => s.addMember);
   const convoyRemoveMember = useConvoyStore((s) => s.removeMember);
@@ -141,10 +162,26 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
         updateFuelStation(station);
       });
 
+      // Spot created (manual or auto)
+      socket.on('spot-created', (spot: Spot) => {
+        addSpot(decorateSpot(spot, meIdRef.current));
+      });
+
+      // Spot updated (e.g. participants joined)
+      socket.on('spot-updated', (spot: Spot) => {
+        upsertSpot(decorateSpot(spot, meIdRef.current));
+      });
+
+      // Spot closed by owner / auto-expired
+      socket.on('spot-closed', (data: { spotId: string }) => {
+        removeSpot(data.spotId);
+      });
+
       // Convoy shared destination update
       socket.on('convoy-destination-set', (data: { convoyId: string; destLat: number | null; destLng: number | null; destName: string | null }) => {
         convoySetDestination(data.destLat, data.destLng, data.destName);
       });
+
     },
     [
       updateConvoyMember,
@@ -153,6 +190,9 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
       removeReport,
       updateReportVotes,
       updateFuelStation,
+      addSpot,
+      upsertSpot,
+      removeSpot,
       convoyAddMember,
       convoyRemoveMember,
       convoyUpdateMemberLocation,
@@ -166,6 +206,7 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
 
     const socket = io(url, {
       autoConnect: false,
+      path: '/api/socketio',
       auth,
       reconnection: true,
       reconnectionAttempts: RECONNECT_ATTEMPTS_MAX,
@@ -205,6 +246,7 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
     // Only run on mount/unmount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   return {
     socket: socketRef.current,

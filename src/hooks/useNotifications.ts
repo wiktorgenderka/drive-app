@@ -3,6 +3,8 @@
 import { useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useToast } from '@/components/ui/Toast';
+import { useMapStore } from '@/stores/useMapStore';
+import type { FriendLocation } from '@/stores/useMapStore';
 
 interface UseNotificationsOptions {
   userId: string | null | undefined;
@@ -24,6 +26,10 @@ export function useNotifications({ userId, convoyId }: UseNotificationsOptions) 
     const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || '', {
       path: '/api/socketio',
       transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 30000,
     });
     socketRef.current = socket;
 
@@ -71,6 +77,10 @@ export function useNotifications({ userId, convoyId }: UseNotificationsOptions) 
       addToastRef.current('warning', 'Nowy raport drogowy w pobliżu');
     });
 
+    socket.on('friend-location-update', (data: Omit<FriendLocation, 'updatedAt'>) => {
+      useMapStore.getState().setFriendLocation({ ...data, updatedAt: Date.now() });
+    });
+
     return () => {
       socket.removeAllListeners();
       socket.disconnect();
@@ -85,4 +95,20 @@ export function useNotifications({ userId, convoyId }: UseNotificationsOptions) 
     if (!socket?.connected || !convoyId) return;
     socket.emit('join-convoy-notify', { convoyId });
   }, [convoyId]);
+
+  // Remove stale friend markers (no update for > 5 min)
+  useEffect(() => {
+    if (!userId) return;
+    const STALE_MS = 5 * 60 * 1000;
+    const interval = setInterval(() => {
+      const locs = useMapStore.getState().friendLocations;
+      const now = Date.now();
+      for (const [uid, loc] of Object.entries(locs)) {
+        if (now - loc.updatedAt > STALE_MS) {
+          useMapStore.getState().removeFriendLocation(uid);
+        }
+      }
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [userId]);
 }

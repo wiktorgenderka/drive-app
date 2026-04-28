@@ -17,6 +17,17 @@ export interface UserLocation {
   timestamp: number;
 }
 
+export interface FriendLocation {
+  userId: string;
+  name: string;
+  image: string | null;
+  latitude: number;
+  longitude: number;
+  speed: number | null;
+  heading?: number | null;
+  updatedAt: number;
+}
+
 export interface ConvoyMember {
   id: string;
   name: string;
@@ -107,6 +118,7 @@ interface MapState {
   viewState: ViewState;
   userLocation: UserLocation | null;
   convoyMembers: ConvoyMember[];
+  friendLocations: Record<string, FriendLocation>;
   reports: Report[];
   fuelStations: FuelStation[];
   routes: Route[];
@@ -115,6 +127,8 @@ interface MapState {
   showReports: boolean;
   showFuelStations: boolean;
   showConvoyMembers: boolean;
+  showSpots: boolean;
+  showFriends: boolean;
   mapFlyTarget: { longitude: number; latitude: number; zoom: number } | null;
   navigationRoute: NavigationRoute | null;
   mysteryDrive: MysteryDrive | null;
@@ -138,7 +152,10 @@ interface MapActions {
   setRoutes: (routes: Route[]) => void;
   setSelectedReport: (report: Report | null) => void;
   setSelectedStation: (station: FuelStation | null) => void;
-  toggleLayer: (layer: 'showReports' | 'showFuelStations' | 'showConvoyMembers') => void;
+  setFriendLocation: (data: FriendLocation) => void;
+  removeFriendLocation: (userId: string) => void;
+  clearFriendLocations: () => void;
+  toggleLayer: (layer: 'showReports' | 'showFuelStations' | 'showConvoyMembers' | 'showSpots' | 'showFriends') => void;
   setMapFlyTarget: (target: { longitude: number; latitude: number; zoom: number } | null) => void;
   setNavigationRoute: (route: NavigationRoute | null) => void;
   startMysteryDrive: (config: { routeId: string; routeName: string; waypoints: { latitude: number; longitude: number; label?: string }[]; visibleAhead?: number }) => void;
@@ -165,6 +182,7 @@ export const useMapStore = create<MapStore>()((set) => ({
   viewState: DEFAULT_VIEW_STATE,
   userLocation: null,
   convoyMembers: [],
+  friendLocations: {},
   reports: [],
   fuelStations: [],
   routes: [],
@@ -173,6 +191,8 @@ export const useMapStore = create<MapStore>()((set) => ({
   showReports: true,
   showFuelStations: true,
   showConvoyMembers: true,
+  showSpots: true,
+  showFriends: true,
   mapFlyTarget: null,
   navigationRoute: null,
   mysteryDrive: null,
@@ -258,6 +278,20 @@ export const useMapStore = create<MapStore>()((set) => ({
   setSelectedReport: (report) => set({ selectedReport: report }),
 
   setSelectedStation: (station) => set({ selectedStation: station }),
+
+  setFriendLocation: (data) =>
+    set((state) => ({
+      friendLocations: { ...state.friendLocations, [data.userId]: data },
+    })),
+
+  removeFriendLocation: (userId) =>
+    set((state) => {
+      const next = { ...state.friendLocations };
+      delete next[userId];
+      return { friendLocations: next };
+    }),
+
+  clearFriendLocations: () => set({ friendLocations: {} }),
 
   toggleLayer: (layer) =>
     set((state) => ({

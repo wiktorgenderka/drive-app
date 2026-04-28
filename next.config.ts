@@ -7,6 +7,17 @@ const nextConfig: NextConfig = {
     root: path.resolve(__dirname),
   },
   async headers() {
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: *.mapbox.com *.googleapis.com *.googleusercontent.com *.githubusercontent.com",
+      "connect-src 'self' wss: ws: *.mapbox.com events.mapbox.com api.open-meteo.com api.spotify.com",
+      "worker-src blob:",
+      "child-src blob:",
+      "font-src 'self' data:",
+    ].join('; ');
+
     return [
       {
         source: '/(.*)',
@@ -19,6 +30,7 @@ const nextConfig: NextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(self), geolocation=(self)',
           },
+          { key: 'Content-Security-Policy', value: csp },
         ],
       },
     ];

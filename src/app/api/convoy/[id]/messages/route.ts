@@ -68,6 +68,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   // text (default)
   if (!message?.trim()) return NextResponse.json({ error: 'Brak wiadomości' }, { status: 400 });
+  if (message.trim().length > 500) return NextResponse.json({ error: 'Wiadomość za długa (max 500 znaków)' }, { status: 400 });
   const msg = await prisma.convoyMessage.create({
     data: {
       id,

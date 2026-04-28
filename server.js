@@ -21,6 +21,7 @@ app.prepare().then(() => {
       methods: ['GET', 'POST'],
     },
     path: '/api/socketio',
+    maxHttpBufferSize: 1e6, // 1 MB max per Socket.IO message
   });
 
   // Make io accessible from Next.js API routes
