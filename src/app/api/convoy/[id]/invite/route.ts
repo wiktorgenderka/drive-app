@@ -30,12 +30,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Convoy not found" }, { status: 404 });
     }
 
-    const callerIsMember = convoy.members.some((m) => m.userId === session.user!.id);
+    const callerIsMember = convoy.members.some((m: { userId: string }) => m.userId === session.user!.id);
     if (!callerIsMember) {
       return NextResponse.json({ error: "You are not a member of this convoy" }, { status: 403 });
     }
 
-    const alreadyMember = convoy.members.some((m) => m.userId === userId);
+    const alreadyMember = convoy.members.some((m: { userId: string }) => m.userId === userId);
     if (alreadyMember) {
       return NextResponse.json({ error: "User is already a member" }, { status: 409 });
     }
