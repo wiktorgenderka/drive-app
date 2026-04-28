@@ -17,7 +17,7 @@ app.prepare().then(() => {
 
   const io = new SocketIOServer(httpServer, {
     cors: {
-      origin: process.env.NEXTAUTH_URL || 'http://localhost:3000',
+      origin: dev ? '*' : (process.env.AUTH_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000'),
       methods: ['GET', 'POST'],
     },
     path: '/api/socketio',
