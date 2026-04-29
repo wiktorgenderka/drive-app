@@ -60,6 +60,8 @@ function timeAgo(iso: string): string {
   return new Date(iso).toLocaleDateString('pl-PL');
 }
 
+const CLIP_BTN = 'polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,0 100%)';
+
 export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
   const { data: session } = useSession();
   const userLocation = useMapStore((s) => s.userLocation);
@@ -70,14 +72,12 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
   const [filter, setFilter] = useState<'all' | 'friends'>('all');
   const [sort, setSort] = useState<'new' | 'hot'>('new');
 
-  // User search
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<{ id: string; name: string; image: string | null; carDisplay: string | null }[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Compose
   const [composeOpen, setComposeOpen] = useState(false);
   const [content, setContent] = useState('');
   const [imageData, setImageData] = useState<string | null>(null);
@@ -86,7 +86,6 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Per-post UI state
   const [openComments, setOpenComments] = useState<Record<string, boolean>>({});
   const [allComments, setAllComments] = useState<Record<string, PostComment[]>>({});
   const [commentsLoading, setCommentsLoading] = useState<Record<string, boolean>>({});
@@ -196,7 +195,6 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
 
   async function toggleLike(post: FeedPost) {
     if (likingId === post.id) return;
-    // Optymistycznie
     setPosts((arr) =>
       arr.map((p) => p.id === post.id
         ? { ...p, myLiked: !p.myLiked, likeCount: p.likeCount + (p.myLiked ? -1 : 1) }
@@ -212,7 +210,6 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
         arr.map((p) => (p.id === post.id ? { ...p, myLiked: data.liked, likeCount: data.likeCount } : p))
       );
     } catch {
-      // rollback
       setPosts((arr) =>
         arr.map((p) => p.id === post.id
           ? { ...p, myLiked: !p.myLiked, likeCount: p.likeCount + (p.myLiked ? -1 : 1) }
@@ -313,17 +310,21 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
   const myId = session?.user?.id;
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Toolbar */}
+    <div className="flex flex-col gap-3">
+
+      {/* ── Toolbar ── */}
       <div className="flex items-center gap-2">
-        <div className="flex flex-1 gap-1 rounded-xl bg-input-bg p-1">
+        {/* Filter tabs */}
+        <div className="flex flex-1 overflow-hidden border border-orange-900/30 bg-black/50">
           <TabBtn active={filter === 'all'} onClick={() => setFilter('all')}>Wszyscy</TabBtn>
           <TabBtn active={filter === 'friends'} onClick={() => setFilter('friends')}>Znajomi</TabBtn>
         </div>
-        <div className="flex flex-1 gap-1 rounded-xl bg-input-bg p-1">
+        {/* Sort tabs */}
+        <div className="flex flex-1 overflow-hidden border border-orange-900/30 bg-black/50">
           <TabBtn active={sort === 'new'} onClick={() => setSort('new')}>Nowe</TabBtn>
           <TabBtn active={sort === 'hot'} onClick={() => setSort('hot')}>Popularne</TabBtn>
         </div>
+        {/* Search toggle */}
         <button
           onClick={() => {
             setSearchOpen((o) => {
@@ -337,10 +338,10 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
             });
           }}
           title="Wyszukaj profil"
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition ${
+          className={`flex h-9 w-9 shrink-0 items-center justify-center border transition ${
             searchOpen
               ? 'border-orange-500 bg-orange-600 text-white'
-              : 'border-card-border bg-input-bg text-muted hover:text-foreground'
+              : 'border-orange-900/30 bg-black/50 text-orange-400/60 hover:text-orange-400'
           }`}
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -350,14 +351,12 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
         </button>
       </div>
 
-      {/* User search panel */}
+      {/* ── Search panel ── */}
       {searchOpen && (
-        <div className="rounded-2xl border border-card-border bg-card-bg p-3">
+        <div className="border border-orange-900/30 bg-black/70 p-3"
+          style={{ clipPath: 'polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)' }}>
           <div className="relative">
-            <svg
-              className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
-              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
-            >
+            <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-orange-400/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <circle cx="11" cy="11" r="8" />
               <path d="M21 21l-4.35-4.35" />
             </svg>
@@ -367,7 +366,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
               value={searchQuery}
               onChange={(e) => handleSearchInput(e.target.value)}
               placeholder="Szukaj po imieniu (min. 2 znaki)"
-              className="w-full rounded-xl border border-card-border bg-input-bg py-2 pl-10 pr-4 text-sm text-foreground placeholder-muted outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+              className="w-full border border-orange-900/40 bg-black/60 py-2 pl-10 pr-4 text-sm text-foreground placeholder-white/20 outline-none transition focus:border-orange-500"
             />
             {searchLoading && (
               <svg className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-orange-500" viewBox="0 0 24 24" fill="none">
@@ -379,7 +378,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
           {searchQuery.trim().length >= 2 && (
             <div className="mt-2">
               {!searchLoading && searchResults.length === 0 ? (
-                <p className="px-2 py-3 text-center text-xs text-muted">Brak wyników</p>
+                <p className="px-2 py-3 text-center text-xs uppercase tracking-widest text-muted">Brak wyników</p>
               ) : (
                 <ul className="flex flex-col gap-1">
                   {searchResults.map((u) => (
@@ -391,16 +390,16 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
                           setSearchQuery('');
                           setSearchResults([]);
                         }}
-                        className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition hover:bg-input-bg"
+                        className="flex w-full items-center gap-2.5 border border-transparent px-2 py-2 text-left transition hover:border-orange-900/30 hover:bg-black/40"
                       >
                         <Avatar src={u.image} name={u.name} size={32} />
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-xs font-semibold text-foreground">{u.name}</p>
+                          <p className="truncate text-xs font-bold text-foreground">{u.name}</p>
                           {u.carDisplay && (
-                            <p className="truncate text-[10px] text-muted">{u.carDisplay}</p>
+                            <p className="truncate font-mono text-[10px] text-orange-400/60">{u.carDisplay}</p>
                           )}
                         </div>
-                        <svg className="h-4 w-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <svg className="h-4 w-4 text-orange-400/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                           <path d="M9 18l6-6-6-6" />
                         </svg>
                       </button>
@@ -413,112 +412,126 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
         </div>
       )}
 
-      {/* Compose toggle */}
+      {/* ── Compose ── */}
       {!composeOpen ? (
         <button
           onClick={() => setComposeOpen(true)}
-          className="flex w-full items-center gap-3 rounded-2xl border border-card-border bg-card-bg px-4 py-3 text-left text-sm text-muted transition hover:border-orange-500/40 hover:text-foreground"
+          className="flex w-full items-center gap-3 border border-orange-900/30 bg-black/60 px-4 py-3 text-left text-sm text-muted transition hover:border-orange-500/40 hover:bg-black/80"
+          style={{ clipPath: 'polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)' }}
         >
           <Avatar src={session?.user?.image} name={session?.user?.name ?? '?'} size={36} />
-          <span className="flex-1">Co u Ciebie? Podziel się ze społecznością…</span>
-          <span className="rounded-lg bg-orange-600 px-2.5 py-1 text-xs font-semibold text-white">+ Post</span>
+          <span className="flex-1 text-white/30">Co u Ciebie? Podziel się ze społecznością…</span>
+          <span
+            className="px-2.5 py-1 text-xs font-black uppercase tracking-wider text-white"
+            style={{ backgroundColor: '#ea580c', clipPath: CLIP_BTN }}
+          >
+            + Post
+          </span>
         </button>
       ) : (
-        <div className="rounded-2xl border border-card-border bg-card-bg p-4">
-          <div className="flex items-start gap-3">
-            <Avatar src={session?.user?.image} name={session?.user?.name ?? '?'} size={36} />
-            <div className="min-w-0 flex-1">
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={3}
-                maxLength={1000}
-                placeholder="Co u Ciebie? Podziel się trasą, zdjęciem albo myślą…"
-                className="w-full resize-none rounded-xl border border-card-border bg-input-bg px-3 py-2 text-sm text-foreground placeholder-muted outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-              />
-              {imageData && (
-                <div className="relative mt-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={imageData} alt="Załącznik" className="max-h-64 w-full rounded-xl object-cover" />
-                  <button
-                    onClick={() => setImageData(null)}
-                    className="absolute right-2 top-2 rounded-full bg-black/60 p-1.5 text-white hover:bg-black/80"
-                  >
-                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                      <path d="M18 6L6 18M6 6l12 12" />
-                    </svg>
-                  </button>
+        <div className="border border-orange-900/30 bg-black/70 p-4"
+          style={{ clipPath: 'polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%)' }}>
+          {/* orange left accent */}
+          <div className="relative">
+            <div className="absolute bottom-0 left-0 top-0 w-0.5 bg-gradient-to-b from-orange-500 via-orange-500/40 to-transparent" />
+            <div className="pl-3">
+              <div className="flex items-start gap-3">
+                <Avatar src={session?.user?.image} name={session?.user?.name ?? '?'} size={36} />
+                <div className="min-w-0 flex-1">
+                  <textarea
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    rows={3}
+                    maxLength={1000}
+                    placeholder="Co u Ciebie? Podziel się trasą, zdjęciem albo myślą…"
+                    className="w-full resize-none border border-orange-900/40 bg-black/60 px-3 py-2 text-sm text-foreground placeholder-white/20 outline-none transition focus:border-orange-500"
+                  />
+                  {imageData && (
+                    <div className="relative mt-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={imageData} alt="Załącznik" className="max-h-64 w-full object-cover" />
+                      <button
+                        onClick={() => setImageData(null)}
+                        className="absolute right-2 top-2 bg-black/70 p-1.5 text-orange-400 hover:bg-black"
+                      >
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                          <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={imageLoading}
+                      className="flex items-center gap-1.5 border border-orange-900/30 bg-black/40 px-2.5 py-1.5 text-xs font-bold uppercase tracking-wide text-muted transition hover:border-orange-500/40 hover:text-orange-400 disabled:opacity-50"
+                    >
+                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <path d="M21 15l-5-5L5 21" />
+                      </svg>
+                      {imageLoading ? 'Wczytuję…' : imageData ? 'Zmień' : 'Zdjęcie'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAttachLocation((v) => !v)}
+                      disabled={!userLocation}
+                      title={userLocation ? 'Dołącz aktualne miejsce' : 'Brak GPS'}
+                      className={`flex items-center gap-1.5 border px-2.5 py-1.5 text-xs font-bold uppercase tracking-wide transition disabled:opacity-50 ${
+                        attachLocation
+                          ? 'border-emerald-500/40 bg-emerald-600/15 text-emerald-400'
+                          : 'border-orange-900/30 bg-black/40 text-muted hover:border-orange-500/40 hover:text-orange-400'
+                      }`}
+                    >
+                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                      {attachLocation ? 'GPS on' : 'GPS'}
+                    </button>
+                    <span className="ml-auto font-mono text-[11px] text-orange-400/40">{content.length}/1000</span>
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={() => { setComposeOpen(false); setContent(''); setImageData(null); setAttachLocation(false); }}
+                      className="flex-1 border border-orange-900/30 bg-black/40 py-2 text-xs font-bold uppercase tracking-wide text-muted transition hover:border-orange-500/40 hover:text-foreground"
+                    >
+                      Anuluj
+                    </button>
+                    <button
+                      onClick={submitPost}
+                      disabled={submitting || (!content.trim() && !imageData)}
+                      className="flex-1 py-2 text-xs font-black uppercase tracking-wider text-white transition hover:bg-orange-500 disabled:opacity-50"
+                      style={{ backgroundColor: '#ea580c', clipPath: CLIP_BTN }}
+                    >
+                      {submitting ? 'Publikuję…' : 'Opublikuj'}
+                    </button>
+                  </div>
                 </div>
-              )}
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={imageLoading}
-                  className="flex items-center gap-1.5 rounded-lg border border-card-border bg-input-bg px-2.5 py-1.5 text-xs font-semibold text-muted transition hover:text-foreground disabled:opacity-50"
-                >
-                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <path d="M21 15l-5-5L5 21" />
-                  </svg>
-                  {imageLoading ? 'Wczytuję…' : imageData ? 'Zmień zdjęcie' : 'Zdjęcie'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAttachLocation((v) => !v)}
-                  disabled={!userLocation}
-                  title={userLocation ? 'Dołącz aktualne miejsce' : 'Brak GPS'}
-                  className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition disabled:opacity-50 ${
-                    attachLocation
-                      ? 'border-emerald-500/40 bg-emerald-600/15 text-emerald-400'
-                      : 'border-card-border bg-input-bg text-muted hover:text-foreground'
-                  }`}
-                >
-                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                  {attachLocation ? 'Lokalizacja dołączona' : 'Dodaj lokalizację'}
-                </button>
-                <span className="ml-auto text-[11px] text-muted">{content.length}/1000</span>
-              </div>
-              <div className="mt-3 flex gap-2">
-                <button
-                  onClick={() => { setComposeOpen(false); setContent(''); setImageData(null); setAttachLocation(false); }}
-                  className="flex-1 rounded-xl border border-card-border bg-card-bg py-2 text-xs font-semibold text-muted transition hover:bg-input-bg hover:text-foreground"
-                >
-                  Anuluj
-                </button>
-                <button
-                  onClick={submitPost}
-                  disabled={submitting || (!content.trim() && !imageData)}
-                  className="flex-1 rounded-xl bg-orange-600 py-2 text-xs font-semibold text-white transition hover:bg-orange-700 disabled:opacity-50"
-                >
-                  {submitting ? 'Publikuję…' : 'Opublikuj'}
-                </button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Error */}
+      {/* ── Error ── */}
       {error && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
+        <div className="border-l-2 border-l-red-500 bg-red-950/30 px-3 py-2 text-xs text-red-400">
           {error}
           <button onClick={() => setError('')} className="ml-2 text-red-300 hover:text-red-200">✕</button>
         </div>
       )}
 
-      {/* Feed */}
+      {/* ── Feed ── */}
       {loading ? (
         <div className="flex justify-center py-12">
           <svg className="h-6 w-6 animate-spin text-orange-500" viewBox="0 0 24 24" fill="none">
@@ -527,8 +540,9 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
           </svg>
         </div>
       ) : posts.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-card-border bg-card-bg/60 px-4 py-12 text-center">
-          <p className="text-sm font-medium text-foreground">Tu jeszcze nic nie ma</p>
+        <div className="border border-dashed border-orange-900/30 bg-black/40 px-4 py-12 text-center"
+          style={{ clipPath: 'polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))' }}>
+          <p className="text-sm font-black uppercase tracking-widest text-orange-400/60">Pusto</p>
           <p className="mt-1 text-xs text-muted">
             {filter === 'friends'
               ? 'Twoi znajomi nic nie wrzucili. Dodaj nowych znajomych albo zobacz wszystkich.'
@@ -536,7 +550,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           {posts.map((post) => {
             const isOwner = myId === post.userId;
             const open = !!openComments[post.id];
@@ -546,40 +560,41 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
             return (
               <article
                 key={post.id}
-                className="overflow-hidden rounded-2xl border border-card-border bg-card-bg shadow-sm"
+                className="relative overflow-hidden border border-orange-900/25 bg-black/65"
+                style={{ clipPath: 'polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)' }}
               >
-                {/* Header */}
-                <header className="flex items-center gap-3 px-4 pt-3 pb-2">
-                  <button
-                    onClick={() => onShowProfile?.(post.user.id)}
-                    className="shrink-0 transition hover:opacity-90"
-                  >
+                {/* left accent bar */}
+                <div className="absolute bottom-0 left-0 top-0 w-0.5 bg-gradient-to-b from-orange-500 via-orange-500/30 to-transparent" />
+
+                {/* Post header */}
+                <header className="flex items-center gap-3 px-4 pb-2 pt-3">
+                  <button onClick={() => onShowProfile?.(post.user.id)} className="shrink-0 transition hover:opacity-80">
                     <Avatar src={post.user.image} name={post.user.name} size={40} />
                   </button>
                   <div className="min-w-0 flex-1">
                     <button
                       onClick={() => onShowProfile?.(post.user.id)}
-                      className="block truncate text-left text-sm font-semibold text-foreground hover:text-orange-400"
+                      className="block truncate text-left text-sm font-black uppercase tracking-wide text-foreground hover:text-orange-400"
                     >
                       {post.user.name}
                     </button>
-                    <p className="truncate text-[11px] text-muted">
+                    <p className="truncate font-mono text-[10px] text-muted">
                       {post.user.carDisplay && (
                         <>
-                          <span>{post.user.carDisplay}</span>
-                          <span className="mx-1">•</span>
+                          <span className="text-orange-400/60">{post.user.carDisplay}</span>
+                          <span className="mx-1 text-orange-900">|</span>
                         </>
                       )}
                       <span>{timeAgo(post.createdAt)}</span>
                       {post.latitude !== null && post.longitude !== null && (
                         <>
-                          <span className="mx-1">•</span>
+                          <span className="mx-1 text-orange-900">|</span>
                           <span className="inline-flex items-center gap-0.5 text-emerald-400">
                             <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
                               <circle cx="12" cy="10" r="3" />
                             </svg>
-                            okolica
+                            GPS
                           </span>
                         </>
                       )}
@@ -590,7 +605,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
                       onClick={() => deletePost(post.id)}
                       disabled={deletingId === post.id}
                       title="Usuń post"
-                      className="rounded-lg p-1.5 text-muted transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                      className="p-1.5 text-muted transition hover:text-red-400 disabled:opacity-50"
                     >
                       <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                         <polyline points="3 6 5 6 21 6" />
@@ -602,57 +617,57 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
 
                 {/* Content */}
                 {post.content && (
-                  <p className="whitespace-pre-wrap px-4 pb-2 text-sm leading-relaxed text-foreground">
+                  <p className="whitespace-pre-wrap px-4 pb-3 text-sm leading-relaxed text-foreground/90">
                     {post.content}
                   </p>
                 )}
 
                 {/* Image */}
                 {post.imageData && (
-                  <button
-                    onClick={() => setLightbox(post.imageData)}
-                    className="block w-full"
-                  >
+                  <button onClick={() => setLightbox(post.imageData)} className="block w-full">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={post.imageData}
                       alt="Post"
-                      className="max-h-[520px] w-full object-cover transition hover:opacity-95"
+                      className="max-h-[520px] w-full object-cover transition hover:opacity-90"
                     />
                   </button>
                 )}
 
-                {/* Footer actions */}
-                <div className="flex items-center gap-1 border-t border-card-border px-2 py-1">
+                {/* Actions */}
+                <div className="flex items-center gap-px border-t border-orange-900/20">
                   <button
                     onClick={() => toggleLike(post)}
                     disabled={likingId === post.id}
-                    className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition ${
-                      post.myLiked ? 'text-rose-400' : 'text-muted hover:text-foreground hover:bg-input-bg'
+                    className={`flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs font-black uppercase tracking-wide transition ${
+                      post.myLiked
+                        ? 'bg-rose-900/20 text-rose-400'
+                        : 'text-muted hover:bg-orange-900/10 hover:text-orange-400'
                     }`}
                   >
                     <svg className="h-4 w-4" viewBox="0 0 24 24" fill={post.myLiked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2}>
                       <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
                     </svg>
-                    {post.likeCount > 0 ? `${post.likeCount} ${post.myLiked ? 'lubisz' : 'lubi'}` : 'Polub'}
+                    {post.likeCount > 0 ? `${post.likeCount}` : 'Polub'}
                   </button>
+                  <div className="w-px self-stretch bg-orange-900/20" />
                   <button
                     onClick={() => toggleCommentsOpen(post.id)}
-                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-muted transition hover:bg-input-bg hover:text-foreground"
+                    className="flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs font-black uppercase tracking-wide text-muted transition hover:bg-orange-900/10 hover:text-orange-400"
                   >
                     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                       <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                     </svg>
-                    {post.commentCount > 0 ? `${post.commentCount} komentarzy` : 'Komentuj'}
+                    {post.commentCount > 0 ? `${post.commentCount}` : 'Komentuj'}
                   </button>
                 </div>
 
                 {/* Comments */}
                 {(post.commentCount > 0 || open) && (
-                  <div className="border-t border-card-border bg-input-bg/30 px-4 py-3">
+                  <div className="border-t border-orange-900/20 bg-black/40 px-4 py-3">
                     {commentsLoading[post.id] ? (
                       <div className="flex justify-center py-3">
-                        <svg className="h-4 w-4 animate-spin text-muted" viewBox="0 0 24 24" fill="none">
+                        <svg className="h-4 w-4 animate-spin text-orange-500" viewBox="0 0 24 24" fill="none">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                         </svg>
@@ -661,27 +676,24 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
                       <ul className="flex flex-col gap-2">
                         {previewComments.map((c) => (
                           <li key={c.id} className="flex items-start gap-2">
-                            <button
-                              onClick={() => onShowProfile?.(c.user.id)}
-                              className="shrink-0"
-                            >
+                            <button onClick={() => onShowProfile?.(c.user.id)} className="shrink-0">
                               <Avatar src={c.user.image} name={c.user.name} size={28} />
                             </button>
-                            <div className="min-w-0 flex-1 rounded-xl bg-card-bg px-3 py-2">
+                            <div className="min-w-0 flex-1 border border-orange-900/20 bg-black/50 px-3 py-2">
                               <div className="flex items-center justify-between gap-2">
                                 <button
                                   onClick={() => onShowProfile?.(c.user.id)}
-                                  className="text-[11px] font-semibold text-foreground hover:text-orange-400"
+                                  className="text-[11px] font-black uppercase tracking-wide text-foreground hover:text-orange-400"
                                 >
                                   {c.user.name}
                                 </button>
-                                <span className="text-[10px] text-muted">{timeAgo(c.createdAt)}</span>
+                                <span className="font-mono text-[10px] text-orange-400/40">{timeAgo(c.createdAt)}</span>
                               </div>
-                              <p className="mt-0.5 whitespace-pre-wrap text-xs text-foreground">{c.content}</p>
+                              <p className="mt-0.5 whitespace-pre-wrap text-xs text-foreground/80">{c.content}</p>
                               {c.userId === myId && (
                                 <button
                                   onClick={() => deleteComment(post.id, c.id)}
-                                  className="mt-1 text-[10px] text-muted hover:text-red-400"
+                                  className="mt-1 text-[10px] uppercase tracking-wide text-muted hover:text-red-400"
                                 >
                                   Usuń
                                 </button>
@@ -693,9 +705,9 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
                           <li>
                             <button
                               onClick={() => toggleCommentsOpen(post.id)}
-                              className="text-[11px] text-muted hover:text-foreground"
+                              className="text-[11px] font-bold uppercase tracking-wide text-orange-400/60 hover:text-orange-400"
                             >
-                              Pokaż wszystkie ({post.commentCount})
+                              Pokaż wszystkie ({post.commentCount}) ▾
                             </button>
                           </li>
                         )}
@@ -711,12 +723,13 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
                           rows={1}
                           maxLength={500}
                           placeholder="Napisz komentarz…"
-                          className="flex-1 resize-none rounded-xl border border-card-border bg-card-bg px-3 py-2 text-xs text-foreground placeholder-muted outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                          className="flex-1 resize-none border border-orange-900/40 bg-black/60 px-3 py-2 text-xs text-foreground placeholder-white/20 outline-none transition focus:border-orange-500"
                         />
                         <button
                           onClick={() => submitComment(post.id)}
                           disabled={submittingComment === post.id || !(draftComments[post.id] ?? '').trim()}
-                          className="rounded-xl bg-orange-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-orange-700 disabled:opacity-50"
+                          className="px-3 py-2 text-xs font-black uppercase tracking-wider text-white transition hover:bg-orange-500 disabled:opacity-50"
+                          style={{ backgroundColor: '#ea580c', clipPath: CLIP_BTN }}
                         >
                           {submittingComment === post.id ? '…' : 'Wyślij'}
                         </button>
@@ -730,17 +743,17 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
         </div>
       )}
 
-      {/* Lightbox */}
+      {/* ── Lightbox ── */}
       {lightbox && (
         <div
           onClick={() => setLightbox(null)}
           className="fixed inset-0 z-[80] flex items-center justify-center bg-black/95 p-4"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={lightbox} alt="Zdjęcie" className="max-h-full max-w-full rounded-xl object-contain" />
+          <img src={lightbox} alt="Zdjęcie" className="max-h-full max-w-full object-contain" />
           <button
             onClick={() => setLightbox(null)}
-            className="absolute right-4 top-4 rounded-lg bg-white/10 p-2 text-white hover:bg-white/20"
+            className="absolute right-4 top-4 border border-orange-900/40 bg-black/70 p-2 text-orange-400 hover:border-orange-500 hover:text-orange-300"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path d="M18 6L6 18M6 6l12 12" />
@@ -756,8 +769,10 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
   return (
     <button
       onClick={onClick}
-      className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition ${
-        active ? 'bg-card-bg text-foreground shadow-sm' : 'text-muted hover:text-foreground'
+      className={`flex-1 py-1.5 text-xs font-black uppercase tracking-wide transition ${
+        active
+          ? 'bg-orange-600 text-white'
+          : 'text-orange-400/50 hover:text-orange-400'
       }`}
     >
       {children}
@@ -768,14 +783,14 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
 function Avatar({ src, name, size }: { src: string | null | undefined; name: string; size: number }) {
   return (
     <div
-      className="overflow-hidden rounded-full bg-input-bg ring-1 ring-card-border"
-      style={{ width: size, height: size }}
+      className="overflow-hidden bg-black/60 ring-1 ring-orange-900/40"
+      style={{ width: size, height: size, clipPath: 'polygon(0 0,calc(100% - 4px) 0,100% 4px,100% 100%,4px 100%,0 calc(100% - 4px))' }}
     >
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={src} alt={name} className="h-full w-full object-cover" />
       ) : (
-        <div className="flex h-full w-full items-center justify-center text-xs font-bold text-muted">
+        <div className="flex h-full w-full items-center justify-center text-xs font-black text-orange-400/60">
           {name?.[0]?.toUpperCase() ?? '?'}
         </div>
       )}
