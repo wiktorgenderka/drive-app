@@ -453,15 +453,19 @@ export default function MapView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLocation, isFollowing, isNavigating]);
 
-  // Follow poza nawigacją — łagodny easeTo bez zmiany pitch/zoom przy każdym fix.
+  // Follow poza nawigacją — obrót mapy z kierunkiem jazdy, marker lekko poniżej środka.
   // Pomijamy fixy o bardzo słabej dokładności (>200 m), żeby mapa nie skakała
   // gdy lokalizacja idzie z WiFi i potrafi się "teleportować".
   useEffect(() => {
     if (isNavigating || !isFollowing || !userLocation) return;
     if ((userLocation.accuracy ?? 0) > 200) return;
+    const hasHeading = userLocation.heading != null && !Number.isNaN(userLocation.heading);
     mapRef.current?.easeTo({
       center: [userLocation.longitude, userLocation.latitude],
+      bearing: hasHeading ? (userLocation.heading as number) : 0,
+      pitch: hasHeading ? 40 : 0,
       duration: 800,
+      padding: { top: 0, bottom: 200, left: 0, right: 0 },
       easing: (t) => t,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -530,8 +534,22 @@ export default function MapView() {
   function handleLocateUser() {
     if (!userLocation) return;
     setIsFollowing(true);
-    if (!isNavigating) {
-      mapRef.current?.flyTo({ center: [userLocation.longitude, userLocation.latitude], zoom: 15, duration: 1000 });
+    if (isNavigating) {
+      mapRef.current?.easeTo({
+        center: [userLocation.longitude, userLocation.latitude],
+        bearing: userLocation.heading ?? 0,
+        pitch: 68, zoom: 17, duration: 600,
+        padding: { top: 0, bottom: 240, left: 0, right: 0 },
+      });
+    } else {
+      const hasHeading = userLocation.heading != null && !Number.isNaN(userLocation.heading);
+      mapRef.current?.easeTo({
+        center: [userLocation.longitude, userLocation.latitude],
+        bearing: hasHeading ? (userLocation.heading as number) : 0,
+        pitch: hasHeading ? 40 : 0,
+        zoom: 15, duration: 800,
+        padding: { top: 0, bottom: 200, left: 0, right: 0 },
+      });
     }
   }
 
@@ -735,21 +753,19 @@ export default function MapView() {
             </button>
           )}
 
-          {!isNavigating && (
-            <button
-              onClick={handleLocateUser}
-              className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition-all ${
-                isFollowing ? 'bg-blue-600 text-white' : 'text-muted hover:text-foreground'
-              }`}
-              style={!isFollowing ? { backgroundColor: 'rgba(24,24,27,0.9)', border: '1px solid #3f3f46', backdropFilter: 'blur(8px)' } : {}}
-              title={isFollowing ? 'Mapa podąża za Tobą — kliknij by ponownie wycentrować' : 'Podążaj za moją lokalizacją'}
-            >
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <circle cx="12" cy="12" r="4" />
-                <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
-              </svg>
-            </button>
-          )}
+          <button
+            onClick={handleLocateUser}
+            className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition-all ${
+              isFollowing ? 'bg-blue-600 text-white' : 'text-muted hover:text-foreground'
+            }`}
+            style={!isFollowing ? { backgroundColor: 'rgba(24,24,27,0.9)', border: '1px solid #3f3f46', backdropFilter: 'blur(8px)' } : {}}
+            title={isFollowing ? 'Mapa podąża za Tobą — kliknij by ponownie wycentrować' : 'Podążaj za moją lokalizacją'}
+          >
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+            </svg>
+          </button>
 
           <button
             onClick={() => {
