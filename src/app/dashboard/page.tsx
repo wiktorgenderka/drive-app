@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { calculateDistance, formatDistance } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import { useSession } from 'next-auth/react';
@@ -122,6 +123,7 @@ const sectionVariants: Variants = {
 
 export default function DashboardPage() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
   const activeConvoy = useConvoyStore((s) => s.activeConvoy);
   useNotifications({ userId: session?.user?.id, convoyId: activeConvoy?.id });
   const autoSpotEnabled = useProfileStore((s) => s.privacy.autoSpot !== false);
@@ -131,7 +133,12 @@ export default function DashboardPage() {
   const geo = useGeolocation({ enableHighAccuracy: true, autoStart: true });
   const [geoBannerDismissed, setGeoBannerDismissed] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<Tab>('home');
+  const initialTab = (() => {
+    const t = searchParams?.get('tab');
+    if (t === 'map' || t === 'car' || t === 'routes' || t === 'friends' || t === 'feed' || t === 'profile') return t as Tab;
+    return 'home' as Tab;
+  })();
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [carSubTab, setCarSubTab] = useState<'convoy' | 'garage'>('convoy');
   const [feedSubTab, setFeedSubTab] = useState<'feed' | 'events'>('feed');
   const { show: showOnboarding, dismiss: dismissOnboarding } = useShowOnboarding();
@@ -219,6 +226,7 @@ export default function DashboardPage() {
   const isOverlay = !isHome && !isMapMode && !isProfileView;
 
   function handleTabClick(tab: Tab) {
+    if ('vibrate' in navigator) navigator.vibrate(8);
     if (viewedProfileUserId !== null) setViewedProfileUserId(null);
     if (tab === activeTab && viewedProfileUserId === null) {
       setActiveTab('home');

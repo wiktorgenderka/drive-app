@@ -64,6 +64,15 @@ interface RecentReport {
   user: { name: string };
 }
 
+interface SuggestedRoute {
+  id: string;
+  name: string;
+  description: string;
+  distance: number;
+  duration: number;
+  type: 'scenic' | 'mountain' | 'coastal' | 'city' | 'countryside';
+}
+
 interface HomeScreenProps {
   onNavigateToMap: () => void;
   onNavigateToFriends: () => void;
@@ -112,7 +121,7 @@ function ShortcutTile({ onClick, label, sub, gradient, icon, badge }: {
   return (
     <motion.button
       whileTap={{ scale: 0.96 }}
-      onClick={onClick}
+      onClick={() => { navigator.vibrate?.(8); onClick(); }}
       className={`relative flex h-28 flex-col justify-between rounded-2xl bg-gradient-to-br ${gradient} p-3 text-left text-white shadow-lg transition hover:brightness-110`}
     >
       <div className="flex items-start justify-between">
@@ -147,15 +156,45 @@ export default function HomeScreen({
 
   const weather = useWeather(userLocation?.latitude, userLocation?.longitude);
 
-  const [friends, setFriends]   = useState<OnlineFriend[]>([]);
-  const [stats, setStats]       = useState<DashboardStats | null>(null);
-  const [xpData, setXpData]     = useState<XPData | null>(null);
-  const [reports, setReports]   = useState<RecentReport[]>([]);
-  const [loading, setLoading]   = useState(true);
+  const [friends, setFriends]           = useState<OnlineFriend[]>([]);
+  const [stats, setStats]               = useState<DashboardStats | null>(null);
+  const [xpData, setXpData]             = useState<XPData | null>(null);
+  const [reports, setReports]           = useState<RecentReport[]>([]);
+  const [suggestedRoutes, setSuggested] = useState<SuggestedRoute[]>([]);
+  const [loading, setLoading]           = useState(true);
   const [newAchievement, setNewAchievement] = useState<XPData['achievements'][number] | null>(null);
+  const [notifState, setNotifState] = useState<'hidden' | 'prompt'>('hidden');
+  const [notifRequesting, setNotifRequesting] = useState(false);
   const seenAchievementsRef = useRef<Set<string>>(new Set());
   const userLocationRef = useRef(userLocation);
   userLocationRef.current = userLocation;
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    const dismissed = localStorage.getItem('driveapp_notif_dismissed');
+    if (!dismissed && Notification.permission === 'default') {
+      const timer = setTimeout(() => setNotifState('prompt'), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  async function requestNotifPermission() {
+    setNotifRequesting(true);
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm === 'granted' && 'serviceWorker' in navigator) {
+        navigator.vibrate?.(40);
+      }
+    } catch { /* silent */ }
+    localStorage.setItem('driveapp_notif_dismissed', '1');
+    setNotifRequesting(false);
+    setNotifState('hidden');
+  }
+
+  function dismissNotifBanner() {
+    localStorage.setItem('driveapp_notif_dismissed', '1');
+    setNotifState('hidden');
+  }
 
   const fetchReports = useCallback(async () => {
     const loc = userLocationRef.current;
@@ -168,25 +207,32 @@ export default function HomeScreen({
 
   const fetchData = useCallback(async () => {
     try {
-      const [friendsRes, statsRes, xpRes] = await Promise.all([
+      const loc = userLocationRef.current;
+      const suggestedUrl = loc
+        ? `/api/routes/suggested?lat=${loc.latitude}&lng=${loc.longitude}`
+        : null;
+
+      const requests: Promise<Response>[] = [
         fetch('/api/friends/online'),
         fetch('/api/dashboard/stats'),
         fetch('/api/xp'),
-      ]);
+      ];
+      if (suggestedUrl) requests.push(fetch(suggestedUrl));
+
+      const [friendsRes, statsRes, xpRes, suggestedRes] = await Promise.all(requests);
       if (friendsRes.ok) setFriends(await friendsRes.json());
       if (statsRes.ok)   setStats(await statsRes.json());
       if (xpRes.ok) {
         const xp: XPData = await xpRes.json();
         setXpData(xp);
-        // Show latest unseen achievement
         const unseen = xp.achievements.find((a) => !seenAchievementsRef.current.has(a.key));
         if (unseen) {
           seenAchievementsRef.current.add(unseen.key);
-          // Only show if unlocked in last 60s
           const age = Date.now() - new Date(unseen.unlockedAt).getTime();
           if (age < 60_000) setNewAchievement(unseen);
         }
       }
+      if (suggestedRes?.ok) setSuggested(await suggestedRes.json());
       await fetchReports();
     } catch { /* silent */ } finally {
       setLoading(false);
@@ -242,6 +288,38 @@ export default function HomeScreen({
                 xpNeeded={xpData.xpNeeded}
                 nextLevel={xpData.nextLevel}
               />
+            </motion.div>
+          )}
+
+          {/* Push notification permission banner */}
+          {notifState === 'prompt' && (
+            <motion.div variants={fadeUp}>
+              <div className="flex items-start gap-3 rounded-2xl border border-accent/30 bg-accent/8 px-4 py-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/20 text-accent">
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">Powiadomienia o trasie</p>
+                  <p className="text-xs text-muted mt-0.5">Bądź na bieżąco z raportami w konwoju i zaproszeniami</p>
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      onClick={requestNotifPermission}
+                      disabled={notifRequesting}
+                      className="rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+                    >
+                      Włącz
+                    </button>
+                    <button
+                      onClick={dismissNotifBanner}
+                      className="rounded-lg border border-card-border px-3 py-1.5 text-xs font-medium text-muted transition hover:text-foreground"
+                    >
+                      Nie teraz
+                    </button>
+                  </div>
+                </div>
+              </div>
             </motion.div>
           )}
 
@@ -368,6 +446,47 @@ export default function HomeScreen({
               icon={<svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx="6" cy="19" r="3" /><path d="M9 19h8.5a3.5 3.5 0 000-7h-11a3.5 3.5 0 010-7H15" /><circle cx="18" cy="5" r="3" /></svg>}
             />
           </motion.div>
+
+          {/* Suggested routes strip */}
+          {suggestedRoutes.length > 0 && (
+            <motion.div variants={fadeUp}>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted">Polecane trasy</p>
+                <button onClick={onNavigateToRoutes} className="text-xs font-medium text-accent hover:opacity-80">Wszystkie →</button>
+              </div>
+              <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+                {suggestedRoutes.map((route) => {
+                  const TYPE_EMOJI: Record<string, string> = {
+                    scenic: '🌄', mountain: '⛰️', coastal: '🌊', city: '🏙️', countryside: '🌾',
+                  };
+                  return (
+                    <button
+                      key={route.id}
+                      onClick={onNavigateToRoutes}
+                      className="flex shrink-0 w-44 flex-col gap-2 rounded-2xl border border-card-border bg-card-bg p-3 text-left transition hover:border-accent/40"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl">{TYPE_EMOJI[route.type] ?? '🗺️'}</span>
+                        <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-bold text-accent">
+                          {route.distance.toFixed(0)} km
+                        </span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">{route.name}</p>
+                        <p className="text-[11px] text-muted truncate mt-0.5">{route.description}</p>
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px] text-muted">
+                        <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                          <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                        </svg>
+                        {route.duration < 60 ? `${route.duration} min` : `${Math.floor(route.duration / 60)}h ${route.duration % 60}m`}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
 
           {/* Friend requests banner */}
           {stats && stats.pendingRequests > 0 && (

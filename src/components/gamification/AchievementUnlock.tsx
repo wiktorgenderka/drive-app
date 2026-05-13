@@ -25,6 +25,8 @@ const RARITY_CONFIG = {
 export default function AchievementUnlock({ achievement, onDismiss }: AchievementUnlockProps) {
   useEffect(() => {
     if (!achievement) return;
+    // Pattern: short burst → pause → longer burst (celebration feel)
+    if ('vibrate' in navigator) navigator.vibrate([60, 80, 120, 80, 200]);
     const t = setTimeout(onDismiss, 4500);
     return () => clearTimeout(t);
   }, [achievement, onDismiss]);
