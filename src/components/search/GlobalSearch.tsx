@@ -21,16 +21,22 @@ export default function GlobalSearch({ open, onClose, onShowProfile, onShowRoute
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (open) {
       setQuery('');
       setResults([]);
+      setActiveIdx(-1);
       setTimeout(() => inputRef.current?.focus(), 80);
     }
   }, [open]);
+
+  // Reset active index when results change
+  useEffect(() => { setActiveIdx(-1); }, [results]);
 
   const search = useCallback(async (q: string) => {
     if (q.length < 2) { setResults([]); setLoading(false); return; }
@@ -63,6 +69,34 @@ export default function GlobalSearch({ open, onClose, onShowProfile, onShowRoute
     onClose();
   }
 
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Escape') { onClose(); return; }
+    if (results.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveIdx((i) => Math.min(i + 1, results.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveIdx((i) => Math.max(i - 1, -1));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (activeIdx >= 0 && activeIdx < results.length) {
+        handleSelect(results[activeIdx]);
+      }
+    }
+  }
+
+  // Scroll active item into view
+  useEffect(() => {
+    if (activeIdx < 0 || !listRef.current) return;
+    const items = listRef.current.querySelectorAll('[data-result-item]');
+    items[activeIdx]?.scrollIntoView({ block: 'nearest' });
+  }, [activeIdx]);
+
+  // Flat list of results (users first, then routes) for keyboard nav
+  const flatResults = results;
+
   return (
     <AnimatePresence>
       {open && (
@@ -93,7 +127,7 @@ export default function GlobalSearch({ open, onClose, onShowProfile, onShowRoute
                 ref={inputRef}
                 value={query}
                 onChange={(e) => handleChange(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+                onKeyDown={handleKeyDown}
                 placeholder="Szukaj kierowców, tras…"
                 className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted"
               />
@@ -106,7 +140,7 @@ export default function GlobalSearch({ open, onClose, onShowProfile, onShowRoute
             </div>
 
             {/* Results */}
-            <div className="max-h-[60vh] overflow-y-auto">
+            <div ref={listRef} className="max-h-[60vh] overflow-y-auto">
               {query.length < 2 && (
                 <div className="flex flex-col items-center gap-2 py-10 text-center">
                   <span className="text-3xl">🔍</span>
@@ -125,66 +159,78 @@ export default function GlobalSearch({ open, onClose, onShowProfile, onShowRoute
               {results.length > 0 && (
                 <div className="py-2">
                   {/* Group by type */}
-                  {results.some((r) => r.kind === 'user') && (
+                  {flatResults.some((r) => r.kind === 'user') && (
                     <>
                       <p className="px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
                         Kierowcy
                       </p>
-                      {results.filter((r): r is { kind: 'user'; data: UserResult } => r.kind === 'user').map((r) => (
-                        <button
-                          key={r.data.id}
-                          onClick={() => handleSelect(r)}
-                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-input-bg"
-                        >
-                          {r.data.image ? (
-                            <img src={r.data.image} alt="" className="h-9 w-9 rounded-full object-cover" />
-                          ) : (
-                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent/20 text-sm font-bold text-accent">
-                              {r.data.name.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-foreground">{r.data.name}</p>
-                            {r.data.carDisplay && (
-                              <p className="text-xs text-muted truncate">{r.data.carDisplay}</p>
+                      {flatResults.filter((r): r is { kind: 'user'; data: UserResult } => r.kind === 'user').map((r) => {
+                        const idx = flatResults.indexOf(r);
+                        return (
+                          <button
+                            key={r.data.id}
+                            data-result-item
+                            onClick={() => handleSelect(r)}
+                            className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition ${
+                              activeIdx === idx ? 'bg-input-bg' : 'hover:bg-input-bg'
+                            }`}
+                          >
+                            {r.data.image ? (
+                              <img src={r.data.image} alt="" className="h-9 w-9 rounded-full object-cover" />
+                            ) : (
+                              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent/20 text-sm font-bold text-accent">
+                                {r.data.name.charAt(0).toUpperCase()}
+                              </div>
                             )}
-                          </div>
-                          <svg className="ml-auto h-4 w-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                            <path d="M9 18l6-6-6-6" />
-                          </svg>
-                        </button>
-                      ))}
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-foreground">{r.data.name}</p>
+                              {r.data.carDisplay && (
+                                <p className="text-xs text-muted truncate">{r.data.carDisplay}</p>
+                              )}
+                            </div>
+                            <svg className="ml-auto h-4 w-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                              <path d="M9 18l6-6-6-6" />
+                            </svg>
+                          </button>
+                        );
+                      })}
                     </>
                   )}
 
-                  {results.some((r) => r.kind === 'route') && (
+                  {flatResults.some((r) => r.kind === 'route') && (
                     <>
                       <p className="mt-1 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
                         Trasy publiczne
                       </p>
-                      {results.filter((r): r is { kind: 'route'; data: RouteResult } => r.kind === 'route').map((r) => (
-                        <button
-                          key={r.data.id}
-                          onClick={() => handleSelect(r)}
-                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-input-bg"
-                        >
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-lg">
-                            🗺️
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold text-foreground truncate">{r.data.name}</p>
-                            <p className="text-xs text-muted">
-                              {r.data.user.name}
-                              {r.data.avgRating && (
-                                <span className="ml-2">⭐ {r.data.avgRating.toFixed(1)}</span>
-                              )}
-                            </p>
-                          </div>
-                          <svg className="ml-auto h-4 w-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                            <path d="M9 18l6-6-6-6" />
-                          </svg>
-                        </button>
-                      ))}
+                      {flatResults.filter((r): r is { kind: 'route'; data: RouteResult } => r.kind === 'route').map((r) => {
+                        const idx = flatResults.indexOf(r);
+                        return (
+                          <button
+                            key={r.data.id}
+                            data-result-item
+                            onClick={() => handleSelect(r)}
+                            className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition ${
+                              activeIdx === idx ? 'bg-input-bg' : 'hover:bg-input-bg'
+                            }`}
+                          >
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-lg">
+                              🗺️
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-foreground truncate">{r.data.name}</p>
+                              <p className="text-xs text-muted">
+                                {r.data.user.name}
+                                {r.data.avgRating && (
+                                  <span className="ml-2">⭐ {r.data.avgRating.toFixed(1)}</span>
+                                )}
+                              </p>
+                            </div>
+                            <svg className="ml-auto h-4 w-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                              <path d="M9 18l6-6-6-6" />
+                            </svg>
+                          </button>
+                        );
+                      })}
                     </>
                   )}
                 </div>
@@ -193,9 +239,10 @@ export default function GlobalSearch({ open, onClose, onShowProfile, onShowRoute
 
             {/* Footer hint */}
             <div className="border-t border-card-border px-4 py-2 flex items-center gap-4 text-[11px] text-muted/60">
+              <span><kbd className="rounded border border-card-border px-1">↑↓</kbd> nawiguj</span>
               <span><kbd className="rounded border border-card-border px-1">↵</kbd> wybierz</span>
               <span><kbd className="rounded border border-card-border px-1">Esc</kbd> zamknij</span>
-              <span className="ml-auto">Ctrl+K aby otworzyć</span>
+              <span className="ml-auto">Ctrl+K</span>
             </div>
           </motion.div>
         </>
