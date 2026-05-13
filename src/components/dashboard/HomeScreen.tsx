@@ -12,6 +12,7 @@ import { REPORT_TYPE_LABELS } from '@/types';
 import XPBar from '@/components/gamification/XPBar';
 import StreakWidget from '@/components/gamification/StreakWidget';
 import AchievementUnlock from '@/components/gamification/AchievementUnlock';
+import Leaderboard from '@/components/gamification/Leaderboard';
 import { getLevelInfo } from '@/lib/xp';
 
 interface SpotifyNowPlaying {
@@ -479,6 +480,14 @@ export default function HomeScreen({
                 <p className="text-sm font-medium text-foreground">Czysto w okolicy</p>
                 <p className="mt-0.5 text-xs text-muted">Brak raportów o zagrożeniach</p>
               </div>
+            </motion.div>
+          )}
+
+          {/* Leaderboard */}
+          {session?.user?.id && (
+            <motion.div variants={fadeUp}>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">🏆 Ranking tygodnia</p>
+              <Leaderboard currentUserId={session.user.id} />
             </motion.div>
           )}
 

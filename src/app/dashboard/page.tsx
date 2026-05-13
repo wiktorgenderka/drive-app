@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { calculateDistance, formatDistance } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import { useSession } from 'next-auth/react';
@@ -19,6 +19,8 @@ import SocialFeed from '@/components/social/SocialFeed';
 import GaragePanel from '@/components/garage/GaragePanel';
 import EventPanel from '@/components/events/EventPanel';
 import OnboardingFlow, { useShowOnboarding } from '@/components/onboarding/OnboardingFlow';
+import GlobalSearch from '@/components/search/GlobalSearch';
+import TripHistoryPanel from '@/components/trips/TripHistoryPanel';
 import CreateSpotModal from '@/components/spots/CreateSpotModal';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useLocationPing } from '@/hooks/useLocationPing';
@@ -133,6 +135,20 @@ export default function DashboardPage() {
   const [carSubTab, setCarSubTab] = useState<'convoy' | 'garage'>('convoy');
   const [feedSubTab, setFeedSubTab] = useState<'feed' | 'events'>('feed');
   const { show: showOnboarding, dismiss: dismissOnboarding } = useShowOnboarding();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [routesSubTab, setRoutesSubTab] = useState<'routes' | 'trips'>('routes');
+
+  // Ctrl+K global shortcut
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen((v) => !v);
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
   const [viewedProfileUserId, setViewedProfileUserId] = useState<string | null>(null);
   const [createRouteOpen, setCreateRouteOpen] = useState(false);
   const [mapVoiceEnabled, setMapVoiceEnabled] = useState(() => {
@@ -493,9 +509,18 @@ export default function DashboardPage() {
                 <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${SECTION_META[activeTab as keyof typeof SECTION_META].color} text-white`}>
                   {NAV_ITEMS.find((n) => n.id === activeTab)?.icon}
                 </div>
-                <h2 className="text-lg font-bold text-foreground">
+                <h2 className="flex-1 text-lg font-bold text-foreground">
                   {SECTION_META[activeTab as keyof typeof SECTION_META].title}
                 </h2>
+                <button
+                  onClick={() => setSearchOpen(true)}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-card-bg border border-card-border text-muted transition hover:text-foreground"
+                  title="Szukaj (Ctrl+K)"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+                  </svg>
+                </button>
               </div>
 
               {/* Content */}
@@ -563,11 +588,45 @@ export default function DashboardPage() {
                 )}
 
                 {activeTab === 'routes' && (
-                  <RoutePanel
-                    onShowOnMap={() => setActiveTab('map')}
-                    onShowProfile={(uid) => setViewedProfileUserId(uid)}
-                    onCreateRouteOpenChange={setCreateRouteOpen}
-                  />
+                  <div className="flex flex-col gap-4">
+                    {/* Sub-tabs: Trasy / Historia */}
+                    <div className="flex rounded-xl bg-input-bg p-1">
+                      {(['routes', 'trips'] as const).map((t) => (
+                        <button
+                          key={t}
+                          onClick={() => setRoutesSubTab(t)}
+                          className={`relative flex-1 rounded-lg py-2 text-sm font-semibold transition ${routesSubTab === t ? 'text-foreground' : 'text-muted hover:text-foreground'}`}
+                        >
+                          {routesSubTab === t && (
+                            <motion.div
+                              layoutId="routes-sub-pill"
+                              className="absolute inset-0 rounded-lg bg-card-bg shadow"
+                              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                            />
+                          )}
+                          <span className="relative">
+                            {t === 'routes' ? '🗺️ Trasy' : '🏁 Historia jazdy'}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <AnimatePresence mode="wait">
+                      {routesSubTab === 'routes' ? (
+                        <motion.div key="routes" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                          <RoutePanel
+                            onShowOnMap={() => setActiveTab('map')}
+                            onShowProfile={(uid) => setViewedProfileUserId(uid)}
+                            onCreateRouteOpenChange={setCreateRouteOpen}
+                          />
+                        </motion.div>
+                      ) : (
+                        <motion.div key="trips" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                          <TripHistoryPanel />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 )}
 
                 {activeTab === 'feed' && (
@@ -691,6 +750,12 @@ export default function DashboardPage() {
         </AnimatePresence>
 
         <CreateSpotModal open={showCreateSpot} onClose={() => setShowCreateSpot(false)} />
+
+        <GlobalSearch
+          open={searchOpen}
+          onClose={() => setSearchOpen(false)}
+          onShowProfile={(uid) => { setViewedProfileUserId(uid); setSearchOpen(false); }}
+        />
 
         {/* BOTTOM NAV — 5 tabów */}
         {!isMapMode && !createRouteOpen && (

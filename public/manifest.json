@@ -1,18 +1,38 @@
 {
   "name": "DriveApp",
   "short_name": "DriveApp",
-  "description": "Nawiguj razem — mapa, konwoje i raporty drogowe w czasie rzeczywistym",
+  "description": "Nawiguj razem — mapa, konwoje, garaż i raporty drogowe w czasie rzeczywistym",
+  "lang": "pl",
+  "dir": "ltr",
   "start_url": "/dashboard",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0f172a",
-  "theme_color": "#1e293b",
+  "theme_color": "#f97316",
   "orientation": "portrait",
+  "categories": ["navigation", "social", "travel"],
   "icons": [
     {
       "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Mapa",
+      "short_name": "Mapa",
+      "description": "Otwórz mapę z raportami drogowymi",
+      "url": "/dashboard?tab=map",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Trasy",
+      "short_name": "Trasy",
+      "description": "Przeglądaj i nagrywaj trasy",
+      "url": "/dashboard?tab=routes",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
     }
   ]
 }

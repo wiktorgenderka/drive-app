@@ -4,6 +4,7 @@ import { SessionProvider } from 'next-auth/react';
 import { ToastProvider } from '@/components/ui/Toast';
 import { ReactNode, useEffect } from 'react';
 import { useThemeStore } from '@/stores/useThemeStore';
+import ServiceWorkerRegistration from '@/components/pwa/ServiceWorkerRegistration';
 
 function ThemeWrapper({ children }: { children: ReactNode }) {
   const { mode, accentColor } = useThemeStore();
@@ -25,7 +26,10 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
       <ThemeWrapper>
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          <ServiceWorkerRegistration />
+          {children}
+        </ToastProvider>
       </ThemeWrapper>
     </SessionProvider>
   );
