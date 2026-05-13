@@ -14,6 +14,7 @@ import StreakWidget from '@/components/gamification/StreakWidget';
 import AchievementUnlock from '@/components/gamification/AchievementUnlock';
 import AchievementsPanel from '@/components/gamification/AchievementsPanel';
 import Leaderboard from '@/components/gamification/Leaderboard';
+import DailyChallenge from '@/components/dashboard/DailyChallenge';
 import { getLevelInfo } from '@/lib/xp';
 
 interface SpotifyNowPlaying {
@@ -40,6 +41,10 @@ interface DashboardStats {
   activeConvoy: { id: string; name: string; role: string; memberCount: number } | null;
   pendingRequests: number;
   totalActiveReports: number;
+  todayKm: number;
+  todayMinutes: number;
+  todayTripCount: number;
+  weekKm: number;
 }
 
 interface XPData {
@@ -324,6 +329,21 @@ export default function HomeScreen({
             </motion.div>
           )}
 
+          {/* Daily challenge */}
+          {stats && (
+            <motion.div variants={fadeUp}>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted">Wyzwanie dnia</p>
+              </div>
+              <DailyChallenge stats={{
+                todayKm: stats.todayKm,
+                todayTripCount: stats.todayTripCount,
+                todayReports: stats.todayReports,
+                streakCurrent: xpData?.streak.current ?? 0,
+              }} />
+            </motion.div>
+          )}
+
           {/* Push notification permission banner */}
           {notifState === 'prompt' && (
             <motion.div variants={fadeUp}>
@@ -451,6 +471,45 @@ export default function HomeScreen({
                 </div>
                 <div className="flex h-2 w-2 shrink-0 rounded-full bg-emerald-500 animate-pulse" />
               </button>
+            </motion.div>
+          )}
+
+          {/* Today's drive widget */}
+          {stats && (stats.todayKm > 0 || stats.todayTripCount > 0) && (
+            <motion.div variants={fadeUp}>
+              <div className="rounded-2xl border border-card-border bg-card-bg overflow-hidden">
+                <div className="h-0.5 w-full bg-gradient-to-r from-accent to-orange-600" />
+                <div className="px-4 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-2">Dzisiaj na drodze</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="flex flex-col items-center">
+                      <span className="text-xl font-extrabold text-accent tabular-nums">
+                        {stats.todayKm.toFixed(1)}
+                      </span>
+                      <span className="text-[10px] text-muted">km</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <span className="text-xl font-extrabold text-foreground tabular-nums">
+                        {stats.todayMinutes < 60
+                          ? `${stats.todayMinutes}m`
+                          : `${Math.floor(stats.todayMinutes / 60)}h${stats.todayMinutes % 60 > 0 ? ` ${stats.todayMinutes % 60}m` : ''}`}
+                      </span>
+                      <span className="text-[10px] text-muted">czas</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <span className="text-xl font-extrabold text-foreground tabular-nums">
+                        {stats.todayTripCount}
+                      </span>
+                      <span className="text-[10px] text-muted">{stats.todayTripCount === 1 ? 'podróż' : 'podróże'}</span>
+                    </div>
+                  </div>
+                  {stats.weekKm > 0 && (
+                    <p className="mt-2 text-[11px] text-muted text-center">
+                      Ten tydzień: <span className="font-semibold text-foreground">{stats.weekKm.toFixed(0)} km</span>
+                    </p>
+                  )}
+                </div>
+              </div>
             </motion.div>
           )}
 

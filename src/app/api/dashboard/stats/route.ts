@@ -19,6 +19,8 @@ export async function GET() {
       activeConvoy,
       pendingRequests,
       totalActiveReports,
+      todayTrips,
+      weekTrips,
     ] = await Promise.all([
       prisma.route.count({ where: { userId: session.user.id } }),
       prisma.report.count({ where: { userId: session.user.id } }),
@@ -43,6 +45,18 @@ export async function GET() {
           expiresAt: { gte: now },
         },
       }),
+      prisma.trip.aggregate({
+        where: { userId: session.user.id, startedAt: { gte: todayStart } },
+        _sum: { distanceKm: true, durationMin: true },
+        _count: { id: true },
+      }),
+      prisma.trip.aggregate({
+        where: {
+          userId: session.user.id,
+          startedAt: { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) },
+        },
+        _sum: { distanceKm: true },
+      }),
     ]);
 
     return NextResponse.json({
@@ -59,6 +73,10 @@ export async function GET() {
         : null,
       pendingRequests,
       totalActiveReports,
+      todayKm: todayTrips._sum.distanceKm ?? 0,
+      todayMinutes: todayTrips._sum.durationMin ?? 0,
+      todayTripCount: todayTrips._count.id,
+      weekKm: weekTrips._sum.distanceKm ?? 0,
     });
   } catch (error) {
     console.error("Dashboard stats error:", error);
