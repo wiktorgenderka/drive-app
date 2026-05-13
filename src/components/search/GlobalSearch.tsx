@@ -5,10 +5,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface UserResult { id: string; name: string; image: string | null; carDisplay: string | null }
 interface RouteResult { id: string; name: string; description: string | null; avgRating: number | null; user: { name: string } }
+interface EventResult { id: string; title: string; startAt: string; locationName: string | null }
 
 type SearchResult =
   | { kind: 'user'; data: UserResult }
-  | { kind: 'route'; data: RouteResult };
+  | { kind: 'route'; data: RouteResult }
+  | { kind: 'event'; data: EventResult };
 
 interface GlobalSearchProps {
   open: boolean;
@@ -42,15 +44,18 @@ export default function GlobalSearch({ open, onClose, onShowProfile, onShowRoute
     if (q.length < 2) { setResults([]); setLoading(false); return; }
     setLoading(true);
     try {
-      const [usersRes, routesRes] = await Promise.all([
-        fetch(`/api/users/search?q=${encodeURIComponent(q)}&limit=5`),
-        fetch(`/api/routes/public?q=${encodeURIComponent(q)}&limit=5`),
+      const [usersRes, routesRes, eventsRes] = await Promise.all([
+        fetch(`/api/users/search?q=${encodeURIComponent(q)}&limit=4`),
+        fetch(`/api/routes/public?q=${encodeURIComponent(q)}&limit=4`),
+        fetch(`/api/events?q=${encodeURIComponent(q)}&upcoming=true`),
       ]);
       const users: UserResult[] = usersRes.ok ? (await usersRes.json()).data ?? [] : [];
       const routes: RouteResult[] = routesRes.ok ? (await routesRes.json()).data ?? [] : [];
+      const events: EventResult[] = eventsRes.ok ? (await eventsRes.json()).slice(0, 4) : [];
       const combined: SearchResult[] = [
         ...users.map((u): SearchResult => ({ kind: 'user', data: u })),
         ...routes.map((r): SearchResult => ({ kind: 'route', data: r })),
+        ...events.map((e): SearchResult => ({ kind: 'event', data: e })),
       ];
       setResults(combined);
     } catch { /* silent */ }
@@ -128,7 +133,7 @@ export default function GlobalSearch({ open, onClose, onShowProfile, onShowRoute
                 value={query}
                 onChange={(e) => handleChange(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Szukaj kierowców, tras…"
+                placeholder="Szukaj kierowców, tras, eventów…"
                 className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted"
               />
               {loading && (
@@ -145,7 +150,7 @@ export default function GlobalSearch({ open, onClose, onShowProfile, onShowRoute
                 <div className="flex flex-col items-center gap-2 py-10 text-center">
                   <span className="text-3xl">🔍</span>
                   <p className="text-sm text-muted">Wpisz min. 2 znaki</p>
-                  <p className="text-xs text-muted/60">Szukaj kierowców lub tras</p>
+                  <p className="text-xs text-muted/60">Szukaj kierowców, tras lub eventów</p>
                 </div>
               )}
 
@@ -223,6 +228,42 @@ export default function GlobalSearch({ open, onClose, onShowProfile, onShowRoute
                                 {r.data.avgRating && (
                                   <span className="ml-2">⭐ {r.data.avgRating.toFixed(1)}</span>
                                 )}
+                              </p>
+                            </div>
+                            <svg className="ml-auto h-4 w-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                              <path d="M9 18l6-6-6-6" />
+                            </svg>
+                          </button>
+                        );
+                      })}
+                    </>
+                  )}
+
+                  {flatResults.some((r) => r.kind === 'event') && (
+                    <>
+                      <p className="mt-1 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                        Eventy
+                      </p>
+                      {flatResults.filter((r): r is { kind: 'event'; data: EventResult } => r.kind === 'event').map((r) => {
+                        const idx = flatResults.indexOf(r);
+                        const d = new Date(r.data.startAt);
+                        return (
+                          <button
+                            key={r.data.id}
+                            data-result-item
+                            onClick={() => handleSelect(r)}
+                            className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition ${
+                              activeIdx === idx ? 'bg-input-bg' : 'hover:bg-input-bg'
+                            }`}
+                          >
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-pink-600/15 text-lg">
+                              🏁
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-foreground truncate">{r.data.title}</p>
+                              <p className="text-xs text-muted truncate">
+                                {d.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}
+                                {r.data.locationName ? ` · ${r.data.locationName}` : ''}
                               </p>
                             </div>
                             <svg className="ml-auto h-4 w-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>

@@ -73,5 +73,50 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  if (category === 'km') {
+    const startOfWeek = new Date();
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const rows = await prisma.trip.groupBy({
+      by: ['userId'],
+      where: { startedAt: { gte: startOfWeek }, distanceKm: { gt: 0 } },
+      _sum: { distanceKm: true },
+      orderBy: { _sum: { distanceKm: 'desc' } },
+      take: 10,
+    });
+
+    const users = await prisma.user.findMany({
+      where: { id: { in: rows.map((r) => r.userId) } },
+      select: { id: true, name: true, image: true },
+    });
+    const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
+
+    const myRow = await prisma.trip.aggregate({
+      where: { userId: session.user.id, startedAt: { gte: startOfWeek }, distanceKm: { gt: 0 } },
+      _sum: { distanceKm: true },
+    });
+    const myKm = myRow._sum.distanceKm ?? 0;
+    const myRank = await prisma.trip.groupBy({
+      by: ['userId'],
+      where: { startedAt: { gte: startOfWeek }, distanceKm: { gt: 0 } },
+      _sum: { distanceKm: true },
+      having: { distanceKm: { _sum: { gt: myKm } } },
+    });
+
+    return NextResponse.json({
+      category,
+      entries: rows.map((r, i) => ({
+        rank: i + 1,
+        userId: r.userId,
+        name: userMap[r.userId]?.name ?? '?',
+        image: userMap[r.userId]?.image ?? null,
+        value: Math.round((r._sum.distanceKm ?? 0) * 10) / 10,
+      })),
+      myRank: myKm > 0 ? myRank.length + 1 : null,
+      myValue: Math.round(myKm * 10) / 10,
+    });
+  }
+
   return NextResponse.json({ error: 'Unknown category' }, { status: 400 });
 }

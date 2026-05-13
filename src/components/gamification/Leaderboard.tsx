@@ -24,6 +24,7 @@ interface LeaderboardData {
 
 const CATEGORIES = [
   { key: 'xp',      label: 'XP',      emoji: '⭐' },
+  { key: 'km',      label: 'Km/tydz', emoji: '🛣️' },
   { key: 'reports', label: 'Raporty', emoji: '🚔' },
 ] as const;
 
@@ -35,7 +36,7 @@ const RANK_STYLE: Record<number, string> = {
 const RANK_MEDAL: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };
 
 export default function Leaderboard({ currentUserId }: { currentUserId: string }) {
-  const [category, setCategory] = useState<'xp' | 'reports'>('xp');
+  const [category, setCategory] = useState<'xp' | 'km' | 'reports'>('xp');
   const [data, setData] = useState<LeaderboardData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -120,6 +121,8 @@ export default function Leaderboard({ currentUserId }: { currentUserId: string }
                   <span className="text-sm font-bold text-foreground tabular-nums">
                     {category === 'xp'
                       ? entry.value.toLocaleString('pl-PL')
+                      : category === 'km'
+                      ? `${entry.value} km`
                       : entry.value}
                   </span>
                 </div>
