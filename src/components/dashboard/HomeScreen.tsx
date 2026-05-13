@@ -13,6 +13,7 @@ import XPBar from '@/components/gamification/XPBar';
 import StreakWidget from '@/components/gamification/StreakWidget';
 import AchievementUnlock from '@/components/gamification/AchievementUnlock';
 import AchievementsPanel from '@/components/gamification/AchievementsPanel';
+import XPActivityLog from '@/components/gamification/XPActivityLog';
 import Leaderboard from '@/components/gamification/Leaderboard';
 import DailyChallenge from '@/components/dashboard/DailyChallenge';
 import { getLevelInfo } from '@/lib/xp';
@@ -188,6 +189,7 @@ export default function HomeScreen({
   const [notifState, setNotifState] = useState<'hidden' | 'prompt'>('hidden');
   const [notifRequesting, setNotifRequesting] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
+  const [showXPLog, setShowXPLog] = useState(false);
   const seenAchievementsRef = useRef<Set<string>>(new Set());
   const userLocationRef = useRef(userLocation);
   userLocationRef.current = userLocation;
@@ -288,6 +290,37 @@ export default function HomeScreen({
         onDismiss={() => setNewAchievement(null)}
       />
 
+      {/* XP Activity Log overlay */}
+      <AnimatePresence>
+        {showXPLog && (
+          <motion.div
+            initial={{ opacity: 0, y: '100%' }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: '100%' }}
+            transition={{ type: 'spring', stiffness: 340, damping: 30 }}
+            className="absolute inset-0 z-40 flex flex-col bg-background"
+          >
+            <div className="flex items-center gap-3 px-5 pt-12 pb-4 border-b border-card-border">
+              <button
+                onClick={() => setShowXPLog(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-card-bg border border-card-border text-muted transition hover:text-foreground"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/20 text-xl">
+                ⚡
+              </div>
+              <h2 className="flex-1 text-lg font-bold text-foreground">Historia XP</h2>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              <XPActivityLog />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* All achievements overlay */}
       <AnimatePresence>
         {showAchievements && (
@@ -330,18 +363,20 @@ export default function HomeScreen({
             </h1>
           </motion.div>
 
-          {/* XP Bar */}
+          {/* XP Bar — tap to open activity log */}
           {xpData && (
             <motion.div variants={fadeUp}>
-              <XPBar
-                total={xpData.total}
-                level={xpData.level}
-                levelName={xpData.levelName}
-                progress={xpData.progress}
-                xpInLevel={xpData.xpInLevel}
-                xpNeeded={xpData.xpNeeded}
-                nextLevel={xpData.nextLevel}
-              />
+              <button onClick={() => setShowXPLog(true)} className="w-full text-left">
+                <XPBar
+                  total={xpData.total}
+                  level={xpData.level}
+                  levelName={xpData.levelName}
+                  progress={xpData.progress}
+                  xpInLevel={xpData.xpInLevel}
+                  xpNeeded={xpData.xpNeeded}
+                  nextLevel={xpData.nextLevel}
+                />
+              </button>
             </motion.div>
           )}
 
