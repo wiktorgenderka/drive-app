@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getSupabaseClient } from '@/lib/supabase-client';
 import { useMapStore } from '@/stores/useMapStore';
 import SpotifyWidget from '@/components/spotify/SpotifyWidget';
@@ -12,6 +12,7 @@ import { REPORT_TYPE_LABELS } from '@/types';
 import XPBar from '@/components/gamification/XPBar';
 import StreakWidget from '@/components/gamification/StreakWidget';
 import AchievementUnlock from '@/components/gamification/AchievementUnlock';
+import AchievementsPanel from '@/components/gamification/AchievementsPanel';
 import Leaderboard from '@/components/gamification/Leaderboard';
 import { getLevelInfo } from '@/lib/xp';
 
@@ -165,6 +166,7 @@ export default function HomeScreen({
   const [newAchievement, setNewAchievement] = useState<XPData['achievements'][number] | null>(null);
   const [notifState, setNotifState] = useState<'hidden' | 'prompt'>('hidden');
   const [notifRequesting, setNotifRequesting] = useState(false);
+  const [showAchievements, setShowAchievements] = useState(false);
   const seenAchievementsRef = useRef<Set<string>>(new Set());
   const userLocationRef = useRef(userLocation);
   userLocationRef.current = userLocation;
@@ -264,6 +266,37 @@ export default function HomeScreen({
         achievement={newAchievement}
         onDismiss={() => setNewAchievement(null)}
       />
+
+      {/* All achievements overlay */}
+      <AnimatePresence>
+        {showAchievements && (
+          <motion.div
+            initial={{ opacity: 0, y: '100%' }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: '100%' }}
+            transition={{ type: 'spring', stiffness: 340, damping: 30 }}
+            className="absolute inset-0 z-40 flex flex-col bg-background"
+          >
+            <div className="flex items-center gap-3 px-5 pt-12 pb-4 border-b border-card-border">
+              <button
+                onClick={() => setShowAchievements(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-card-bg border border-card-border text-muted transition hover:text-foreground"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-yellow-500/20 text-xl">
+                🏅
+              </div>
+              <h2 className="flex-1 text-lg font-bold text-foreground">Kolekcja odznak</h2>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              <AchievementsPanel />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="flex-1 overflow-y-auto pb-28">
         <motion.div variants={stagger} initial="initial" animate="animate" className="space-y-4 px-5 pt-14 pb-2">
@@ -539,19 +572,46 @@ export default function HomeScreen({
           )}
 
           {/* Recent achievements strip */}
-          {xpData && xpData.achievements.length > 0 && (
+          {xpData && (
             <motion.div variants={fadeUp}>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Ostatnie odznaki</p>
-              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-                {xpData.achievements.slice(0, 8).map((ach) => (
-                  <div key={ach.key} className="flex shrink-0 flex-col items-center gap-1" title={ach.name}>
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-input-bg text-2xl border border-card-border">
-                      {ach.emoji}
-                    </div>
-                    <span className="text-[9px] text-muted text-center truncate max-w-[48px]">{ach.name}</span>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted">Odznaki</p>
+                <button
+                  onClick={() => setShowAchievements(true)}
+                  className="text-xs font-medium text-accent hover:opacity-80"
+                >
+                  Wszystkie →
+                </button>
               </div>
+              {xpData.achievements.length > 0 ? (
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                  {xpData.achievements.slice(0, 8).map((ach) => (
+                    <div key={ach.key} className="flex shrink-0 flex-col items-center gap-1" title={ach.name}>
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-input-bg text-2xl border border-card-border">
+                        {ach.emoji}
+                      </div>
+                      <span className="text-[9px] text-muted text-center truncate max-w-[48px]">{ach.name}</span>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => setShowAchievements(true)}
+                    className="flex shrink-0 flex-col items-center gap-1"
+                  >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-dashed border-card-border text-muted text-lg">
+                      +
+                    </div>
+                    <span className="text-[9px] text-muted">Więcej</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowAchievements(true)}
+                  className="flex w-full items-center gap-3 rounded-xl border border-dashed border-card-border px-4 py-3 text-left text-muted transition hover:border-accent/40"
+                >
+                  <span className="text-xl">🏅</span>
+                  <span className="text-sm">Zacznij zbierać odznaki</span>
+                </button>
+              )}
             </motion.div>
           )}
 
