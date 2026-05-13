@@ -16,7 +16,7 @@ import AchievementsPanel from '@/components/gamification/AchievementsPanel';
 import XPActivityLog from '@/components/gamification/XPActivityLog';
 import Leaderboard from '@/components/gamification/Leaderboard';
 import DailyChallenge from '@/components/dashboard/DailyChallenge';
-import { getLevelInfo } from '@/lib/xp';
+import { getLevelInfo } from '@/lib/xp-shared';
 
 interface SpotifyNowPlaying {
   isPlaying: boolean;

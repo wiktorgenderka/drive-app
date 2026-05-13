@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Avatar from '@/components/ui/Avatar';
 import { LevelBadge } from './XPBar';
-import { getLevelInfo } from '@/lib/xp';
+import { getLevelInfo } from '@/lib/xp-shared';
 
 interface LeaderboardEntry {
   rank: number;

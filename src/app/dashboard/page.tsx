@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { Suspense, useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { calculateDistance, formatDistance } from '@/lib/utils';
 import dynamic from 'next/dynamic';
@@ -123,7 +123,7 @@ const sectionVariants: Variants = {
   exit:    { opacity: 0, y: -8, transition: { duration: 0.15 } },
 };
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const activeConvoy = useConvoyStore((s) => s.activeConvoy);
@@ -877,5 +877,13 @@ export default function DashboardPage() {
         )}
       </div>
     </AuthGuard>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense>
+      <DashboardContent />
+    </Suspense>
   );
 }
