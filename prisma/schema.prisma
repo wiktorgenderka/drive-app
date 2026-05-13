@@ -347,6 +347,7 @@ model Trip {
   maxSpeedKmh Float
   avgSpeedKmh Float
   durationMin Int
+  waypoints   Json?
   createdAt   DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

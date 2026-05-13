@@ -26,7 +26,29 @@ export async function GET() {
     where: { userId: session.user.id },
     orderBy: { createdAt: 'desc' },
   });
-  return NextResponse.json(vehicles);
+
+  const statsArr = await Promise.all(
+    vehicles.map((v) =>
+      prisma.trip.aggregate({
+        where: { userId: session.user.id, vehicleId: v.id },
+        _sum: { distanceKm: true, durationMin: true },
+        _count: { id: true },
+        _max: { maxSpeedKmh: true },
+      })
+    )
+  );
+
+  const result = vehicles.map((v, i) => ({
+    ...v,
+    tripStats: {
+      totalKm: statsArr[i]._sum.distanceKm ?? 0,
+      totalMin: statsArr[i]._sum.durationMin ?? 0,
+      tripCount: statsArr[i]._count.id,
+      maxSpeedKmh: statsArr[i]._max.maxSpeedKmh ?? 0,
+    },
+  }));
+
+  return NextResponse.json(result);
 }
 
 export async function POST(req: NextRequest) {

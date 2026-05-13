@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { useMemo, useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Challenge {
   emoji: string;
@@ -90,9 +90,30 @@ export default function DailyChallenge({ stats }: DailyChallengeProps) {
   const progress = Math.min(current / target, 1);
   const done = progress >= 1;
 
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const claimKey = `driveapp_daily_claimed_${todayStr}`;
+  const [claimed, setClaimed] = useState(false);
+  const [claiming, setClaiming] = useState(false);
+
+  useEffect(() => {
+    setClaimed(localStorage.getItem(claimKey) === '1');
+  }, [claimKey]);
+
+  async function handleClaim() {
+    setClaiming(true);
+    try {
+      const res = await fetch('/api/daily-challenge/claim', { method: 'POST' });
+      if (res.ok || (await res.json()).error === 'already_claimed') {
+        localStorage.setItem(claimKey, '1');
+        setClaimed(true);
+      }
+    } catch { /* silent */ }
+    setClaiming(false);
+  }
+
   return (
-    <div className={`overflow-hidden rounded-2xl border ${done ? 'border-emerald-500/40 bg-emerald-500/8' : 'border-card-border bg-card-bg'}`}>
-      <div className={`h-0.5 w-full ${done ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-gradient-to-r from-accent to-orange-600'}`} />
+    <div className={`overflow-hidden rounded-2xl border ${claimed ? 'border-emerald-500/40 bg-emerald-500/8' : done ? 'border-accent/40 bg-accent/5' : 'border-card-border bg-card-bg'}`}>
+      <div className={`h-0.5 w-full ${claimed ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : done ? 'bg-gradient-to-r from-accent to-orange-600' : 'bg-gradient-to-r from-accent/30 to-orange-600/30'}`} />
       <div className="px-4 py-3">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
@@ -100,7 +121,7 @@ export default function DailyChallenge({ stats }: DailyChallengeProps) {
             <div>
               <div className="flex items-center gap-1.5">
                 <p className="text-sm font-bold text-foreground">{challenge.title}</p>
-                {done && (
+                {claimed && (
                   <motion.span
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
@@ -115,19 +136,46 @@ export default function DailyChallenge({ stats }: DailyChallengeProps) {
               <p className="text-[11px] text-muted">{challenge.description}</p>
             </div>
           </div>
-          <div className="shrink-0 flex items-center gap-1 rounded-full bg-accent/10 px-2 py-1">
-            <svg className="h-3 w-3 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-            </svg>
-            <span className="text-[11px] font-bold text-accent">+{challenge.xpReward}</span>
-          </div>
+          <AnimatePresence mode="wait">
+            {done && !claimed ? (
+              <motion.button
+                key="claim"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                whileTap={{ scale: 0.94 }}
+                onClick={handleClaim}
+                disabled={claiming}
+                className="shrink-0 flex items-center gap-1.5 rounded-xl bg-accent px-3 py-1.5 text-xs font-bold text-white shadow transition hover:opacity-90 disabled:opacity-60"
+              >
+                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                </svg>
+                {claiming ? '…' : `Odbierz +${challenge.xpReward}`}
+              </motion.button>
+            ) : (
+              <motion.div
+                key="badge"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className={`shrink-0 flex items-center gap-1 rounded-full px-2 py-1 ${claimed ? 'bg-emerald-500/15' : 'bg-accent/10'}`}
+              >
+                <svg className={`h-3 w-3 ${claimed ? 'text-emerald-400' : 'text-accent'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                </svg>
+                <span className={`text-[11px] font-bold ${claimed ? 'text-emerald-400' : 'text-accent'}`}>
+                  {claimed ? 'Odebrano!' : `+${challenge.xpReward}`}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Progress bar */}
         <div className="flex items-center gap-2">
           <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-input-bg">
             <motion.div
-              className={`h-full rounded-full ${done ? 'bg-emerald-500' : 'bg-accent'}`}
+              className={`h-full rounded-full ${claimed ? 'bg-emerald-500' : 'bg-accent'}`}
               initial={{ width: 0 }}
               animate={{ width: `${progress * 100}%` }}
               transition={{ duration: 0.6, ease: 'easeOut' }}

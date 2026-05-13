@@ -44,13 +44,17 @@ export async function GET(req: NextRequest) {
     select: { id: true, type: true, amount: true, createdAt: true, meta: true },
   });
 
-  return NextResponse.json(events.map((e) => ({
-    id: e.id,
-    type: e.type,
-    label: EVENT_LABELS[e.type] ?? e.type,
-    emoji: EVENT_EMOJI[e.type] ?? '⚡',
-    amount: e.amount,
-    createdAt: e.createdAt,
-    meta: e.meta,
-  })));
+  return NextResponse.json(events.map((e) => {
+    const meta = e.meta as Record<string, unknown> | null;
+    const isChallenge = meta?.dailyChallengeDate != null;
+    return {
+      id: e.id,
+      type: e.type,
+      label: isChallenge ? `Wyzwanie dnia: ${meta!.challengeTitle ?? 'Dzienne wyzwanie'}` : (EVENT_LABELS[e.type] ?? e.type),
+      emoji: isChallenge ? '🎯' : (EVENT_EMOJI[e.type] ?? '⚡'),
+      amount: e.amount,
+      createdAt: e.createdAt,
+      meta: e.meta,
+    };
+  }));
 }

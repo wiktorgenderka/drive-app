@@ -89,12 +89,23 @@ export default function TripSummaryModal({ show, trip, onClose, userName = 'Kier
                 {/* Header */}
                 <div className="mb-5 flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15 text-xl">🏁</div>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <h2 className="text-base font-bold text-foreground">Podróż zakończona</h2>
                     <p className="text-xs text-muted">
                       {new Date().toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}
                     </p>
                   </div>
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.4, type: 'spring', stiffness: 400, damping: 22 }}
+                    className="flex items-center gap-1 rounded-xl bg-accent/15 px-2.5 py-1.5 shrink-0"
+                  >
+                    <svg className="h-3.5 w-3.5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                    </svg>
+                    <span className="text-sm font-black text-accent">+50 XP</span>
+                  </motion.div>
                 </div>
 
                 {/* Stats grid */}

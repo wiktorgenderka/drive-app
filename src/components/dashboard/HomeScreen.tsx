@@ -85,6 +85,7 @@ interface HomeScreenProps {
   onNavigateToFriends: () => void;
   onNavigateToRoutes: () => void;
   onNavigateToConvoy: () => void;
+  onNavigateToProfile?: () => void;
 }
 
 const REPORT_LABELS: Record<string, { label: string; color: string; bg: string; emoji: string }> = {
@@ -154,7 +155,7 @@ const fadeUp = {
 };
 
 export default function HomeScreen({
-  onNavigateToMap, onNavigateToFriends, onNavigateToRoutes, onNavigateToConvoy,
+  onNavigateToMap, onNavigateToFriends, onNavigateToRoutes, onNavigateToConvoy, onNavigateToProfile,
 }: HomeScreenProps) {
   const { data: session } = useSession();
   const userLocation = useMapStore((s) => s.userLocation);
@@ -284,6 +285,29 @@ export default function HomeScreen({
 
   return (
     <div className="flex h-full flex-col bg-background">
+      {/* Fixed top-right header buttons */}
+      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-5 pt-4 pointer-events-none">
+        <div className="pointer-events-none" />
+        <div className="flex items-center gap-2 pointer-events-auto">
+          {onNavigateToProfile && (
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              onClick={onNavigateToProfile}
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-card-bg/90 border border-card-border shadow-lg backdrop-blur-md text-muted transition hover:text-foreground"
+              title="Profil i ustawienia"
+            >
+              {session?.user?.image ? (
+                <img src={session.user.image} alt="" className="h-7 w-7 rounded-lg object-cover" />
+              ) : (
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
+                </svg>
+              )}
+            </motion.button>
+          )}
+        </div>
+      </div>
+
       {/* Achievement unlock overlay */}
       <AchievementUnlock
         achievement={newAchievement}

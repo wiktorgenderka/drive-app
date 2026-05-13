@@ -148,4 +148,5 @@ export const CreateTripSchema = z.object({
   durationMin: z.number().int().min(0),
   vehicleId: z.string().optional(),
   convoyId: z.string().optional(),
+  waypoints: z.array(z.tuple([z.number(), z.number()])).max(500).optional(),
 });

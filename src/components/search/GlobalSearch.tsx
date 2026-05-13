@@ -17,9 +17,10 @@ interface GlobalSearchProps {
   onClose: () => void;
   onShowProfile?: (userId: string) => void;
   onShowRoute?: (routeId: string) => void;
+  onShowEvents?: () => void;
 }
 
-export default function GlobalSearch({ open, onClose, onShowProfile, onShowRoute }: GlobalSearchProps) {
+export default function GlobalSearch({ open, onClose, onShowProfile, onShowRoute, onShowEvents }: GlobalSearchProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -71,6 +72,7 @@ export default function GlobalSearch({ open, onClose, onShowProfile, onShowRoute
   function handleSelect(result: SearchResult) {
     if (result.kind === 'user') onShowProfile?.(result.data.id);
     if (result.kind === 'route') onShowRoute?.(result.data.id);
+    if (result.kind === 'event') onShowEvents?.();
     onClose();
   }
 

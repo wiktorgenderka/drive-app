@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
-    const { startedAt, endedAt, distanceKm, maxSpeedKmh, avgSpeedKmh, durationMin, vehicleId, convoyId } = parsed.data;
+    const { startedAt, endedAt, distanceKm, maxSpeedKmh, avgSpeedKmh, durationMin, vehicleId, convoyId, waypoints } = parsed.data;
 
     const trip = await prisma.trip.create({
       data: {
@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
         durationMin,
         vehicleId: vehicleId ?? null,
         convoyId: convoyId ?? null,
+        ...(waypoints ? { waypoints } : {}),
       },
     });
 

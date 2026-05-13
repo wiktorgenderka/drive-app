@@ -72,8 +72,10 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
   const [destConvoyId, setDestConvoyId] = useState<string | null>(null);
   const [destInput, setDestInput] = useState('');
   const [driveModeConvoy, setDriveModeConvoy] = useState<Convoy | null>(null);
+  interface MemberStats { userId: string; name: string; image: string | null; totalKm: number; maxSpeedKmh: number; tripCount: number; }
   const [postConvoyStats, setPostConvoyStats] = useState<{
     name: string; memberCount: number; destName: string | null;
+    members: MemberStats[]; totalKm: number;
   } | null>(null);
   const [joinedAtMap, setJoinedAtMap] = useState<Record<string, number>>({});
   const [shareRouteConvoyId, setShareRouteConvoyId] = useState<string | null>(null);
@@ -140,15 +142,23 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
 
     setActionLoading(convoy.id);
     const joinedAt = joinedAtMap[convoy.id];
+    const showStats = joinedAt && Date.now() - joinedAt > 5 * 60_000;
+
     try {
+      // Fetch trip stats before deleting (they reference convoyId)
+      const tripStatsRes = showStats ? await fetch(`/api/convoy/${convoy.id}/trips`) : null;
+      const tripStats = tripStatsRes?.ok ? await tripStatsRes.json() : null;
+
       const res = await fetch(`/api/convoy?convoyId=${convoy.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
-      // Show post-convoy stats if session was >= 5 minutes
-      if (joinedAt && Date.now() - joinedAt > 5 * 60_000) {
+
+      if (showStats) {
         setPostConvoyStats({
           name: convoy.name,
           memberCount: convoy.members.length,
           destName: convoy.destName ?? null,
+          members: tripStats?.members ?? [],
+          totalKm: tripStats?.totalKm ?? 0,
         });
       }
       await fetchConvoys();
@@ -655,46 +665,87 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
 
       {/* Post-convoy stats overlay */}
       {postConvoyStats && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="mx-4 w-full max-w-sm rounded-3xl border border-card-border bg-card-bg p-6 shadow-2xl">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600/20 text-2xl">
-                🏁
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">Konwój zakończony</p>
-                <h3 className="text-lg font-bold text-foreground">{postConvoyStats.name}</h3>
-              </div>
-            </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-sm rounded-3xl border border-card-border bg-card-bg shadow-2xl overflow-hidden">
+            {/* Emerald accent top bar */}
+            <div className="h-1 w-full bg-gradient-to-r from-emerald-500 to-teal-500" />
 
-            <div className="grid grid-cols-2 gap-3 mb-5">
-              <div className="rounded-2xl bg-input-bg p-4 text-center">
-                <p className="text-2xl font-black text-foreground">{postConvoyStats.memberCount}</p>
-                <p className="text-xs text-muted mt-0.5">Uczestników</p>
-              </div>
-              {postConvoyStats.destName ? (
-                <div className="rounded-2xl bg-input-bg p-4 text-center">
-                  <p className="text-sm font-bold text-accent truncate">{postConvoyStats.destName}</p>
-                  <p className="text-xs text-muted mt-0.5">Cel podróży</p>
+            <div className="p-6">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600/20 text-2xl">🏁</div>
+                <div>
+                  <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">Konwój zakończony</p>
+                  <h3 className="text-base font-bold text-foreground truncate">{postConvoyStats.name}</h3>
                 </div>
-              ) : (
-                <div className="rounded-2xl bg-input-bg p-4 text-center">
-                  <p className="text-2xl">🛣️</p>
-                  <p className="text-xs text-muted mt-0.5">Wolny przejazd</p>
+              </div>
+
+              {/* Summary row */}
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                <div className="rounded-xl bg-input-bg p-3 text-center">
+                  <p className="text-lg font-black text-foreground">{postConvoyStats.memberCount}</p>
+                  <p className="text-[10px] text-muted">uczestników</p>
+                </div>
+                <div className="rounded-xl bg-input-bg p-3 text-center">
+                  <p className="text-lg font-black text-accent tabular-nums">{postConvoyStats.totalKm.toFixed(1)}</p>
+                  <p className="text-[10px] text-muted">km razem</p>
+                </div>
+                <div className="rounded-xl bg-input-bg p-3 text-center">
+                  {postConvoyStats.destName ? (
+                    <>
+                      <p className="text-xs font-bold text-blue-400 truncate">{postConvoyStats.destName.split(',')[0]}</p>
+                      <p className="text-[10px] text-muted">cel</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-lg">🛣️</p>
+                      <p className="text-[10px] text-muted">wolna trasa</p>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Member rankings */}
+              {postConvoyStats.members.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-2">Ranking</p>
+                  <div className="flex flex-col gap-1.5">
+                    {postConvoyStats.members.slice(0, 5).map((m, i) => (
+                      <div key={m.userId} className="flex items-center gap-2.5 rounded-xl bg-input-bg px-3 py-2">
+                        <span className="text-sm font-black tabular-nums text-muted w-4">{i + 1}</span>
+                        {m.image ? (
+                          <img src={m.image} alt="" className="h-7 w-7 rounded-full object-cover shrink-0" />
+                        ) : (
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-600/20 text-xs font-bold text-emerald-400">
+                            {m.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <p className="flex-1 truncate text-sm font-semibold text-foreground">{m.name}</p>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <div className="text-right">
+                            <p className="text-xs font-bold text-accent tabular-nums">{m.totalKm.toFixed(1)} km</p>
+                            {m.maxSpeedKmh > 0 && (
+                              <p className="text-[10px] text-muted tabular-nums">{Math.round(m.maxSpeedKmh)} km/h max</p>
+                            )}
+                          </div>
+                          {i === 0 && <span className="text-base">🥇</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
+
+              {postConvoyStats.members.length === 0 && (
+                <p className="mb-4 text-center text-sm text-muted">Dobra jazda! XP zostały zapisane.</p>
+              )}
+
+              <button
+                onClick={() => setPostConvoyStats(null)}
+                className="w-full rounded-2xl bg-accent py-3 text-sm font-bold text-white transition hover:opacity-90"
+              >
+                Zamknij
+              </button>
             </div>
-
-            <p className="mb-5 text-center text-sm text-muted">
-              Dobra jazda! XP zostały zapisane automatycznie.
-            </p>
-
-            <button
-              onClick={() => setPostConvoyStats(null)}
-              className="w-full rounded-2xl bg-accent py-3 text-sm font-bold text-white transition hover:opacity-90"
-            >
-              Zamknij
-            </button>
           </div>
         </div>
       )}

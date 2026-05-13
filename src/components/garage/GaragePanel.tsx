@@ -3,6 +3,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+interface TripStats {
+  totalKm: number;
+  totalMin: number;
+  tripCount: number;
+  maxSpeedKmh: number;
+}
+
 interface Vehicle {
   id: string;
   make: string;
@@ -15,6 +22,7 @@ interface Vehicle {
   engine: string | null;
   mods: string | null;
   isActive: boolean;
+  tripStats?: TripStats;
 }
 
 interface AddForm {
@@ -343,7 +351,7 @@ export default function GaragePanel() {
                   )}
                 </div>
 
-                {/* Stats row */}
+                {/* Spec row */}
                 <div className="grid grid-cols-2 divide-x divide-card-border border-t border-card-border">
                   <div className="flex flex-col items-center py-4">
                     <span className="text-xl font-bold text-foreground tabular-nums">
@@ -358,6 +366,30 @@ export default function GaragePanel() {
                     <span className="text-xs text-muted">Nm</span>
                   </div>
                 </div>
+
+                {/* Trip stats row */}
+                {selected.tripStats && (
+                  <div className="grid grid-cols-3 divide-x divide-card-border border-t border-card-border">
+                    <div className="flex flex-col items-center py-3">
+                      <span className="text-sm font-bold text-accent tabular-nums">
+                        {selected.tripStats.totalKm.toFixed(0)}
+                      </span>
+                      <span className="text-[10px] text-muted">km</span>
+                    </div>
+                    <div className="flex flex-col items-center py-3">
+                      <span className="text-sm font-bold text-foreground tabular-nums">
+                        {selected.tripStats.tripCount}
+                      </span>
+                      <span className="text-[10px] text-muted">podróży</span>
+                    </div>
+                    <div className="flex flex-col items-center py-3">
+                      <span className="text-sm font-bold text-foreground tabular-nums">
+                        {selected.tripStats.maxSpeedKmh > 0 ? `${Math.round(selected.tripStats.maxSpeedKmh)}` : '—'}
+                      </span>
+                      <span className="text-[10px] text-muted">maks. km/h</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Mods */}
                 {selected.mods && (

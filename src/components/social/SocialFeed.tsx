@@ -287,6 +287,8 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
   const [likingId, setLikingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [newPostsBanner, setNewPostsBanner] = useState(false);
+  const latestKnownIdRef = useRef<string | null>(null);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -304,6 +306,8 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
       const incoming: FeedPost[] = Array.isArray(data?.data) ? data.data : [];
       if (reset) {
         setPosts(incoming);
+        setNewPostsBanner(false);
+        if (incoming.length > 0) latestKnownIdRef.current = incoming[0].id;
       } else {
         setPosts((prev) => { const ids = new Set(prev.map((p) => p.id)); return [...prev, ...incoming.filter((p) => !ids.has(p.id))]; });
       }
@@ -316,6 +320,29 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
   }, []);
 
   useEffect(() => { fetchFeed(socialFilter, sort, true); }, [socialFilter, sort, fetchFeed]);
+
+  // Track the newest post ID and poll for new posts every 60s
+  useEffect(() => {
+    if (posts.length > 0 && !latestKnownIdRef.current) {
+      latestKnownIdRef.current = posts[0].id;
+    }
+  }, [posts]);
+
+  useEffect(() => {
+    if (sort !== 'new' || socialFilter !== 'all') return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch('/api/posts?filter=all&sort=new&limit=1');
+        if (!res.ok) return;
+        const data = await res.json();
+        const newest: FeedPost | undefined = Array.isArray(data?.data) ? data.data[0] : undefined;
+        if (newest && latestKnownIdRef.current && newest.id !== latestKnownIdRef.current) {
+          setNewPostsBanner(true);
+        }
+      } catch { /* silent */ }
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, [sort, socialFilter]);
 
   const visiblePosts = useMemo(() => {
     let r = posts;
@@ -657,6 +684,23 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
       {/* Trending hashtags */}
       {!loading && posts.length > 0 && (
         <TrendingHashtags posts={posts} activeTag={activeTag} onTagClick={setActiveTag} />
+      )}
+
+      {/* New posts banner */}
+      {newPostsBanner && !loading && (
+        <button
+          onClick={() => {
+            setNewPostsBanner(false);
+            latestKnownIdRef.current = null;
+            fetchFeed(socialFilter, sort, true);
+          }}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent/15 border border-accent/30 px-4 py-2.5 text-sm font-semibold text-accent transition hover:bg-accent/25 animate-pulse"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <path d="M12 19V5M5 12l7-7 7 7" />
+          </svg>
+          Nowe posty — kliknij aby odświeżyć
+        </button>
       )}
 
       {/* Feed */}

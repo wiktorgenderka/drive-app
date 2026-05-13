@@ -298,6 +298,7 @@ export default function DashboardPage() {
                 onNavigateToFriends={() => setActiveTab('friends')}
                 onNavigateToRoutes={() => setActiveTab('routes')}
                 onNavigateToConvoy={() => setActiveTab('car')}
+                onNavigateToProfile={() => setActiveTab('profile')}
               />
             </motion.div>
           )}
@@ -820,6 +821,8 @@ export default function DashboardPage() {
           open={searchOpen}
           onClose={() => setSearchOpen(false)}
           onShowProfile={(uid) => { setViewedProfileUserId(uid); setSearchOpen(false); }}
+          onShowRoute={() => { setActiveTab('routes'); setRoutesSubTab('routes'); setSearchOpen(false); }}
+          onShowEvents={() => { setActiveTab('feed'); setFeedSubTab('events'); setSearchOpen(false); }}
         />
 
         {/* BOTTOM NAV — 5 tabów */}

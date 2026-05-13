@@ -248,6 +248,8 @@ export default function MapView() {
   const [tripSpeedSum, setTripSpeedSum] = useState(0);
   const [tripSpeedCount, setTripSpeedCount] = useState(0);
   const tripLastLocRef = useRef<{ lat: number; lng: number } | null>(null);
+  const tripWaypointsRef = useRef<[number, number][]>([]);
+  const tripWptLastRef = useRef<{ lat: number; lng: number } | null>(null);
   const [showTripSummary, setShowTripSummary] = useState(false);
   const [finishedTrip, setFinishedTrip] = useState<{
     distance: number; duration: number; maxSpeed: number; avgSpeed: number;
@@ -420,6 +422,16 @@ export default function MapView() {
     setTripMaxSpeed((s) => Math.max(s, spd));
     setTripSpeedSum((s) => s + spd);
     setTripSpeedCount((s) => s + 1);
+
+    // Sample waypoint every 100 m, max 500 points
+    const wptLast = tripWptLastRef.current;
+    const dWpt = wptLast
+      ? haversineMeters(wptLast.lat, wptLast.lng, userLocation.latitude, userLocation.longitude)
+      : Infinity;
+    if (dWpt >= 100 && tripWaypointsRef.current.length < 500) {
+      tripWaypointsRef.current.push([userLocation.longitude, userLocation.latitude]);
+      tripWptLastRef.current = { lat: userLocation.latitude, lng: userLocation.longitude };
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLocation]);
 
@@ -503,6 +515,8 @@ export default function MapView() {
     setTripSpeedSum(0);
     setTripSpeedCount(0);
     tripLastLocRef.current = userLocation ? { lat: userLocation.latitude, lng: userLocation.longitude } : null;
+    tripWaypointsRef.current = userLocation ? [[userLocation.longitude, userLocation.latitude]] : [];
+    tripWptLastRef.current = userLocation ? { lat: userLocation.latitude, lng: userLocation.longitude } : null;
   }
 
   function stopTrip() {
@@ -514,6 +528,18 @@ export default function MapView() {
     setShowTripSummary(true);
     recordTrip(activeVehicleId, { km: tripDistance / 1000, maxSpeedKmh: tripMaxSpeed, minutes: Math.round(tripElapsed / 60) });
     tripLastLocRef.current = null;
+
+    // Close the waypoints track with the final position
+    if (userLocation) {
+      const wptLast = tripWptLastRef.current;
+      const dFinal = wptLast
+        ? haversineMeters(wptLast.lat, wptLast.lng, userLocation.latitude, userLocation.longitude)
+        : Infinity;
+      if (dFinal > 0) tripWaypointsRef.current.push([userLocation.longitude, userLocation.latitude]);
+    }
+    const waypoints = tripWaypointsRef.current.length > 1 ? tripWaypointsRef.current : undefined;
+    tripWaypointsRef.current = [];
+    tripWptLastRef.current = null;
 
     // Persist trip to DB
     fetch('/api/trips', {
@@ -527,6 +553,7 @@ export default function MapView() {
         avgSpeedKmh: avg,
         durationMin: Math.round(tripElapsed / 60),
         vehicleId: activeVehicleId ?? undefined,
+        waypoints,
       }),
     }).catch(() => null); // non-blocking, best-effort
   }

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Achievement {
   key: string;
@@ -30,6 +30,28 @@ export default function AchievementsPanel() {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>('all');
+  const [sharingKey, setSharingKey] = useState<string | null>(null);
+  const [sharedKey, setSharedKey] = useState<string | null>(null);
+
+  const shareAchievement = useCallback(async (ach: Achievement) => {
+    const text = `Zdobyłem odznakę ${ach.emoji} "${ach.name}" w DriveApp! ${ach.description} (+${ach.xpReward} XP)`;
+    setSharingKey(ach.key);
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({ title: `Odznaka: ${ach.name}`, text });
+      } else {
+        const res = await fetch('/api/posts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: text }),
+        });
+        if (!res.ok) throw new Error('Post failed');
+      }
+      setSharedKey(ach.key);
+      setTimeout(() => setSharedKey(null), 3000);
+    } catch { /* user cancelled or network error */ }
+    setSharingKey(null);
+  }, []);
 
   useEffect(() => {
     fetch('/api/achievements')
@@ -155,14 +177,41 @@ export default function AchievementsPanel() {
                 </p>
               </div>
 
-              {ach.xpReward > 0 && (
-                <div className={`flex items-center gap-1 ${ach.unlocked ? 'text-accent' : 'text-muted/30'}`}>
-                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                  </svg>
-                  <span className="text-[10px] font-bold">+{ach.xpReward} XP</span>
-                </div>
-              )}
+              <div className="flex items-center justify-between gap-1">
+                {ach.xpReward > 0 && (
+                  <div className={`flex items-center gap-1 ${ach.unlocked ? 'text-accent' : 'text-muted/30'}`}>
+                    <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                    </svg>
+                    <span className="text-[10px] font-bold">+{ach.xpReward} XP</span>
+                  </div>
+                )}
+                {ach.unlocked && (
+                  <button
+                    onClick={() => shareAchievement(ach)}
+                    disabled={sharingKey === ach.key}
+                    className="ml-auto shrink-0 rounded-lg p-1 text-muted transition hover:text-foreground disabled:opacity-50"
+                    title="Udostępnij odznakę"
+                  >
+                    <AnimatePresence mode="wait">
+                      {sharedKey === ach.key ? (
+                        <motion.svg key="check" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
+                          className="h-3.5 w-3.5 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                          <path d="M20 6L9 17l-5-5" />
+                        </motion.svg>
+                      ) : sharingKey === ach.key ? (
+                        <motion.div key="spin" className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-muted/30 border-t-muted" />
+                      ) : (
+                        <motion.svg key="share" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
+                          className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                          <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+                          <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" />
+                        </motion.svg>
+                      )}
+                    </AnimatePresence>
+                  </button>
+                )}
+              </div>
             </motion.div>
           );
         })}

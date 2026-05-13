@@ -11,6 +11,7 @@ interface Trip {
   maxSpeedKmh: number | null;
   avgSpeedKmh: number | null;
   durationMin: number | null;
+  waypoints?: [number, number][] | null;
 }
 
 function formatDuration(min: number | null): string {
@@ -34,6 +35,35 @@ function formatDate(iso: string): string {
     return `Wczoraj, ${d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}`;
   }
   return d.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+
+function WaypointMap({ waypoints }: { waypoints: [number, number][] }) {
+  const W = 240, H = 100, PAD = 8;
+  const lngs = waypoints.map((p) => p[0]);
+  const lats = waypoints.map((p) => p[1]);
+  const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+  const rangeX = maxLng - minLng || 0.0001;
+  const rangeY = maxLat - minLat || 0.0001;
+  const scale = Math.min((W - PAD * 2) / rangeX, (H - PAD * 2) / rangeY);
+
+  const toSvg = ([lng, lat]: [number, number]) => ({
+    x: PAD + (lng - minLng) * scale,
+    y: H - PAD - (lat - minLat) * scale,
+  });
+
+  const pts = waypoints.map(toSvg);
+  const polyline = pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const start = pts[0];
+  const end = pts[pts.length - 1];
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
+      <polyline points={polyline} fill="none" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={start.x} cy={start.y} r="4" fill="#22c55e" />
+      <circle cx={end.x} cy={end.y} r="4" fill="#f97316" />
+    </svg>
+  );
 }
 
 function StatBadge({ value, label }: { value: string; label: string }) {
@@ -153,29 +183,34 @@ function TripCard({ trip, onDelete }: { trip: Trip; onDelete: (id: string) => vo
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="mt-3 grid grid-cols-2 gap-2 border-t border-card-border pt-3">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] text-muted uppercase tracking-wide">Start</span>
-                  <span className="text-xs font-semibold text-foreground">
-                    {new Date(trip.startedAt).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] text-muted uppercase tracking-wide">Koniec</span>
-                  <span className="text-xs font-semibold text-foreground">{endTime}</span>
-                </div>
-                {trip.distanceKm != null && (
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] text-muted uppercase tracking-wide">Dystans</span>
-                    <span className="text-xs font-semibold text-foreground">{trip.distanceKm.toFixed(2)} km</span>
-                  </div>
+              <div className="mt-3 border-t border-card-border pt-3 flex flex-col gap-3">
+                {trip.waypoints && trip.waypoints.length > 1 && (
+                  <WaypointMap waypoints={trip.waypoints} />
                 )}
-                {trip.durationMin != null && (
+                <div className="grid grid-cols-2 gap-2">
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] text-muted uppercase tracking-wide">Czas</span>
-                    <span className="text-xs font-semibold text-foreground">{formatDuration(trip.durationMin)}</span>
+                    <span className="text-[10px] text-muted uppercase tracking-wide">Start</span>
+                    <span className="text-xs font-semibold text-foreground">
+                      {new Date(trip.startedAt).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
                   </div>
-                )}
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted uppercase tracking-wide">Koniec</span>
+                    <span className="text-xs font-semibold text-foreground">{endTime}</span>
+                  </div>
+                  {trip.distanceKm != null && (
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[10px] text-muted uppercase tracking-wide">Dystans</span>
+                      <span className="text-xs font-semibold text-foreground">{trip.distanceKm.toFixed(2)} km</span>
+                    </div>
+                  )}
+                  {trip.durationMin != null && (
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[10px] text-muted uppercase tracking-wide">Czas</span>
+                      <span className="text-xs font-semibold text-foreground">{formatDuration(trip.durationMin)}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </motion.div>
           )}
