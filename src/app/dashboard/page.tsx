@@ -22,6 +22,7 @@ import EventPanel from '@/components/events/EventPanel';
 import OnboardingFlow, { useShowOnboarding } from '@/components/onboarding/OnboardingFlow';
 import GlobalSearch from '@/components/search/GlobalSearch';
 import TripHistoryPanel from '@/components/trips/TripHistoryPanel';
+import LifetimeStatsPanel from '@/components/stats/LifetimeStatsPanel';
 import CreateSpotModal from '@/components/spots/CreateSpotModal';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useLocationPing } from '@/hooks/useLocationPing';
@@ -146,6 +147,7 @@ export default function DashboardPage() {
   const { show: showOnboarding, dismiss: dismissOnboarding } = useShowOnboarding();
   const [searchOpen, setSearchOpen] = useState(false);
   const [routesSubTab, setRoutesSubTab] = useState<'routes' | 'trips'>('routes');
+  const [profileSubTab, setProfileSubTab] = useState<'settings' | 'stats'>('settings');
 
   // Ctrl+K global shortcut
   useEffect(() => {
@@ -535,7 +537,41 @@ export default function DashboardPage() {
 
               {/* Content */}
               <div className="flex-1 overflow-y-auto px-5 pb-28">
-                {activeTab === 'profile' && <SettingsPanel />}
+                {activeTab === 'profile' && (
+                  <div className="flex flex-col gap-4">
+                    <div className="flex rounded-xl bg-input-bg p-1">
+                      {(['settings', 'stats'] as const).map((t) => (
+                        <button
+                          key={t}
+                          onClick={() => setProfileSubTab(t)}
+                          className={`relative flex-1 rounded-lg py-2 text-sm font-semibold transition ${profileSubTab === t ? 'text-foreground' : 'text-muted hover:text-foreground'}`}
+                        >
+                          {profileSubTab === t && (
+                            <motion.div
+                              layoutId="profile-sub-pill"
+                              className="absolute inset-0 rounded-lg bg-card-bg shadow"
+                              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                            />
+                          )}
+                          <span className="relative">
+                            {t === 'settings' ? '⚙️ Ustawienia' : '📊 Statystyki'}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                    <AnimatePresence mode="wait">
+                      {profileSubTab === 'settings' ? (
+                        <motion.div key="settings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                          <SettingsPanel />
+                        </motion.div>
+                      ) : (
+                        <motion.div key="stats" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                          <LifetimeStatsPanel />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
 
                 {activeTab === 'car' && (
                   <div className="flex flex-col gap-4">
