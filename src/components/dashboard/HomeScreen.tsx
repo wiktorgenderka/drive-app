@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getSupabaseClient } from '@/lib/supabase-client';
-import { useMapStore } from '@/stores/useMapStore';
+import { useMapStore, type FuelStation } from '@/stores/useMapStore';
 import SpotifyWidget from '@/components/spotify/SpotifyWidget';
 import { useWeather } from '@/hooks/useWeather';
 import { timeAgo } from '@/lib/utils';
@@ -157,8 +157,24 @@ export default function HomeScreen({
 }: HomeScreenProps) {
   const { data: session } = useSession();
   const userLocation = useMapStore((s) => s.userLocation);
+  const fuelStations = useMapStore((s) => s.fuelStations);
   const speedKmh = userLocation?.speed != null && userLocation.speed >= 0
     ? Math.round(userLocation.speed * 3.6) : 0;
+
+  const nearestPricedStation = useMemo((): (FuelStation & { distKm: number }) | null => {
+    if (!userLocation || fuelStations.length === 0) return null;
+    const withPrices = fuelStations.filter((s) => s.prices.length > 0);
+    if (withPrices.length === 0) return null;
+    const { latitude: lat, longitude: lng } = userLocation;
+    let best: (FuelStation & { distKm: number }) | null = null;
+    for (const s of withPrices) {
+      const dLat = (s.latitude - lat) * 111320;
+      const dLng = (s.longitude - lng) * 111320 * Math.cos(lat * (Math.PI / 180));
+      const distKm = Math.sqrt(dLat * dLat + dLng * dLng) / 1000;
+      if (!best || distKm < best.distKm) best = { ...s, distKm };
+    }
+    return best;
+  }, [userLocation, fuelStations]);
 
   const weather = useWeather(userLocation?.latitude, userLocation?.longitude);
 
@@ -414,6 +430,39 @@ export default function HomeScreen({
                     <span className="text-[9px] font-medium opacity-80">km/h</span>
                   </div>
                 )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Fuel price widget (only when map was loaded and has priced stations) */}
+          {nearestPricedStation && (
+            <motion.div variants={fadeUp}>
+              <div className="flex items-center gap-3 rounded-2xl border border-card-border bg-card-bg px-4 py-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600/15 text-xl">
+                  ⛽
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">
+                    {nearestPricedStation.brand ?? nearestPricedStation.name}
+                  </p>
+                  <p className="text-xs text-muted">
+                    {nearestPricedStation.distKm < 1
+                      ? `${Math.round(nearestPricedStation.distKm * 1000)} m`
+                      : `${nearestPricedStation.distKm.toFixed(1)} km`}
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  {(['PETROL_95', 'DIESEL'] as const).map((type) => {
+                    const p = nearestPricedStation.prices.find((pr) => pr.fuelType === type);
+                    if (!p) return null;
+                    return (
+                      <div key={type} className="flex flex-col items-center">
+                        <span className="text-sm font-extrabold text-foreground tabular-nums">{p.price.toFixed(2)}</span>
+                        <span className="text-[9px] text-muted">{type === 'PETROL_95' ? 'Pb95' : 'ON'}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </motion.div>
           )}
