@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import WeeklyChart from './WeeklyChart';
+import TripCalendar from './TripCalendar';
 
 interface LifetimeStats {
   totalKm: number;
@@ -92,6 +93,9 @@ export default function LifetimeStatsPanel() {
     <div className="flex flex-col gap-6">
       {/* Weekly chart */}
       <WeeklyChart />
+
+      {/* Activity calendar */}
+      <TripCalendar />
 
       {/* Header */}
       <div className="flex items-center gap-4 rounded-2xl border border-accent/30 bg-accent/8 px-4 py-4">

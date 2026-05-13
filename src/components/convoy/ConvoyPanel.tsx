@@ -76,6 +76,9 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
     name: string; memberCount: number; destName: string | null;
   } | null>(null);
   const [joinedAtMap, setJoinedAtMap] = useState<Record<string, number>>({});
+  const [shareRouteConvoyId, setShareRouteConvoyId] = useState<string | null>(null);
+  const [myRoutes, setMyRoutes] = useState<{ id: string; name: string; description?: string | null }[]>([]);
+  const [sharedRouteNotif, setSharedRouteNotif] = useState<{ convoyId: string; routeName: string } | null>(null);
 
   const fetchConvoys = useCallback(async () => {
     try {
@@ -93,6 +96,31 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
   useEffect(() => {
     fetchConvoys();
   }, [fetchConvoys]);
+
+  // Fetch user routes when route picker opens
+  useEffect(() => {
+    if (!shareRouteConvoyId) return;
+    fetch('/api/routes?limit=20')
+      .then((r) => r.ok ? r.json() : { data: [] })
+      .then((d) => setMyRoutes(d.data ?? d ?? []))
+      .catch(() => {});
+  }, [shareRouteConvoyId]);
+
+  // Listen for shared route events from convoy leader
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    if (!supabase || convoys.length === 0) return;
+    const channels = convoys.map((c) => {
+      const ch = supabase.channel(`convoy:${c.id}:routes`);
+      ch.on('broadcast', { event: 'convoy-route-shared' }, (payload) => {
+        const { routeName } = payload.payload as { routeName: string };
+        setSharedRouteNotif({ convoyId: c.id, routeName });
+        setTimeout(() => setSharedRouteNotif(null), 8000);
+      }).subscribe();
+      return ch;
+    });
+    return () => { channels.forEach((ch) => ch.unsubscribe()); };
+  }, [convoys]);
 
   // Record join time for each convoy (for post-convoy stats)
   useEffect(() => {
@@ -174,6 +202,22 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
       setActionLoading(null);
     }
   };
+
+  async function shareRoute(convoyId: string, routeId: string, routeName: string) {
+    setActionLoading(`route-${convoyId}`);
+    try {
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        await supabase.channel(`convoy:${convoyId}:routes`).send({
+          type: 'broadcast',
+          event: 'convoy-route-shared',
+          payload: { routeId, routeName },
+        });
+      }
+    } catch { /* silent */ }
+    setShareRouteConvoyId(null);
+    setActionLoading(null);
+  }
 
   const currentUserId = session?.user?.id;
 
@@ -486,6 +530,18 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
                           Cel
                         </button>
                       )}
+                      {isOwner && (
+                        <button
+                          onClick={() => setShareRouteConvoyId(convoy.id)}
+                          disabled={actionLoading === `route-${convoy.id}`}
+                          className="flex items-center gap-1 rounded-xl border border-violet-500/30 bg-violet-500/10 px-3 py-2.5 text-xs font-semibold text-violet-400 transition hover:bg-violet-500/20 disabled:opacity-50"
+                        >
+                          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                            <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                          </svg>
+                          Trasa
+                        </button>
+                      )}
                       <button
                         onClick={() => setDriveModeConvoy(convoy)}
                         className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 py-2.5 text-xs font-semibold text-white transition hover:bg-emerald-700"
@@ -529,6 +585,72 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
           convoy={driveModeConvoy}
           onClose={() => setDriveModeConvoy(null)}
         />
+      )}
+
+      {/* Route picker modal */}
+      {shareRouteConvoyId && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShareRouteConvoyId(null)}>
+          <div className="w-full max-w-lg rounded-t-3xl border border-card-border bg-card-bg p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-1 h-1 w-12 rounded-full bg-card-border mx-auto" />
+            <h3 className="mt-3 mb-4 text-base font-bold text-foreground">Udostępnij trasę konwojowi</h3>
+            {myRoutes.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted">Brak zapisanych tras. Najpierw stwórz trasę.</p>
+            ) : (
+              <div className="flex flex-col gap-2 max-h-72 overflow-y-auto">
+                {myRoutes.map((route) => (
+                  <button
+                    key={route.id}
+                    onClick={() => shareRoute(shareRouteConvoyId, route.id, route.name)}
+                    className="flex items-center gap-3 rounded-xl border border-card-border bg-input-bg px-4 py-3 text-left transition hover:border-violet-500/40 hover:bg-violet-500/5"
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-600/15 text-violet-400">
+                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                      </svg>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-foreground">{route.name}</p>
+                      {route.description && (
+                        <p className="truncate text-xs text-muted">{route.description}</p>
+                      )}
+                    </div>
+                    <svg className="h-4 w-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                      <path d="M9 18l6-6-6-6" />
+                    </svg>
+                  </button>
+                ))}
+              </div>
+            )}
+            <button
+              onClick={() => setShareRouteConvoyId(null)}
+              className="mt-4 w-full rounded-xl border border-card-border py-2.5 text-sm text-muted transition hover:text-foreground"
+            >
+              Anuluj
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Shared route notification banner */}
+      {sharedRouteNotif && (
+        <div className="fixed bottom-28 left-1/2 z-50 -translate-x-1/2">
+          <div className="flex items-center gap-3 rounded-2xl border border-violet-500/30 bg-card-bg/95 px-4 py-3 shadow-xl backdrop-blur-md">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-600/20 text-violet-400">
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-foreground">Lider udostępnił trasę</p>
+              <p className="truncate text-xs text-violet-400 font-medium max-w-[200px]">{sharedRouteNotif.routeName}</p>
+            </div>
+            <button onClick={() => setSharedRouteNotif(null)} className="ml-1 text-muted hover:text-foreground">
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Post-convoy stats overlay */}
