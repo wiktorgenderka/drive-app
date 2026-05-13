@@ -469,6 +469,29 @@ export default function HomeScreen({
             </motion.div>
           )}
 
+          {/* Weather driving tip */}
+          {weather && (() => {
+            const tips: [number, number, string, string][] = [
+              [51, 82, '🌧️', 'Pada deszcz — zwiększ odstęp i jedź wolniej'],
+              [85, 86, '🌨️', 'Śnieg — używaj opon zimowych i jedź ostrożnie'],
+              [71, 77, '🌨️', 'Opady śniegu — ogranicz prędkość i zwiększ odstęp'],
+              [45, 48, '🌫️', 'Mgła — włącz światła przeciwmgielne'],
+              [95, 99, '⛈️', 'Burza — unikaj jazdy jeśli możliwe'],
+              [0, 3, '☀️', 'Dobra pogoda — idealne warunki do jazdy'],
+            ];
+            const tip = tips.find(([min, max]) => weather.code >= min && weather.code <= max);
+            if (!tip) return null;
+            const [, , emoji, text] = tip;
+            return (
+              <motion.div variants={fadeUp}>
+                <div className="flex items-center gap-3 rounded-xl border border-card-border bg-card-bg px-4 py-2.5">
+                  <span className="text-lg shrink-0">{emoji}</span>
+                  <p className="text-xs text-muted flex-1">{text}</p>
+                </div>
+              </motion.div>
+            );
+          })()}
+
           {/* Fuel price widget (only when map was loaded and has priced stations) */}
           {nearestPricedStation && (
             <motion.div variants={fadeUp}>

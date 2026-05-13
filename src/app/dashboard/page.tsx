@@ -693,15 +693,34 @@ export default function DashboardPage() {
                   <div className="flex flex-col gap-5">
                     <div className="flex items-center justify-between">
                       <h3 className="text-base font-semibold text-foreground">Znajomi</h3>
-                      <button
-                        onClick={() => setShowAddFriend(true)}
-                        className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
-                      >
-                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                          <path d="M12 5v14M5 12h14" />
-                        </svg>
-                        Dodaj
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={async () => {
+                            const text = 'Hej! Dołącz do mnie na DriveApp — aplikacji dla kierowców 🚗';
+                            if (navigator.share) {
+                              await navigator.share({ title: 'DriveApp', text }).catch(() => {});
+                            } else {
+                              await navigator.clipboard.writeText(text).catch(() => {});
+                            }
+                          }}
+                          className="flex items-center gap-1.5 rounded-lg border border-card-border px-3 py-1.5 text-xs font-medium text-muted transition hover:text-foreground"
+                          title="Zaproś znajomego"
+                        >
+                          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                            <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" />
+                          </svg>
+                          Zaproś
+                        </button>
+                        <button
+                          onClick={() => setShowAddFriend(true)}
+                          className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
+                        >
+                          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                            <path d="M12 5v14M5 12h14" />
+                          </svg>
+                          Dodaj
+                        </button>
+                      </div>
                     </div>
                     <div>
                       <h4 className="mb-2 text-sm font-medium text-muted">Zaproszenia</h4>
