@@ -43,6 +43,41 @@ enum SpotVisibility {
   PUBLIC
 }
 
+enum XPEventType {
+  TRIP_COMPLETED
+  ROUTE_CREATED
+  ROUTE_DRIVEN
+  REPORT_CONFIRMED
+  SPOT_CREATED
+  CONVOY_JOINED
+  FRIEND_ADDED
+  POST_LIKED
+  STREAK_BONUS
+  ACHIEVEMENT_UNLOCKED
+}
+
+enum AchievementRarity {
+  COMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+enum EventType {
+  MEETUP
+  TRACK_DAY
+  CONVOY_EVENT
+  CRUISE
+  CAR_SHOW
+  OTHER
+}
+
+enum AttendeeStatus {
+  GOING
+  MAYBE
+  NOT_GOING
+}
+
 model User {
   id                 String          @id @default(cuid())
   email              String          @unique
@@ -76,6 +111,13 @@ model User {
   postComments        PostComment[]
   spots               Spot[]
   spotParticipations  SpotParticipant[]
+  userXP              UserXP?
+  xpEvents            XPEvent[]
+  achievements        UserAchievement[]
+  streak              UserStreak?
+  createdEvents       Event[]
+  eventAttendees      EventAttendee[]
+  vehicles            Vehicle[]
 
   @@map("users")
 }
@@ -384,6 +426,132 @@ model SpotParticipant {
   @@unique([spotId, userId])
   @@index([userId, leftAt])
   @@map("spot_participants")
+}
+
+model UserXP {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  total     Int      @default(0)
+  level     Int      @default(1)
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_xp")
+}
+
+model XPEvent {
+  id        String      @id @default(cuid())
+  userId    String
+  type      XPEventType
+  amount    Int
+  meta      Json?
+  createdAt DateTime    @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("xp_events")
+}
+
+model Achievement {
+  id          String            @id @default(cuid())
+  key         String            @unique
+  name        String
+  description String
+  emoji       String
+  xpReward    Int               @default(0)
+  rarity      AchievementRarity @default(COMMON)
+
+  userAchievements UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@map("user_achievements")
+}
+
+model UserStreak {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  currentStreak Int       @default(0)
+  longestStreak Int       @default(0)
+  lastActiveDate DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_streaks")
+}
+
+model Event {
+  id           String        @id @default(cuid())
+  title        String
+  description  String
+  type         EventType
+  date         DateTime
+  endDate      DateTime?
+  latitude     Float
+  longitude    Float
+  address      String
+  maxAttendees Int?
+  imageData    String?
+  isPublic     Boolean       @default(true)
+  createdById  String
+  createdAt    DateTime      @default(now())
+
+  createdBy  User            @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  attendees  EventAttendee[]
+
+  @@index([date, latitude, longitude])
+  @@index([createdById])
+  @@map("events")
+}
+
+model EventAttendee {
+  id        String         @id @default(cuid())
+  eventId   String
+  userId    String
+  status    AttendeeStatus @default(GOING)
+  createdAt DateTime       @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@map("event_attendees")
+}
+
+model Vehicle {
+  id         String   @id @default(cuid())
+  userId     String
+  make       String
+  model      String
+  year       Int
+  color      String?
+  photos     String[]
+  mods       String?
+  horsepower Int?
+  torque     Int?
+  engine     String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("vehicles")
 }
 
 model PostComment {

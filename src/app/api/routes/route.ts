@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { CreateRouteSchema } from "@/lib/schemas";
+import { awardXP, touchStreak, getLevelInfo } from "@/lib/xp";
+import { checkAndUnlockAchievements } from "@/lib/achievements";
 
 export async function GET(request: NextRequest) {
   try {
@@ -59,6 +61,17 @@ export async function POST(request: NextRequest) {
         publishedAt: isPublic ? new Date() : null,
       },
     });
+
+    try {
+      const userId = session.user.id;
+      const { streak } = await touchStreak(userId);
+      const xpResult = await awardXP(userId, 'ROUTE_CREATED');
+      const level = xpResult ? getLevelInfo(xpResult.newTotal).current.level : 1;
+      const routeCount = await prisma.route.count({ where: { userId } });
+      await checkAndUnlockAchievements(userId, { routeCount, streak, level });
+    } catch (e) {
+      console.error('Route XP error:', e);
+    }
 
     return NextResponse.json(route, { status: 201 });
   } catch (error) {

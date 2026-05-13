@@ -5,6 +5,8 @@ import { rateLimit } from "@/lib/rateLimit";
 import { FriendshipStatus } from "@prisma/client";
 import { SendFriendRequestSchema, RespondFriendSchema } from "@/lib/schemas";
 import { broadcastToChannel } from "@/lib/supabase-broadcast";
+import { awardXP } from "@/lib/xp";
+import { checkAndUnlockAchievements } from "@/lib/achievements";
 
 export async function GET(request: NextRequest) {
   try {
@@ -159,6 +161,25 @@ export async function PUT(request: NextRequest) {
       fromName: updated.addressee.name ?? 'Ktoś',
       fromId: updated.addresseeId,
     });
+
+    try {
+      const [accepterCount, requesterCount] = await Promise.all([
+        prisma.friendship.count({
+          where: { status: FriendshipStatus.ACCEPTED, OR: [{ requesterId: updated.addresseeId }, { addresseeId: updated.addresseeId }] },
+        }),
+        prisma.friendship.count({
+          where: { status: FriendshipStatus.ACCEPTED, OR: [{ requesterId: updated.requesterId }, { addresseeId: updated.requesterId }] },
+        }),
+      ]);
+      await Promise.all([
+        awardXP(updated.addresseeId, 'FRIEND_ADDED'),
+        awardXP(updated.requesterId, 'FRIEND_ADDED'),
+        checkAndUnlockAchievements(updated.addresseeId, { friendCount: accepterCount }),
+        checkAndUnlockAchievements(updated.requesterId, { friendCount: requesterCount }),
+      ]);
+    } catch (e) {
+      console.error('Friend XP error:', e);
+    }
 
     return NextResponse.json(updated);
   } catch (error) {

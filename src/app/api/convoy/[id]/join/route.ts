@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { awardXP, touchStreak } from "@/lib/xp";
+import { checkAndUnlockAchievements } from "@/lib/achievements";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -49,6 +51,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
         convoy: { select: { id: true, name: true } },
       },
     });
+
+    try {
+      const userId = session.user.id;
+      const { streak } = await touchStreak(userId);
+      await awardXP(userId, 'CONVOY_JOINED');
+      const convoyCount = await prisma.convoyMember.count({ where: { userId } });
+      await checkAndUnlockAchievements(userId, { convoyCount, streak });
+    } catch (e) {
+      console.error('Convoy XP error:', e);
+    }
 
     return NextResponse.json(member, { status: 201 });
   } catch (error) {

@@ -3,10 +3,29 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { getSupabaseClient } from '@/lib/supabase-client';
+import { useMapStore } from '@/stores/useMapStore';
 import CreateConvoyModal from './CreateConvoyModal';
 import InviteFriendModal from './InviteFriendModal';
 import ConvoyChat from './ConvoyChat';
 import ConvoyDriveMode from './ConvoyDriveMode';
+
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const a = Math.sin(toRad((lat2 - lat1) / 2)) ** 2
+    + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(toRad((lon2 - lon1) / 2)) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function formatETA(distKm: number, speedKmh: number | null): string {
+  const speed = speedKmh && speedKmh > 5 ? speedKmh : 60;
+  const minutes = Math.round((distKm / speed) * 60);
+  if (minutes < 1) return '< 1 min';
+  if (minutes < 60) return `${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
 
 interface ConvoyMember {
   id: string;
@@ -40,6 +59,8 @@ interface Props {
 
 export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNotificationsEnabled, onToggleMapNotifications, onEnterDriveMode }: Props) {
   const { data: session } = useSession();
+  const liveMembers = useMapStore((s) => s.convoyMembers);
+  const userLocation = useMapStore((s) => s.userLocation);
   const [convoys, setConvoys] = useState<Convoy[]>([]);
   const [showSettings, setShowSettings] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -51,6 +72,10 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
   const [destConvoyId, setDestConvoyId] = useState<string | null>(null);
   const [destInput, setDestInput] = useState('');
   const [driveModeConvoy, setDriveModeConvoy] = useState<Convoy | null>(null);
+  const [postConvoyStats, setPostConvoyStats] = useState<{
+    name: string; memberCount: number; destName: string | null;
+  } | null>(null);
+  const [joinedAtMap, setJoinedAtMap] = useState<Record<string, number>>({});
 
   const fetchConvoys = useCallback(async () => {
     try {
@@ -69,15 +94,35 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
     fetchConvoys();
   }, [fetchConvoys]);
 
+  // Record join time for each convoy (for post-convoy stats)
+  useEffect(() => {
+    setJoinedAtMap((prev) => {
+      const next = { ...prev };
+      for (const c of convoys) {
+        if (!next[c.id]) next[c.id] = Date.now();
+      }
+      return next;
+    });
+  }, [convoys]);
+
   const leaveOrDelete = async (convoy: Convoy) => {
     const isOwner = convoy.ownerId === session?.user?.id;
     const action = isOwner ? 'usunąć' : 'opuścić';
     if (!confirm(`Czy na pewno chcesz ${action} konwój "${convoy.name}"?`)) return;
 
     setActionLoading(convoy.id);
+    const joinedAt = joinedAtMap[convoy.id];
     try {
       const res = await fetch(`/api/convoy?convoyId=${convoy.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
+      // Show post-convoy stats if session was >= 5 minutes
+      if (joinedAt && Date.now() - joinedAt > 5 * 60_000) {
+        setPostConvoyStats({
+          name: convoy.name,
+          memberCount: convoy.members.length,
+          destName: convoy.destName ?? null,
+        });
+      }
       await fetchConvoys();
     } catch {
       setError('Operacja nie powiodła się.');
@@ -294,39 +339,79 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
                 {/* Expanded content */}
                 {isExpanded && (
                   <div className="border-t border-card-border px-4 py-3">
-                    {/* Member list */}
+                    {/* Member list with live ETA */}
                     {convoy.members.length === 0 ? (
                       <p className="py-2 text-center text-xs text-muted">Brak członków.</p>
                     ) : (
                       <ul className="flex flex-col gap-1">
-                        {convoy.members.map((member) => (
-                          <li key={member.id} className="flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-input-bg/50">
-                            {member.user.image ? (
-                              <img
-                                src={member.user.image}
-                                alt={member.user.name}
-                                className="h-8 w-8 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600/20 text-xs font-semibold text-emerald-400">
-                                {member.user.name.charAt(0).toUpperCase()}
+                        {convoy.members.map((member) => {
+                          const live = liveMembers.find((m) => m.id === member.userId);
+                          const isMe = member.userId === currentUserId;
+                          const loc = isMe ? userLocation : live;
+                          const hasDest = convoy.destLat != null && convoy.destLng != null;
+                          const distKm = hasDest && loc
+                            ? haversineKm(loc.latitude, loc.longitude, convoy.destLat!, convoy.destLng!)
+                            : null;
+                          const speed = live?.speed ?? (isMe ? userLocation?.speed ?? null : null);
+                          const isOnline = live != null || isMe;
+                          const lastSeen = live ? Math.floor((Date.now() - live.lastUpdated) / 1000) : 0;
+
+                          return (
+                            <li key={member.id} className="flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-input-bg/50">
+                              {/* Avatar with online dot */}
+                              <div className="relative shrink-0">
+                                {member.user.image ? (
+                                  <img
+                                    src={member.user.image}
+                                    alt={member.user.name}
+                                    className="h-8 w-8 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600/20 text-xs font-semibold text-emerald-400">
+                                    {member.user.name.charAt(0).toUpperCase()}
+                                  </div>
+                                )}
+                                <div className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-card-bg ${
+                                  isOnline && lastSeen < 60 ? 'bg-emerald-500' : 'bg-zinc-600'
+                                }`} />
                               </div>
-                            )}
-                            <span className="flex-1 truncate text-sm text-foreground">
-                              {member.user.name}
-                            </span>
-                            {member.role === 'OWNER' && (
-                              <span className="rounded-md bg-emerald-600/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
-                                Lider
-                              </span>
-                            )}
-                            {member.userId === currentUserId && member.role !== 'OWNER' && (
-                              <span className="rounded-md bg-blue-600/15 px-2 py-0.5 text-[10px] font-semibold text-blue-400">
-                                Ty
-                              </span>
-                            )}
-                          </li>
-                        ))}
+
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm text-foreground">{member.user.name}</p>
+                                {/* Speed indicator */}
+                                {speed != null && speed > 1 && (
+                                  <p className="text-[11px] text-muted tabular-nums">
+                                    {Math.round(speed * 3.6)} km/h
+                                  </p>
+                                )}
+                              </div>
+
+                              {/* ETA badge */}
+                              {distKm !== null && (
+                                <div className="flex flex-col items-end">
+                                  <span className="text-xs font-bold text-accent tabular-nums">
+                                    {distKm < 1 ? `${Math.round(distKm * 1000)} m` : `${distKm.toFixed(1)} km`}
+                                  </span>
+                                  <span className="text-[10px] text-muted tabular-nums">
+                                    {formatETA(distKm, speed ? speed * 3.6 : null)}
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Role / Me badges (when no ETA) */}
+                              {distKm === null && member.role === 'OWNER' && (
+                                <span className="rounded-md bg-emerald-600/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
+                                  Lider
+                                </span>
+                              )}
+                              {distKm === null && isMe && member.role !== 'OWNER' && (
+                                <span className="rounded-md bg-blue-600/15 px-2 py-0.5 text-[10px] font-semibold text-blue-400">
+                                  Ty
+                                </span>
+                              )}
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
 
@@ -444,6 +529,52 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
           convoy={driveModeConvoy}
           onClose={() => setDriveModeConvoy(null)}
         />
+      )}
+
+      {/* Post-convoy stats overlay */}
+      {postConvoyStats && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-sm rounded-3xl border border-card-border bg-card-bg p-6 shadow-2xl">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600/20 text-2xl">
+                🏁
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">Konwój zakończony</p>
+                <h3 className="text-lg font-bold text-foreground">{postConvoyStats.name}</h3>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              <div className="rounded-2xl bg-input-bg p-4 text-center">
+                <p className="text-2xl font-black text-foreground">{postConvoyStats.memberCount}</p>
+                <p className="text-xs text-muted mt-0.5">Uczestników</p>
+              </div>
+              {postConvoyStats.destName ? (
+                <div className="rounded-2xl bg-input-bg p-4 text-center">
+                  <p className="text-sm font-bold text-accent truncate">{postConvoyStats.destName}</p>
+                  <p className="text-xs text-muted mt-0.5">Cel podróży</p>
+                </div>
+              ) : (
+                <div className="rounded-2xl bg-input-bg p-4 text-center">
+                  <p className="text-2xl">🛣️</p>
+                  <p className="text-xs text-muted mt-0.5">Wolny przejazd</p>
+                </div>
+              )}
+            </div>
+
+            <p className="mb-5 text-center text-sm text-muted">
+              Dobra jazda! XP zostały zapisane automatycznie.
+            </p>
+
+            <button
+              onClick={() => setPostConvoyStats(null)}
+              className="w-full rounded-2xl bg-accent py-3 text-sm font-bold text-white transition hover:opacity-90"
+            >
+              Zamknij
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Create modal */}

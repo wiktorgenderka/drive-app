@@ -5,6 +5,8 @@ import { rateLimit } from "@/lib/rateLimit";
 import { CreateSpotSchema } from "@/lib/schemas";
 import { broadcastToChannel } from "@/lib/supabase-broadcast";
 import { FriendshipStatus, SpotKind, SpotVisibility } from "@prisma/client";
+import { awardXP, touchStreak } from "@/lib/xp";
+import { checkAndUnlockAchievements } from "@/lib/achievements";
 
 const SPOT_EXPIRY_HOURS = 2;
 
@@ -147,6 +149,16 @@ export async function POST(request: NextRequest) {
           broadcastToChannel(`user:${fid}`, 'spot-created', payload)
         )
       );
+    }
+
+    try {
+      const userId = session.user.id;
+      const { streak } = await touchStreak(userId);
+      await awardXP(userId, 'SPOT_CREATED');
+      const spotCount = await prisma.spot.count({ where: { createdById: userId } });
+      await checkAndUnlockAchievements(userId, { spotCount, streak });
+    } catch (e) {
+      console.error('Spot XP error:', e);
     }
 
     return NextResponse.json({ ...spot, isOwner: true, isParticipant: false }, { status: 201 });

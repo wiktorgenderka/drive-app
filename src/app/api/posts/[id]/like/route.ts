@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { awardXP } from "@/lib/xp";
+import { checkAndUnlockAchievements } from "@/lib/achievements";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -13,7 +15,7 @@ export async function POST(_req: NextRequest, context: RouteContext) {
     }
     const { id: postId } = await context.params;
 
-    const post = await prisma.post.findUnique({ where: { id: postId }, select: { id: true } });
+    const post = await prisma.post.findUnique({ where: { id: postId }, select: { id: true, userId: true } });
     if (!post) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
@@ -33,6 +35,17 @@ export async function POST(_req: NextRequest, context: RouteContext) {
 
     const likeCount = await prisma.postLike.count({ where: { postId } });
     await prisma.post.update({ where: { id: postId }, data: { likeCount } });
+
+    if (liked && session.user.id !== post.userId) {
+      try {
+        await awardXP(session.user.id, 'POST_LIKED');
+        if (likeCount >= 10) {
+          await checkAndUnlockAchievements(post.userId, { postLikes: likeCount });
+        }
+      } catch (e) {
+        console.error('Like XP error:', e);
+      }
+    }
 
     return NextResponse.json({ liked, likeCount });
   } catch (error) {

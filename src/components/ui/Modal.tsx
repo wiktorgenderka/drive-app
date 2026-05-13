@@ -1,19 +1,25 @@
 'use client';
 
 import { ReactNode, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
   children: ReactNode;
+  size?: 'sm' | 'md' | 'lg';
 }
 
-export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
+const sizeClass = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-2xl',
+};
+
+export default function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
   const handleEsc = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    },
+    (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); },
     [onClose]
   );
 
@@ -28,28 +34,43 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
     };
   }, [isOpen, handleEsc]);
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
-        onClick={onClose}
-      />
-      <div className="relative bg-gray-800 border border-gray-700 rounded-xl shadow-2xl w-full max-w-md animate-scale-in">
-        <div className="flex items-center justify-between p-4 border-b border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-100">{title}</h2>
-          <button
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <motion.div
+            className="absolute inset-0 bg-black/65 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
             onClick={onClose}
-            className="p-1 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-gray-700 transition-colors"
+          />
+
+          {/* Panel */}
+          <motion.div
+            className={`relative w-full ${sizeClass[size]} rounded-2xl border border-card-border bg-card-bg shadow-2xl`}
+            initial={{ opacity: 0, scale: 0.94, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 4 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+            <div className="flex items-center justify-between border-b border-card-border px-5 py-4">
+              <h2 className="text-base font-semibold text-foreground">{title}</h2>
+              <button
+                onClick={onClose}
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-muted transition hover:bg-input-bg hover:text-foreground"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-5">{children}</div>
+          </motion.div>
         </div>
-        <div className="p-4">{children}</div>
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 }

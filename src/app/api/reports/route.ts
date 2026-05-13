@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma";
 import { ReportType } from "@prisma/client";
 import { rateLimit } from "@/lib/rateLimit";
 import { CreateReportSchema } from "@/lib/schemas";
+import { awardXP, touchStreak } from "@/lib/xp";
+import { checkAndUnlockAchievements } from "@/lib/achievements";
 
 const REPORT_EXPIRY_HOURS = 2;
 
@@ -129,6 +131,16 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    try {
+      const userId = session.user.id;
+      const { streak } = await touchStreak(userId);
+      await awardXP(userId, 'REPORT_CONFIRMED');
+      const reportCount = await prisma.report.count({ where: { userId } });
+      await checkAndUnlockAchievements(userId, { reportCount, streak, reportConfirmed: true });
+    } catch (e) {
+      console.error('Report XP error:', e);
+    }
 
     return NextResponse.json(report, { status: 201 });
   } catch (error) {

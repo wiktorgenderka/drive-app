@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { awardXP, touchStreak } from "@/lib/xp";
 
 export async function GET(
   _req: NextRequest,
@@ -78,6 +79,13 @@ export async function POST(
       data: { routeId, userId: session.user.id, seconds },
       include: { user: { select: { id: true, name: true, image: true } } },
     });
+
+    try {
+      await touchStreak(session.user.id);
+      await awardXP(session.user.id, 'ROUTE_DRIVEN');
+    } catch (e) {
+      console.error('Route driven XP error:', e);
+    }
 
     return NextResponse.json(record, { status: 201 });
   } catch (error) {

@@ -7,7 +7,6 @@ import { useSession } from 'next-auth/react';
 import AuthGuard from '@/components/auth/AuthGuard';
 import { useMapStore } from '@/stores/useMapStore';
 import { useConvoyStore } from '@/stores/useConvoyStore';
-import Link from 'next/link';
 import HomeScreen from '@/components/dashboard/HomeScreen';
 import SettingsPanel from '@/components/settings/SettingsPanel';
 import FriendsList from '@/components/friends/FriendsList';
@@ -17,6 +16,9 @@ import ConvoyPanel from '@/components/convoy/ConvoyPanel';
 import ConvoyMapVoice from '@/components/convoy/ConvoyMapVoice';
 import RoutePanel from '@/components/routes/RoutePanel';
 import SocialFeed from '@/components/social/SocialFeed';
+import GaragePanel from '@/components/garage/GaragePanel';
+import EventPanel from '@/components/events/EventPanel';
+import OnboardingFlow, { useShowOnboarding } from '@/components/onboarding/OnboardingFlow';
 import CreateSpotModal from '@/components/spots/CreateSpotModal';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useLocationPing } from '@/hooks/useLocationPing';
@@ -24,15 +26,20 @@ import { useAutoSpotDetection } from '@/hooks/useAutoSpotDetection';
 import { useProfileStore } from '@/stores/useProfileStore';
 import { UserProfileView } from '@/components/profile/PublicProfileModals';
 import { useGeolocation } from '@/hooks/useGeolocation';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
+import Link from 'next/link';
 
 const MapView = dynamic(() => import('@/components/map/MapView'), {
   ssr: false,
   loading: () => (
     <div className="flex h-full w-full items-center justify-center bg-background">
-      <svg className="h-8 w-8 animate-spin text-blue-500" viewBox="0 0 24 24" fill="none">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-      </svg>
+      <div className="flex flex-col items-center gap-3">
+        <div className="relative h-10 w-10">
+          <div className="absolute inset-0 rounded-full border-2 border-accent/30" />
+          <div className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-accent" />
+        </div>
+        <span className="text-xs text-muted">Ładowanie mapy…</span>
+      </div>
     </div>
   ),
 });
@@ -48,33 +55,50 @@ const LAYER_CONFIG: { key: LayerKey; label: string }[] = [
   { key: 'showFriends', label: 'Znajomi' },
 ];
 
+// Bottom nav — 5 głównych tabów
 const NAV_ITEMS: { id: Tab; icon: React.ReactNode; label: string }[] = [
-  {
-    id: 'feed',
-    label: 'Społeczność',
-    icon: (
-      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-      </svg>
-    ),
-  },
   {
     id: 'home',
     label: 'Główna',
     icon: (
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 12l9-9 9 9" />
-        <path d="M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10" />
+        <path d="M3 12l9-9 9 9" /><path d="M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10" />
       </svg>
     ),
   },
   {
-    id: 'profile',
-    label: 'Profil',
+    id: 'map',
+    label: 'Mapa',
     icon: (
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-        <circle cx="12" cy="7" r="4" />
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
+      </svg>
+    ),
+  },
+  {
+    id: 'car',
+    label: 'Konwój',
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+      </svg>
+    ),
+  },
+  {
+    id: 'routes',
+    label: 'Trasy',
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+      </svg>
+    ),
+  },
+  {
+    id: 'feed',
+    label: 'Społeczność',
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
       </svg>
     ),
   },
@@ -82,10 +106,16 @@ const NAV_ITEMS: { id: Tab; icon: React.ReactNode; label: string }[] = [
 
 const SECTION_META: Record<Exclude<Tab, 'home' | 'map'>, { title: string; color: string }> = {
   profile: { title: 'Profil', color: 'bg-violet-600' },
-  car: { title: 'Konwój', color: 'bg-emerald-600' },
-  routes: { title: 'Trasy', color: 'bg-orange-600' },
+  car:     { title: 'Konwój', color: 'bg-emerald-600' },
+  routes:  { title: 'Trasy',  color: 'bg-accent' },
   friends: { title: 'Znajomi', color: 'bg-pink-600' },
-  feed: { title: 'Społeczność', color: 'bg-rose-600' },
+  feed:    { title: 'Społeczność', color: 'bg-rose-600' },
+};
+
+const sectionVariants: Variants = {
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 340, damping: 28 } },
+  exit:    { opacity: 0, y: -8, transition: { duration: 0.15 } },
 };
 
 export default function DashboardPage() {
@@ -96,24 +126,21 @@ export default function DashboardPage() {
   useLocationPing(true);
   useAutoSpotDetection(autoSpotEnabled);
 
-  // Trzymaj GPS aktywny dopóki użytkownik jest zalogowany — dzięki temu lokalizacja
-  // działa też w zakładkach Trasy/Społeczność, nie tylko po wejściu w pełnoekranową mapę.
   const geo = useGeolocation({ enableHighAccuracy: true, autoStart: true });
   const [geoBannerDismissed, setGeoBannerDismissed] = useState(false);
 
   const [activeTab, setActiveTab] = useState<Tab>('home');
+  const [carSubTab, setCarSubTab] = useState<'convoy' | 'garage'>('convoy');
+  const [feedSubTab, setFeedSubTab] = useState<'feed' | 'events'>('feed');
+  const { show: showOnboarding, dismiss: dismissOnboarding } = useShowOnboarding();
   const [viewedProfileUserId, setViewedProfileUserId] = useState<string | null>(null);
   const [createRouteOpen, setCreateRouteOpen] = useState(false);
   const [mapVoiceEnabled, setMapVoiceEnabled] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('convoy_map_voice') !== 'false';
-    }
+    if (typeof window !== 'undefined') return localStorage.getItem('convoy_map_voice') !== 'false';
     return true;
   });
   const [mapNotificationsEnabled, setMapNotificationsEnabled] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('convoy_map_notifications') !== 'false';
-    }
+    if (typeof window !== 'undefined') return localStorage.getItem('convoy_map_notifications') !== 'false';
     return true;
   });
   const [mapToast, setMapToast] = useState<{ name: string; type: 'text' | 'voice' } | null>(null);
@@ -135,6 +162,7 @@ export default function DashboardPage() {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     toastTimerRef.current = setTimeout(() => setMapToast(null), 3500);
   }, [mapNotificationsEnabled]);
+
   const { showReports, showFuelStations, showConvoyMembers, showSpots, showFriends, toggleLayer } = useMapStore();
   const [showLayerMenu, setShowLayerMenu] = useState(false);
   const [showAddReport, setShowAddReport] = useState(false);
@@ -159,24 +187,14 @@ export default function DashboardPage() {
       await fetch('/api/reports', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type,
-          latitude: userLocation.latitude,
-          longitude: userLocation.longitude,
-        }),
+        body: JSON.stringify({ type, latitude: userLocation.latitude, longitude: userLocation.longitude }),
       });
-    } catch {
-      // silent fail
-    }
+    } catch { /* silent */ }
     setShowAddReport(false);
   }, [userLocation]);
 
   const layerStates: Record<LayerKey, boolean> = {
-    showReports,
-    showFuelStations,
-    showConvoyMembers,
-    showSpots,
-    showFriends,
+    showReports, showFuelStations, showConvoyMembers, showSpots, showFriends,
   };
 
   const isProfileView = viewedProfileUserId !== null;
@@ -185,7 +203,6 @@ export default function DashboardPage() {
   const isOverlay = !isHome && !isMapMode && !isProfileView;
 
   function handleTabClick(tab: Tab) {
-    // Każde kliknięcie w dolnej nawigacji zamyka pełnostronicowy widok profilu.
     if (viewedProfileUserId !== null) setViewedProfileUserId(null);
     if (tab === activeTab && viewedProfileUserId === null) {
       setActiveTab('home');
@@ -198,81 +215,112 @@ export default function DashboardPage() {
 
   return (
     <AuthGuard>
+      <AnimatePresence>
+        {showOnboarding && (
+          <OnboardingFlow onDone={dismissOnboarding} />
+        )}
+      </AnimatePresence>
       <div className="relative h-screen w-screen overflow-hidden bg-background">
 
-        {/* === GPS STATUS BANNER === */}
-        {geo.error && !geoBannerDismissed && (
-          <div className="absolute left-1/2 top-3 z-40 w-[min(90vw,420px)] -translate-x-1/2 rounded-xl border border-red-500/40 bg-red-500/15 px-3 py-2 shadow-lg backdrop-blur-md">
-            <div className="flex items-start gap-2">
-              <svg className="mt-0.5 h-4 w-4 shrink-0 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-                <line x1="9" y1="9" x2="15" y2="15" />
-                <line x1="15" y1="9" x2="9" y2="15" />
-              </svg>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-red-300">Lokalizacja niedostępna</p>
-                <p className="mt-0.5 text-[11px] leading-4 text-red-200/90">{geo.error}</p>
-                <div className="mt-2 flex gap-2">
-                  <button
-                    onClick={() => geo.startTracking()}
-                    className="rounded-md bg-red-600 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-red-700"
-                  >
-                    Spróbuj ponownie
-                  </button>
-                  <button
-                    onClick={() => setGeoBannerDismissed(true)}
-                    className="rounded-md border border-red-500/40 px-2.5 py-1 text-[11px] font-semibold text-red-200 transition hover:bg-red-500/10"
-                  >
-                    Ukryj
-                  </button>
+        {/* GPS STATUS BANNER */}
+        <AnimatePresence>
+          {geo.error && !geoBannerDismissed && (
+            <motion.div
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+              className="absolute left-1/2 top-3 z-40 w-[min(90vw,420px)] -translate-x-1/2 rounded-xl border border-red-500/40 bg-red-500/15 px-3 py-2 shadow-lg backdrop-blur-md"
+            >
+              <div className="flex items-start gap-2">
+                <svg className="mt-0.5 h-4 w-4 shrink-0 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                  <line x1="9" y1="9" x2="15" y2="15" /><line x1="15" y1="9" x2="9" y2="15" />
+                </svg>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-red-300">Lokalizacja niedostępna</p>
+                  <p className="mt-0.5 text-[11px] leading-4 text-red-200/90">{geo.error}</p>
+                  <div className="mt-2 flex gap-2">
+                    <button onClick={() => geo.startTracking()} className="rounded-md bg-red-600 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-red-700">
+                      Spróbuj ponownie
+                    </button>
+                    <button onClick={() => setGeoBannerDismissed(true)} className="rounded-md border border-red-500/40 px-2.5 py-1 text-[11px] font-semibold text-red-200 transition hover:bg-red-500/10">
+                      Ukryj
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* === HOME SCREEN === */}
-        {isHome && (
-          <HomeScreen
-            onNavigateToMap={() => setActiveTab('map')}
-            onNavigateToFriends={() => setActiveTab('friends')}
-            onNavigateToRoutes={() => setActiveTab('routes')}
-            onNavigateToConvoy={() => setActiveTab('car')}
-          />
-        )}
+        {/* HOME SCREEN */}
+        <AnimatePresence mode="wait">
+          {isHome && (
+            <motion.div
+              key="home"
+              variants={sectionVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="absolute inset-0"
+            >
+              <HomeScreen
+                onNavigateToMap={() => setActiveTab('map')}
+                onNavigateToFriends={() => setActiveTab('friends')}
+                onNavigateToRoutes={() => setActiveTab('routes')}
+                onNavigateToConvoy={() => setActiveTab('car')}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* === FULL MAP MODE === */}
+        {/* FULL MAP MODE */}
         {isMapMode && (
-          <>
+          <motion.div
+            key="map"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0"
+          >
             <MapView />
             {mapVoiceEnabled && <ConvoyMapVoice onIncomingMessage={handleIncomingConvoyMessage} />}
 
-            {/* Convoy message notification toast */}
-            {mapToast && (
-              <div className="absolute left-1/2 top-20 z-30 -translate-x-1/2 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="flex items-center gap-2 rounded-2xl border border-card-border bg-card-bg/95 px-4 py-2.5 shadow-xl backdrop-blur-md">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-600/20 text-emerald-400">
-                    {mapToast.type === 'voice' ? (
-                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                        <path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                      </svg>
-                    ) : (
-                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-                      </svg>
-                    )}
+            {/* Convoy message toast */}
+            <AnimatePresence>
+              {mapToast && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                  transition={{ type: 'spring', stiffness: 380, damping: 26 }}
+                  className="absolute left-1/2 top-20 z-30 -translate-x-1/2"
+                >
+                  <div className="flex items-center gap-2 rounded-2xl border border-card-border bg-card-bg/95 px-4 py-2.5 shadow-xl backdrop-blur-md">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-600/20 text-emerald-400">
+                      {mapToast.type === 'voice' ? (
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                          <path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                        </svg>
+                      ) : (
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs font-semibold text-foreground">{mapToast.name}</span>
+                      <span className="ml-1.5 text-xs text-muted">
+                        {mapToast.type === 'voice' ? 'wysłał głosówkę' : 'napisał wiadomość'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <span className="text-xs font-semibold text-foreground">{mapToast.name}</span>
-                    <span className="ml-1.5 text-xs text-muted">
-                      {mapToast.type === 'voice' ? 'wysłał głosówkę' : 'napisał wiadomość'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            {/* Top bar */}
+            {/* Map top bar */}
             <div className="absolute left-0 right-0 top-0 z-20 flex items-start justify-between px-4 pt-4">
               <div className="flex flex-col items-start gap-1.5">
                 <button
@@ -290,7 +338,7 @@ export default function DashboardPage() {
                     <svg className="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
                     </svg>
-                    <span className="text-xs font-bold text-foreground leading-tight">{formatDistance(nearestStationDist)}</span>
+                    <span className="text-xs font-bold text-foreground leading-tight tabular-nums">{formatDistance(nearestStationDist)}</span>
                     <span className="text-[10px] text-muted leading-tight">do stacji</span>
                   </div>
                 )}
@@ -302,43 +350,43 @@ export default function DashboardPage() {
                   <button
                     onClick={() => { setShowLayerMenu(!showLayerMenu); setShowAddReport(false); }}
                     className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition ${
-                      showLayerMenu
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-card-bg/90 text-muted border border-card-border backdrop-blur-md hover:text-foreground'
+                      showLayerMenu ? 'bg-blue-600 text-white' : 'bg-card-bg/90 text-muted border border-card-border backdrop-blur-md hover:text-foreground'
                     }`}
                   >
                     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                      <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                      <path d="M2 17l10 5 10-5" />
-                      <path d="M2 12l10 5 10-5" />
+                      <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
                     </svg>
                   </button>
-                  {showLayerMenu && (
-                    <div className="absolute top-full right-0 mt-2 w-48 rounded-xl border border-card-border bg-card-bg/95 p-2 shadow-xl backdrop-blur-md">
-                      {LAYER_CONFIG.map(({ key, label }) => (
-                        <button
-                          key={key}
-                          onClick={() => toggleLayer(key)}
-                          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition hover:bg-input-bg"
-                        >
-                          <span
-                            className={`flex h-5 w-5 items-center justify-center rounded border ${
-                              layerStates[key]
-                                ? 'border-blue-500 bg-blue-600'
-                                : 'border-input-border bg-input-bg'
-                            }`}
+                  <AnimatePresence>
+                    {showLayerMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.92, y: -4 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.94, y: -4 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                        className="absolute top-full right-0 mt-2 w-48 rounded-xl border border-card-border bg-card-bg/95 p-2 shadow-xl backdrop-blur-md"
+                      >
+                        {LAYER_CONFIG.map(({ key, label }) => (
+                          <button
+                            key={key}
+                            onClick={() => toggleLayer(key)}
+                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition hover:bg-input-bg"
                           >
-                            {layerStates[key] && (
-                              <svg className="h-3 w-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
-                                <polyline points="20 6 9 17 4 12" />
-                              </svg>
-                            )}
-                          </span>
-                          <span className="text-foreground">{label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                            <span className={`flex h-5 w-5 items-center justify-center rounded border transition ${
+                              layerStates[key] ? 'border-accent bg-accent' : 'border-input-border bg-input-bg'
+                            }`}>
+                              {layerStates[key] && (
+                                <svg className="h-3 w-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              )}
+                            </span>
+                            <span className="text-foreground">{label}</span>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* Add report */}
@@ -346,9 +394,7 @@ export default function DashboardPage() {
                   <button
                     onClick={() => { setShowAddReport(!showAddReport); setShowLayerMenu(false); }}
                     className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition ${
-                      showAddReport
-                        ? 'bg-orange-600 text-white'
-                        : 'bg-card-bg/90 text-muted border border-card-border backdrop-blur-md hover:text-foreground'
+                      showAddReport ? 'bg-orange-600 text-white' : 'bg-card-bg/90 text-muted border border-card-border backdrop-blur-md hover:text-foreground'
                     }`}
                   >
                     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -356,39 +402,45 @@ export default function DashboardPage() {
                       <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                     </svg>
                   </button>
-                  {showAddReport && (
-                    <div className="absolute top-full right-0 mt-2 w-72 rounded-2xl border border-card-border bg-card-bg/95 p-4 shadow-xl backdrop-blur-md">
-                      <div className="mb-3 flex items-center justify-between">
-                        <h3 className="text-sm font-semibold text-foreground">Dodaj raport</h3>
-                        <button onClick={() => setShowAddReport(false)} className="rounded-lg p-1 text-muted hover:text-foreground">
-                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                            <path d="M18 6L6 18M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        {[
-                          { label: 'Policja', type: 'POLICE', icon: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' },
-                          { label: 'Tajniaki', type: 'UNMARKED_POLICE', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' },
-                          { label: 'Kontrola prędkości', type: 'SPEED_TRAP', icon: 'M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z' },
-                          { label: 'Wypadek', type: 'ACCIDENT', icon: 'M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z' },
-                          { label: 'Zagrożenie', type: 'OBSTACLE', icon: 'M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-                          { label: 'Fotoradar', type: 'SPEED_CAMERA', icon: 'M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z' },
-                        ].map((report) => (
-                          <button
-                            key={report.label}
-                            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition hover:bg-input-bg"
-                            onClick={() => submitReport(report.type)}
-                          >
-                            <svg className="h-4 w-4 text-orange-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                              <path d={report.icon} />
+                  <AnimatePresence>
+                    {showAddReport && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.92, y: -4 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.94, y: -4 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                        className="absolute top-full right-0 mt-2 w-72 rounded-2xl border border-card-border bg-card-bg/95 p-4 shadow-xl backdrop-blur-md"
+                      >
+                        <div className="mb-3 flex items-center justify-between">
+                          <h3 className="text-sm font-semibold text-foreground">Dodaj raport</h3>
+                          <button onClick={() => setShowAddReport(false)} className="rounded-lg p-1 text-muted hover:text-foreground">
+                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                              <path d="M18 6L6 18M6 6l12 12" />
                             </svg>
-                            {report.label}
                           </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          {[
+                            { label: 'Policja', type: 'POLICE', emoji: '🚔' },
+                            { label: 'Tajniaki', type: 'UNMARKED_POLICE', emoji: '🕵️' },
+                            { label: 'Kontrola prędkości', type: 'SPEED_TRAP', emoji: '📏' },
+                            { label: 'Wypadek', type: 'ACCIDENT', emoji: '🚨' },
+                            { label: 'Zagrożenie', type: 'OBSTACLE', emoji: '⚠️' },
+                            { label: 'Fotoradar', type: 'SPEED_CAMERA', emoji: '📷' },
+                          ].map((report) => (
+                            <button
+                              key={report.type}
+                              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition hover:bg-input-bg"
+                              onClick={() => submitReport(report.type)}
+                            >
+                              <span className="text-base">{report.emoji}</span>
+                              {report.label}
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* Create spot */}
@@ -414,151 +466,273 @@ export default function DashboardPage() {
                 </Link>
               </div>
             </div>
-          </>
+          </motion.div>
         )}
 
-        {/* === SECTION OVERLAYS (profile, convoy, routes, friends) === */}
-        {isOverlay && (
-          <div className="absolute inset-0 z-20 flex flex-col bg-background">
-            {/* Header */}
-            <div className="flex items-center gap-3 px-5 pt-6 pb-4">
-              <button
-                onClick={() => setActiveTab('home')}
-                className="flex h-9 w-9 items-center justify-center rounded-xl bg-card-bg border border-card-border text-muted transition hover:text-foreground"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                  <path d="M19 12H5M12 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${SECTION_META[activeTab as keyof typeof SECTION_META].color} text-white`}>
-                {NAV_ITEMS.find((n) => n.id === activeTab)?.icon}
+        {/* SECTION OVERLAYS */}
+        <AnimatePresence mode="wait">
+          {isOverlay && (
+            <motion.div
+              key={activeTab}
+              variants={sectionVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="absolute inset-0 z-20 flex flex-col bg-background"
+            >
+              {/* Section header */}
+              <div className="flex items-center gap-3 px-5 pt-6 pb-4">
+                <button
+                  onClick={() => setActiveTab('home')}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-card-bg border border-card-border text-muted transition hover:text-foreground"
+                >
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${SECTION_META[activeTab as keyof typeof SECTION_META].color} text-white`}>
+                  {NAV_ITEMS.find((n) => n.id === activeTab)?.icon}
+                </div>
+                <h2 className="text-lg font-bold text-foreground">
+                  {SECTION_META[activeTab as keyof typeof SECTION_META].title}
+                </h2>
               </div>
-              <h2 className="text-lg font-bold text-foreground">
-                {SECTION_META[activeTab as keyof typeof SECTION_META].title}
-              </h2>
-            </div>
 
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto px-5 pb-24">
-              {activeTab === 'profile' && <SettingsPanel />}
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto px-5 pb-28">
+                {activeTab === 'profile' && <SettingsPanel />}
 
-              {activeTab === 'car' && (
-                <div className="rounded-2xl border border-card-border bg-card-bg p-5">
-                  <ConvoyPanel
-                    mapVoiceEnabled={mapVoiceEnabled}
-                    onToggleMapVoice={toggleMapVoice}
-                    mapNotificationsEnabled={mapNotificationsEnabled}
-                    onToggleMapNotifications={toggleMapNotifications}
-                    onEnterDriveMode={() => {
-                      if (!mapVoiceEnabled) toggleMapVoice(true);
-                      setActiveTab('map');
-                    }}
+                {activeTab === 'car' && (
+                  <div className="flex flex-col gap-4">
+                    {/* Sub-tabs */}
+                    <div className="flex rounded-xl bg-input-bg p-1">
+                      {(['convoy', 'garage'] as const).map((t) => (
+                        <button
+                          key={t}
+                          onClick={() => setCarSubTab(t)}
+                          className={`relative flex-1 rounded-lg py-2 text-sm font-semibold transition ${carSubTab === t ? 'text-foreground' : 'text-muted hover:text-foreground'}`}
+                        >
+                          {carSubTab === t && (
+                            <motion.div
+                              layoutId="car-sub-pill"
+                              className="absolute inset-0 rounded-lg bg-card-bg shadow"
+                              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                            />
+                          )}
+                          <span className="relative">
+                            {t === 'convoy' ? '👥 Konwój' : '🚗 Garaż'}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <AnimatePresence mode="wait">
+                      {carSubTab === 'convoy' ? (
+                        <motion.div
+                          key="convoy"
+                          initial={{ opacity: 0, x: -12 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -12 }}
+                          transition={{ duration: 0.15 }}
+                          className="rounded-2xl border border-card-border bg-card-bg p-5"
+                        >
+                          <ConvoyPanel
+                            mapVoiceEnabled={mapVoiceEnabled}
+                            onToggleMapVoice={toggleMapVoice}
+                            mapNotificationsEnabled={mapNotificationsEnabled}
+                            onToggleMapNotifications={toggleMapNotifications}
+                            onEnterDriveMode={() => {
+                              if (!mapVoiceEnabled) toggleMapVoice(true);
+                              setActiveTab('map');
+                            }}
+                          />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="garage"
+                          initial={{ opacity: 0, x: 12 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 12 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <GaragePanel />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+
+                {activeTab === 'routes' && (
+                  <RoutePanel
+                    onShowOnMap={() => setActiveTab('map')}
+                    onShowProfile={(uid) => setViewedProfileUserId(uid)}
+                    onCreateRouteOpenChange={setCreateRouteOpen}
+                  />
+                )}
+
+                {activeTab === 'feed' && (
+                  <div className="flex flex-col gap-4">
+                    {/* Sub-tabs */}
+                    <div className="flex rounded-xl bg-input-bg p-1">
+                      {(['feed', 'events'] as const).map((t) => (
+                        <button
+                          key={t}
+                          onClick={() => setFeedSubTab(t)}
+                          className={`relative flex-1 rounded-lg py-2 text-sm font-semibold transition ${feedSubTab === t ? 'text-foreground' : 'text-muted hover:text-foreground'}`}
+                        >
+                          {feedSubTab === t && (
+                            <motion.div
+                              layoutId="feed-sub-pill"
+                              className="absolute inset-0 rounded-lg bg-card-bg shadow"
+                              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                            />
+                          )}
+                          <span className="relative">
+                            {t === 'feed' ? '📰 Aktywność' : '🏁 Eventy'}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <AnimatePresence mode="wait">
+                      {feedSubTab === 'feed' ? (
+                        <motion.div
+                          key="feed"
+                          initial={{ opacity: 0, x: -12 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -12 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <SocialFeed onShowProfile={(uid) => setViewedProfileUserId(uid)} />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="events"
+                          initial={{ opacity: 0, x: 12 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 12 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <EventPanel />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+
+                {activeTab === 'friends' && (
+                  <div className="flex flex-col gap-5">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-base font-semibold text-foreground">Znajomi</h3>
+                      <button
+                        onClick={() => setShowAddFriend(true)}
+                        className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
+                      >
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                          <path d="M12 5v14M5 12h14" />
+                        </svg>
+                        Dodaj
+                      </button>
+                    </div>
+                    <div>
+                      <h4 className="mb-2 text-sm font-medium text-muted">Zaproszenia</h4>
+                      <FriendRequests />
+                    </div>
+                    <div>
+                      <h4 className="mb-2 text-sm font-medium text-muted">Lista znajomych</h4>
+                      <FriendsList />
+                    </div>
+                    <AddFriendModal open={showAddFriend} onClose={() => setShowAddFriend(false)} />
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* USER PROFILE OVERLAY */}
+        <AnimatePresence>
+          {isProfileView && viewedProfileUserId && (
+            <motion.div
+              key="profile-view"
+              initial={{ opacity: 0, x: 32 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 32 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              className="absolute inset-0 z-25 flex flex-col bg-background"
+            >
+              <div className="flex items-center gap-3 px-5 pt-6 pb-4">
+                <button
+                  onClick={() => setViewedProfileUserId(null)}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-card-bg border border-card-border text-muted transition hover:text-foreground"
+                >
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 text-white">
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
+                  </svg>
+                </div>
+                <h2 className="text-lg font-bold text-foreground">Profil</h2>
+              </div>
+              <div className="flex-1 overflow-y-auto px-5 pb-24">
+                <div className="mx-auto w-full max-w-2xl">
+                  <UserProfileView
+                    key={viewedProfileUserId}
+                    userId={viewedProfileUserId}
+                    onBack={() => setViewedProfileUserId(null)}
                   />
                 </div>
-              )}
-
-              {activeTab === 'routes' && (
-                <RoutePanel
-                  onShowOnMap={() => setActiveTab('map')}
-                  onShowProfile={(uid) => setViewedProfileUserId(uid)}
-                  onCreateRouteOpenChange={setCreateRouteOpen}
-                />
-              )}
-
-              {activeTab === 'feed' && (
-                <SocialFeed onShowProfile={(uid) => setViewedProfileUserId(uid)} />
-              )}
-
-              {activeTab === 'friends' && (
-                <div className="flex flex-col gap-5">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-base font-semibold text-foreground">Znajomi</h3>
-                    <button
-                      onClick={() => setShowAddFriend(true)}
-                      className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700"
-                    >
-                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                        <path d="M12 5v14M5 12h14" />
-                      </svg>
-                      Dodaj
-                    </button>
-                  </div>
-
-                  <div>
-                    <h4 className="mb-2 text-sm font-medium text-muted">Zaproszenia</h4>
-                    <FriendRequests />
-                  </div>
-
-                  <div>
-                    <h4 className="mb-2 text-sm font-medium text-muted">Lista znajomych</h4>
-                    <FriendsList />
-                  </div>
-
-                  <AddFriendModal
-                    open={showAddFriend}
-                    onClose={() => setShowAddFriend(false)}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* === USER PROFILE OVERLAY (full page) === */}
-        {isProfileView && viewedProfileUserId && (
-          <div className="absolute inset-0 z-20 flex flex-col bg-background">
-            <div className="flex items-center gap-3 px-5 pt-6 pb-4">
-              <button
-                onClick={() => setViewedProfileUserId(null)}
-                className="flex h-9 w-9 items-center justify-center rounded-xl bg-card-bg border border-card-border text-muted transition hover:text-foreground"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                  <path d="M19 12H5M12 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 text-white">
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
               </div>
-              <h2 className="text-lg font-bold text-foreground">Profil</h2>
-            </div>
-            <div className="flex-1 overflow-y-auto px-5 pb-24">
-              <div className="mx-auto w-full max-w-2xl">
-                <UserProfileView
-                  key={viewedProfileUserId}
-                  userId={viewedProfileUserId}
-                  onBack={() => setViewedProfileUserId(null)}
-                />
-              </div>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <CreateSpotModal
-          open={showCreateSpot}
-          onClose={() => setShowCreateSpot(false)}
-        />
+        <CreateSpotModal open={showCreateSpot} onClose={() => setShowCreateSpot(false)} />
 
-        {/* Bottom nav bar - visible when NOT in full map mode and no fullscreen modal */}
+        {/* BOTTOM NAV — 5 tabów */}
         {!isMapMode && !createRouteOpen && (
           <div className="absolute bottom-0 left-0 right-0 z-30">
-            <div className="mx-4 mb-6 flex items-center justify-around rounded-2xl border border-card-border bg-card-bg/95 px-2 py-2 shadow-xl backdrop-blur-md">
-              {NAV_ITEMS.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleTabClick(item.id)}
-                  className={`flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 transition-all duration-200 ${
-                    activeTab === item.id
-                      ? 'bg-blue-600/15 text-blue-500'
-                      : 'text-muted hover:text-foreground'
-                  }`}
-                >
-                  {item.icon}
-                  <span className="text-[10px] font-medium">{item.label}</span>
-                </button>
-              ))}
+            <div className="mx-3 mb-5 overflow-hidden rounded-2xl border border-card-border bg-card-bg/95 shadow-2xl backdrop-blur-xl">
+              {/* accent line on top */}
+              <div className="h-px w-full bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
+              <div className="flex items-center justify-around px-1 py-2">
+                {NAV_ITEMS.map((item) => {
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleTabClick(item.id)}
+                      className="relative flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 transition-all duration-200"
+                    >
+                      {/* Active background pill */}
+                      {isActive && (
+                        <motion.div
+                          layoutId="nav-pill"
+                          className="absolute inset-0 rounded-xl bg-accent/12"
+                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                        />
+                      )}
+                      <span className={`relative transition-colors duration-200 ${isActive ? 'text-accent' : 'text-muted'}`}>
+                        {item.icon}
+                      </span>
+                      <span className={`relative text-[10px] font-medium transition-colors duration-200 ${isActive ? 'text-accent' : 'text-muted'}`}>
+                        {item.label}
+                      </span>
+                      {/* Active dot */}
+                      {isActive && (
+                        <motion.div
+                          layoutId="nav-dot"
+                          className="absolute -bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-accent"
+                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { CreateTripSchema } from "@/lib/schemas";
+import { awardXP, touchStreak, getLevelInfo } from "@/lib/xp";
+import { checkAndUnlockAchievements } from "@/lib/achievements";
 
 export async function GET(request: NextRequest) {
   try {
@@ -57,6 +59,26 @@ export async function POST(request: NextRequest) {
         convoyId: convoyId ?? null,
       },
     });
+
+    try {
+      const userId = session.user.id;
+      const { streak } = await touchStreak(userId);
+      const xpResult = await awardXP(userId, 'TRIP_COMPLETED');
+      const level = xpResult ? getLevelInfo(xpResult.newTotal).current.level : 1;
+      const [tripCount, totalDistanceRaw] = await Promise.all([
+        prisma.trip.count({ where: { userId } }),
+        prisma.trip.aggregate({ where: { userId }, _sum: { distanceKm: true } }),
+      ]);
+      const totalDistanceKm = totalDistanceRaw._sum.distanceKm ?? 0;
+      const lastTripHour = new Date(endedAt).getHours();
+      await checkAndUnlockAchievements(userId, {
+        tripCount, streak, level, lastTripHour,
+        tripDistanceKm: distanceKm ?? 0,
+        totalDistanceKm,
+      });
+    } catch (e) {
+      console.error('Trip XP error:', e);
+    }
 
     return NextResponse.json(trip, { status: 201 });
   } catch (error) {
