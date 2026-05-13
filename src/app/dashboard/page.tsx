@@ -25,6 +25,7 @@ import TripHistoryPanel from '@/components/trips/TripHistoryPanel';
 import CreateSpotModal from '@/components/spots/CreateSpotModal';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useLocationPing } from '@/hooks/useLocationPing';
+import { usePendingRequests } from '@/hooks/usePendingRequests';
 import { useAutoSpotDetection } from '@/hooks/useAutoSpotDetection';
 import { useProfileStore } from '@/stores/useProfileStore';
 import { UserProfileView } from '@/components/profile/PublicProfileModals';
@@ -132,6 +133,7 @@ export default function DashboardPage() {
 
   const geo = useGeolocation({ enableHighAccuracy: true, autoStart: true });
   const [geoBannerDismissed, setGeoBannerDismissed] = useState(false);
+  const pendingRequests = usePendingRequests(session?.user?.id);
 
   const initialTab = (() => {
     const t = searchParams?.get('tab');
@@ -774,6 +776,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-around px-1 py-2">
                 {NAV_ITEMS.map((item) => {
                   const isActive = activeTab === item.id;
+                  const badge = item.id === 'friends' && pendingRequests > 0 ? pendingRequests : 0;
                   return (
                     <button
                       key={item.id}
@@ -790,6 +793,11 @@ export default function DashboardPage() {
                       )}
                       <span className={`relative transition-colors duration-200 ${isActive ? 'text-accent' : 'text-muted'}`}>
                         {item.icon}
+                        {badge > 0 && (
+                          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-pink-600 px-0.5 text-[9px] font-black text-white">
+                            {badge > 9 ? '9+' : badge}
+                          </span>
+                        )}
                       </span>
                       <span className={`relative text-[10px] font-medium transition-colors duration-200 ${isActive ? 'text-accent' : 'text-muted'}`}>
                         {item.label}
