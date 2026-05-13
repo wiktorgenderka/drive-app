@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import WeeklyChart from './WeeklyChart';
 
 interface LifetimeStats {
   totalKm: number;
@@ -89,6 +90,9 @@ export default function LifetimeStatsPanel() {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Weekly chart */}
+      <WeeklyChart />
+
       {/* Header */}
       <div className="flex items-center gap-4 rounded-2xl border border-accent/30 bg-accent/8 px-4 py-4">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent/20 text-3xl">
