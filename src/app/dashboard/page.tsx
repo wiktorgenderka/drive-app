@@ -36,6 +36,7 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import Link from 'next/link';
 import MapErrorBoundary from '@/components/map/MapErrorBoundary';
 import RouteCollectionsPanel from '@/components/routes/RouteCollectionsPanel';
+import MapWalkieTalkie from '@/components/map/MapWalkieTalkie';
 
 const MapView = dynamic(() => import('@/components/map/MapView'), {
   ssr: false,
@@ -379,127 +380,136 @@ function DashboardContent() {
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
-                {/* Layer toggle */}
-                <div className="relative">
-                  <button
-                    onClick={() => { setShowLayerMenu(!showLayerMenu); setShowAddReport(false); }}
-                    className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition ${
-                      showLayerMenu ? 'bg-blue-600 text-white' : 'bg-card-bg/90 text-muted border border-card-border backdrop-blur-md hover:text-foreground'
-                    }`}
-                  >
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                      <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
-                    </svg>
-                  </button>
-                  <AnimatePresence>
-                    {showLayerMenu && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.92, y: -4 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.94, y: -4 }}
-                        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-                        className="absolute top-full right-0 mt-2 w-48 rounded-xl border border-card-border bg-card-bg/95 p-2 shadow-xl backdrop-blur-md"
-                      >
-                        {LAYER_CONFIG.map(({ key, label }) => (
-                          <button
-                            key={key}
-                            onClick={() => toggleLayer(key)}
-                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition hover:bg-input-bg"
-                          >
-                            <span className={`flex h-5 w-5 items-center justify-center rounded border transition ${
-                              layerStates[key] ? 'border-accent bg-accent' : 'border-input-border bg-input-bg'
-                            }`}>
-                              {layerStates[key] && (
-                                <svg className="h-3 w-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
-                                  <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                              )}
-                            </span>
-                            <span className="text-foreground">{label}</span>
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+              <Link
+                href="/settings"
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-card-bg/90 shadow-lg backdrop-blur-md border border-card-border text-muted transition hover:text-foreground"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+                </svg>
+              </Link>
+            </div>
 
-                {/* Add report */}
-                <div className="relative">
-                  <button
-                    onClick={() => { setShowAddReport(!showAddReport); setShowLayerMenu(false); }}
-                    className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition ${
-                      showAddReport ? 'bg-orange-600 text-white' : 'bg-card-bg/90 text-muted border border-card-border backdrop-blur-md hover:text-foreground'
-                    }`}
-                  >
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                      <path d="M12 9v3m0 0v3m0-3h3m-3 0H9" />
-                      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                    </svg>
-                  </button>
-                  <AnimatePresence>
-                    {showAddReport && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.92, y: -4 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.94, y: -4 }}
-                        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-                        className="absolute top-full right-0 mt-2 w-72 rounded-2xl border border-card-border bg-card-bg/95 p-4 shadow-xl backdrop-blur-md"
-                      >
-                        <div className="mb-3 flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-foreground">Dodaj raport</h3>
-                          <button onClick={() => setShowAddReport(false)} className="rounded-lg p-1 text-muted hover:text-foreground">
-                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                              <path d="M18 6L6 18M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          {[
-                            { label: 'Policja', type: 'POLICE', emoji: '🚔' },
-                            { label: 'Tajniaki', type: 'UNMARKED_POLICE', emoji: '🕵️' },
-                            { label: 'Kontrola prędkości', type: 'SPEED_TRAP', emoji: '📏' },
-                            { label: 'Wypadek', type: 'ACCIDENT', emoji: '🚨' },
-                            { label: 'Zagrożenie', type: 'OBSTACLE', emoji: '⚠️' },
-                            { label: 'Fotoradar', type: 'SPEED_CAMERA', emoji: '📷' },
-                          ].map((report) => (
-                            <button
-                              key={report.type}
-                              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition hover:bg-input-bg"
-                              onClick={() => submitReport(report.type)}
-                            >
-                              <span className="text-base">{report.emoji}</span>
-                              {report.label}
-                            </button>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Create spot */}
+            {/* Right-side floating action buttons */}
+            <div className="absolute right-4 top-20 z-20 flex flex-col gap-2">
+              {/* Layer toggle */}
+              <div className="relative">
                 <button
-                  onClick={() => { setShowCreateSpot(true); setShowAddReport(false); setShowLayerMenu(false); }}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-card-bg/90 text-muted border border-card-border backdrop-blur-md shadow-lg transition hover:text-foreground"
-                  title="Stwórz spot"
+                  onClick={() => { setShowLayerMenu(!showLayerMenu); setShowAddReport(false); }}
+                  className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition ${
+                    showLayerMenu ? 'bg-blue-600 text-white' : 'text-muted hover:text-foreground'
+                  }`}
+                  style={!showLayerMenu ? { backgroundColor: 'rgba(24,24,27,0.9)', border: '1px solid #3f3f46', backdropFilter: 'blur(8px)' } : {}}
+                  title="Warstwy mapy"
                 >
                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-                    <circle cx="12" cy="10" r="3" />
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
                   </svg>
                 </button>
+                <AnimatePresence>
+                  {showLayerMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.92, x: 8 }}
+                      animate={{ opacity: 1, scale: 1, x: 0 }}
+                      exit={{ opacity: 0, scale: 0.94, x: 8 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                      className="absolute top-0 right-full mr-2 w-48 rounded-xl border border-card-border bg-card-bg/95 p-2 shadow-xl backdrop-blur-md"
+                    >
+                      {LAYER_CONFIG.map(({ key, label }) => (
+                        <button
+                          key={key}
+                          onClick={() => toggleLayer(key)}
+                          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition hover:bg-input-bg"
+                        >
+                          <span className={`flex h-5 w-5 items-center justify-center rounded border transition ${
+                            layerStates[key] ? 'border-accent bg-accent' : 'border-input-border bg-input-bg'
+                          }`}>
+                            {layerStates[key] && (
+                              <svg className="h-3 w-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            )}
+                          </span>
+                          <span className="text-foreground">{label}</span>
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
-                <Link
-                  href="/settings"
-                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-card-bg/90 shadow-lg backdrop-blur-md border border-card-border text-muted transition hover:text-foreground"
+              {/* Add report */}
+              <div className="relative">
+                <button
+                  onClick={() => { setShowAddReport(!showAddReport); setShowLayerMenu(false); }}
+                  className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition ${
+                    showAddReport ? 'bg-orange-600 text-white' : 'text-muted hover:text-foreground'
+                  }`}
+                  style={!showAddReport ? { backgroundColor: 'rgba(24,24,27,0.9)', border: '1px solid #3f3f46', backdropFilter: 'blur(8px)' } : {}}
+                  title="Dodaj raport"
                 >
                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <circle cx="12" cy="12" r="3" />
-                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+                    <path d="M12 9v3m0 0v3m0-3h3m-3 0H9" />
+                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                   </svg>
-                </Link>
+                </button>
+                <AnimatePresence>
+                  {showAddReport && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.92, x: 8 }}
+                      animate={{ opacity: 1, scale: 1, x: 0 }}
+                      exit={{ opacity: 0, scale: 0.94, x: 8 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                      className="absolute top-0 right-full mr-2 w-72 rounded-2xl border border-card-border bg-card-bg/95 p-4 shadow-xl backdrop-blur-md"
+                    >
+                      <div className="mb-3 flex items-center justify-between">
+                        <h3 className="text-sm font-semibold text-foreground">Dodaj raport</h3>
+                        <button onClick={() => setShowAddReport(false)} className="rounded-lg p-1 text-muted hover:text-foreground">
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                            <path d="M18 6L6 18M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        {[
+                          { label: 'Policja', type: 'POLICE', emoji: '🚔' },
+                          { label: 'Tajniaki', type: 'UNMARKED_POLICE', emoji: '🕵️' },
+                          { label: 'Kontrola prędkości', type: 'SPEED_TRAP', emoji: '📏' },
+                          { label: 'Wypadek', type: 'ACCIDENT', emoji: '🚨' },
+                          { label: 'Zagrożenie', type: 'OBSTACLE', emoji: '⚠️' },
+                          { label: 'Fotoradar', type: 'SPEED_CAMERA', emoji: '📷' },
+                        ].map((report) => (
+                          <button
+                            key={report.type}
+                            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition hover:bg-input-bg"
+                            onClick={() => submitReport(report.type)}
+                          >
+                            <span className="text-base">{report.emoji}</span>
+                            {report.label}
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
+
+              {/* Create spot */}
+              <button
+                onClick={() => { setShowCreateSpot(true); setShowAddReport(false); setShowLayerMenu(false); }}
+                className="flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition text-muted hover:text-foreground"
+                style={{ backgroundColor: 'rgba(24,24,27,0.9)', border: '1px solid #3f3f46', backdropFilter: 'blur(8px)' }}
+                title="Stwórz spot"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+              </button>
+
+              {/* Walkie-talkie */}
+              <MapWalkieTalkie />
             </div>
           </motion.div>
         )}
