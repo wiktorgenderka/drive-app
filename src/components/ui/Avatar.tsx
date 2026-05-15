@@ -34,6 +34,7 @@ export default function Avatar({ name, image, size = 'md', isOnline, className =
         <img
           src={image}
           alt={name}
+          loading="lazy"
           className={`${sizeStyles[size]} rounded-full object-cover ring-2 ring-gray-700`}
         />
       ) : (

@@ -2,6 +2,8 @@ import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import prisma from './prisma';
+import { rateLimit } from './rateLimit';
+import logger from './logger';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
@@ -17,18 +19,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: (credentials.email as string).toLowerCase() },
-        });
+        const email = (credentials.email as string).toLowerCase();
 
-        if (!user) return null;
+        // Rate limit: max 10 login attempts per email per 15 minutes
+        if (!rateLimit(`login:${email}`, 10, 15 * 60 * 1000)) {
+          logger.warn({ email }, 'Login rate limited');
+          return null;
+        }
+
+        const user = await prisma.user.findUnique({ where: { email } });
+
+        if (!user) {
+          logger.warn({ email }, 'Login failed: user not found');
+          return null;
+        }
 
         const isPasswordValid = await bcrypt.compare(
           credentials.password as string,
           user.password
         );
 
-        if (!isPasswordValid) return null;
+        if (!isPasswordValid) {
+          logger.warn({ email, userId: user.id }, 'Login failed: wrong password');
+          return null;
+        }
 
         return {
           id: user.id,
