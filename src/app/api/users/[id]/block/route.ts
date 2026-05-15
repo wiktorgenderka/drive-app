@@ -1,47 +1,49 @@
-import { NextRequest, NextResponse } from 'next/server';
-import logger from '@/lib/logger';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import logger from '@/lib/logger';
 
-type Ctx = { params: Promise<{ id: string }> };
+type RouteContext = { params: Promise<{ id: string }> };
 
-// GET /api/users/[id]/block — check if current user has blocked this user
-export async function GET(_req: NextRequest, ctx: Ctx) {
+export async function GET(_req: NextRequest, context: RouteContext) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { id: blockedId } = await ctx.params;
+  const { id: blockedId } = await context.params;
   const block = await prisma.block.findUnique({
     where: { blockerId_blockedId: { blockerId: session.user.id, blockedId } },
   });
+
   return NextResponse.json({ blocked: !!block });
 }
 
-// POST /api/users/[id]/block — block a user
-export async function POST(_req: NextRequest, ctx: Ctx) {
+export async function POST(_req: NextRequest, context: RouteContext) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { id: blockedId } = await ctx.params;
+  const { id: blockedId } = await context.params;
   if (blockedId === session.user.id) {
     return NextResponse.json({ error: 'Cannot block yourself' }, { status: 400 });
   }
 
   try {
-    await prisma.block.upsert({
-      where: { blockerId_blockedId: { blockerId: session.user.id, blockedId } },
-      update: {},
-      create: { blockerId: session.user.id, blockedId },
-    });
-    // Also remove any friendship between the two users
-    await prisma.friendship.deleteMany({
-      where: {
-        OR: [
-          { requesterId: session.user.id, addresseeId: blockedId },
-          { requesterId: blockedId, addresseeId: session.user.id },
-        ],
-      },
-    });
+    await prisma.$transaction([
+      prisma.block.upsert({
+        where: { blockerId_blockedId: { blockerId: session.user.id, blockedId } },
+        create: { blockerId: session.user.id, blockedId },
+        update: {},
+      }),
+      // Remove any existing friendship
+      prisma.friendship.deleteMany({
+        where: {
+          OR: [
+            { requesterId: session.user.id, addresseeId: blockedId },
+            { requesterId: blockedId, addresseeId: session.user.id },
+          ],
+        },
+      }),
+    ]);
+
     return NextResponse.json({ blocked: true });
   } catch (err) {
     logger.error({ err }, 'POST /api/users/[id]/block error');
@@ -49,12 +51,11 @@ export async function POST(_req: NextRequest, ctx: Ctx) {
   }
 }
 
-// DELETE /api/users/[id]/block — unblock a user
-export async function DELETE(_req: NextRequest, ctx: Ctx) {
+export async function DELETE(_req: NextRequest, context: RouteContext) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { id: blockedId } = await ctx.params;
+  const { id: blockedId } = await context.params;
 
   try {
     await prisma.block.deleteMany({
