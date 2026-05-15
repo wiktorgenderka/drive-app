@@ -121,8 +121,24 @@ model User {
   vehicles            Vehicle[]
   routeCollections    RouteCollection[]
   pushSubscriptions   PushSubscription[]
+  blocksGiven         Block[]             @relation("BlocksGiven")
+  blocksReceived      Block[]             @relation("BlocksReceived")
 
   @@map("users")
+}
+
+model Block {
+  blockerId String
+  blockedId String
+  blockedAt DateTime @default(now())
+
+  blocker User @relation("BlocksGiven",    fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("BlocksReceived", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@id([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+  @@map("blocks")
 }
 
 model PushSubscription {

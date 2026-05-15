@@ -235,6 +235,8 @@ export function UserProfileView({ userId, onBack }: ViewProps) {
   const [error, setError] = useState('');
   const [tab, setTab] = useState<'records' | 'routes' | 'stats'>('records');
   const [friendActionLoading, setFriendActionLoading] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [blockLoading, setBlockLoading] = useState(false);
 
   const reload = useCallback(() => {
     if (!userId) return;
@@ -258,6 +260,10 @@ export function UserProfileView({ userId, onBack }: ViewProps) {
     setData(null);
     setTab('records');
     reload();
+    fetch(`/api/users/${userId}/block`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d) setIsBlocked(d.blocked); })
+      .catch(() => {});
   }, [userId, reload]);
 
   async function handleFriendAction() {
@@ -290,6 +296,21 @@ export function UserProfileView({ userId, onBack }: ViewProps) {
       setError(e instanceof Error ? e.message : 'Błąd akcji znajomych.');
     } finally {
       setFriendActionLoading(false);
+    }
+  }
+
+  async function handleBlock() {
+    setBlockLoading(true);
+    try {
+      const method = isBlocked ? 'DELETE' : 'POST';
+      const res = await fetch(`/api/users/${userId}/block`, { method });
+      if (res.ok) {
+        const d = await res.json();
+        setIsBlocked(d.blocked);
+        if (d.blocked) reload();
+      }
+    } finally {
+      setBlockLoading(false);
     }
   }
 
@@ -330,7 +351,31 @@ export function UserProfileView({ userId, onBack }: ViewProps) {
                   )}
                 </div>
                 {data.friendship !== 'self' && (
-                  <FriendButton state={data.friendship} loading={friendActionLoading} onClick={handleFriendAction} />
+                  <div className="flex items-center gap-2">
+                    <FriendButton state={data.friendship} loading={friendActionLoading} onClick={handleFriendAction} />
+                    <button
+                      onClick={handleBlock}
+                      disabled={blockLoading}
+                      title={isBlocked ? 'Odblokuj użytkownika' : 'Zablokuj użytkownika'}
+                      className={`flex h-9 w-9 items-center justify-center rounded-xl border transition ${
+                        isBlocked
+                          ? 'border-red-500/50 bg-red-500/10 text-red-400 hover:bg-red-500/20'
+                          : 'border-card-border bg-input-bg text-muted hover:text-red-400 hover:border-red-500/40'
+                      }`}
+                    >
+                      {blockLoading ? (
+                        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                      ) : (
+                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M4.93 4.93l14.14 14.14" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 )}
               </div>
 

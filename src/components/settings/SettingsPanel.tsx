@@ -854,6 +854,20 @@ export default function SettingsPanel() {
           Wyloguj się
         </button>
 
+        {/* GDPR export */}
+        <a
+          href="/api/users/me/export"
+          download
+          className="flex items-center gap-3 rounded-xl border border-card-border bg-card-bg px-4 py-3 text-sm font-medium text-foreground transition hover:bg-input-bg"
+        >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10">
+            <svg className="h-4 w-4 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+            </svg>
+          </div>
+          Eksportuj moje dane (GDPR)
+        </a>
+
         <div className="mt-3">
           <button
             onClick={() => setShowDeleteZone((v) => !v)}
