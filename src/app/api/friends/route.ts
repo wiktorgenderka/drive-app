@@ -7,6 +7,7 @@ import { SendFriendRequestSchema, RespondFriendSchema } from "@/lib/schemas";
 import { broadcastToChannel } from "@/lib/supabase-broadcast";
 import { awardXP } from "@/lib/xp";
 import { checkAndUnlockAchievements } from "@/lib/achievements";
+import { sendPushToUser } from "@/lib/webpush";
 
 export async function GET(request: NextRequest) {
   try {
@@ -64,6 +65,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 
+  const ct = request.headers.get('content-type') ?? '';
+  if (!ct.includes('application/json')) {
+    return NextResponse.json({ error: 'Content-Type must be application/json' }, { status: 415 });
+  }
+
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -111,6 +117,13 @@ export async function POST(request: NextRequest) {
       fromId: session.user.id,
     });
 
+    sendPushToUser(targetUser.id, {
+      title: 'Nowe zaproszenie do znajomych',
+      body: `${session.user.name ?? 'Ktoś'} chce dodać Cię do znajomych`,
+      tag: 'friend-request',
+      url: '/dashboard',
+    }).catch(() => {});
+
     return NextResponse.json(friendship, { status: 201 });
   } catch (error) {
     console.error("Send friend request error:", error);
@@ -119,6 +132,11 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const ctPut = request.headers.get('content-type') ?? '';
+  if (!ctPut.includes('application/json')) {
+    return NextResponse.json({ error: 'Content-Type must be application/json' }, { status: 415 });
+  }
+
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -161,6 +179,13 @@ export async function PUT(request: NextRequest) {
       fromName: updated.addressee.name ?? 'Ktoś',
       fromId: updated.addresseeId,
     });
+
+    sendPushToUser(updated.requesterId, {
+      title: 'Zaproszenie zaakceptowane',
+      body: `${updated.addressee.name ?? 'Ktoś'} zaakceptował(a) Twoje zaproszenie`,
+      tag: 'friend-accepted',
+      url: '/dashboard',
+    }).catch(() => {});
 
     try {
       const [accepterCount, requesterCount] = await Promise.all([

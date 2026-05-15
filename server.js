@@ -5,6 +5,14 @@ const { createServer } = require('http');
 const next = require('next');
 const { Server: SocketIOServer } = require('socket.io');
 
+// Validate required env vars on server start
+const REQUIRED_ENV = ['DATABASE_URL', 'NEXTAUTH_SECRET', 'NEXT_PUBLIC_MAPBOX_TOKEN'];
+const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
+if (missing.length > 0) {
+  console.error(`[server] Missing required environment variables: ${missing.join(', ')}`);
+  if (process.env.NODE_ENV === 'production') process.exit(1);
+}
+
 const port = parseInt(process.env.PORT || '3000', 10);
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });

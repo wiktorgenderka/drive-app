@@ -33,6 +33,7 @@ import { UserProfileView } from '@/components/profile/PublicProfileModals';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import Link from 'next/link';
+import MapErrorBoundary from '@/components/map/MapErrorBoundary';
 
 const MapView = dynamic(() => import('@/components/map/MapView'), {
   ssr: false,
@@ -313,7 +314,9 @@ function DashboardContent() {
             transition={{ duration: 0.2 }}
             className="absolute inset-0"
           >
-            <MapView />
+            <MapErrorBoundary>
+              <MapView />
+            </MapErrorBoundary>
             {mapVoiceEnabled && <ConvoyMapVoice onIncomingMessage={handleIncomingConvoyMessage} />}
 
             {/* Convoy message toast */}

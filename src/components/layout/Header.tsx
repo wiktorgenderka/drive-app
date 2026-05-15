@@ -3,12 +3,14 @@
 import { useSession } from 'next-auth/react';
 import Avatar from '@/components/ui/Avatar';
 import { useThemeStore } from '@/stores/useThemeStore';
+import PushNotificationBanner from '@/components/pwa/PushNotificationBanner';
 
 export default function Header() {
   const { data: session } = useSession();
   const { mode, setMode } = useThemeStore();
 
   return (
+    <div>
     <header className="h-14 bg-gray-900/80 backdrop-blur border-b border-gray-800 flex items-center justify-between px-4 md:px-6 z-20">
       <div className="md:hidden w-10" /> {/* spacer for mobile hamburger */}
       <h1 className="text-lg font-bold text-gray-100 hidden md:block">DriveApp</h1>
@@ -50,5 +52,9 @@ export default function Header() {
         )}
       </div>
     </header>
+    <div className="px-4 py-1">
+      <PushNotificationBanner />
+    </div>
+    </div>
   );
 }

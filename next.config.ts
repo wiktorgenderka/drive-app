@@ -33,6 +33,7 @@ const nextConfig: NextConfig = {
             value: 'camera=(), microphone=(self), geolocation=(self)',
           },
           { key: 'Content-Security-Policy', value: csp },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
         ],
       },
     ];

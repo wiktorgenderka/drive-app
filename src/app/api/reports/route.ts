@@ -99,6 +99,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 
+  const ct = request.headers.get('content-type') ?? '';
+  if (!ct.includes('application/json')) {
+    return NextResponse.json({ error: 'Content-Type must be application/json' }, { status: 415 });
+  }
+
   try {
     const session = await auth();
 

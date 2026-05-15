@@ -115,34 +115,27 @@ export async function POST(request: NextRequest, context: RouteContext) {
       },
     });
 
+    const historyEntry = { stationId, fuelType: typedFuelType, price, userId: session.user.id };
+
     if (existingPrice) {
-      // Update existing price
-      const updatedPrice = await prisma.fuelPrice.update({
-        where: { id: existingPrice.id },
-        data: { price },
-        include: {
-          user: {
-            select: { id: true, name: true },
-          },
-        },
-      });
+      const [updatedPrice] = await prisma.$transaction([
+        prisma.fuelPrice.update({
+          where: { id: existingPrice.id },
+          data: { price },
+          include: { user: { select: { id: true, name: true } } },
+        }),
+        prisma.fuelPriceHistory.create({ data: historyEntry }),
+      ]);
       return NextResponse.json(updatedPrice);
     }
 
-    // Create new price entry
-    const newPrice = await prisma.fuelPrice.create({
-      data: {
-        stationId,
-        fuelType: typedFuelType,
-        price,
-        userId: session.user.id,
-      },
-      include: {
-        user: {
-          select: { id: true, name: true },
-        },
-      },
-    });
+    const [newPrice] = await prisma.$transaction([
+      prisma.fuelPrice.create({
+        data: { stationId, fuelType: typedFuelType, price, userId: session.user.id },
+        include: { user: { select: { id: true, name: true } } },
+      }),
+      prisma.fuelPriceHistory.create({ data: historyEntry }),
+    ]);
 
     return NextResponse.json(newPrice, { status: 201 });
   } catch (error) {

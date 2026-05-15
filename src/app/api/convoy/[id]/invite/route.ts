@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { broadcastToChannel } from "@/lib/supabase-broadcast";
+import { sendPushToUser } from "@/lib/webpush";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -64,6 +65,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
       convoyName: convoy.name,
       invitedByName: session.user.name ?? 'Ktoś',
     });
+
+    sendPushToUser(userId, {
+      title: 'Zaproszenie do konwoju',
+      body: `${session.user.name ?? 'Ktoś'} zaprasza Cię do konwoju „${convoy.name}"`,
+      tag: 'convoy-invite',
+      url: '/dashboard',
+    }).catch(() => {});
 
     return NextResponse.json(member, { status: 201 });
   } catch (error) {

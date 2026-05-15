@@ -99,6 +99,7 @@ model User {
   ownedConvoys     Convoy[]
   reports          Report[]
   fuelPrices       FuelPrice[]
+  fuelPriceHistory FuelPriceHistory[]
   routes           Route[]
   routeTimes       RouteTime[]
   routeRatings        RouteRating[]
@@ -118,8 +119,23 @@ model User {
   createdEvents       Event[]
   eventAttendees      EventAttendee[]
   vehicles            Vehicle[]
+  pushSubscriptions   PushSubscription[]
 
   @@map("users")
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
 }
 
 model SpotifyToken {
@@ -244,7 +260,8 @@ model FuelStation {
   latitude  Float
   longitude Float
 
-  prices FuelPrice[]
+  prices       FuelPrice[]
+  priceHistory FuelPriceHistory[]
 
   @@index([latitude, longitude])
   @@map("fuel_stations")
@@ -278,6 +295,7 @@ model Route {
   importedFromId String?
   avgRating     Float?
   ratingCount   Int       @default(0)
+  shareToken    String?   @unique
 
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   convoy         Convoy?       @relation(fields: [convoyId], references: [id], onDelete: SetNull)
@@ -532,6 +550,21 @@ model EventAttendee {
   @@unique([eventId, userId])
   @@index([eventId])
   @@map("event_attendees")
+}
+
+model FuelPriceHistory {
+  id        String   @id @default(cuid())
+  stationId String
+  fuelType  FuelType
+  price     Float
+  userId    String
+  recordedAt DateTime @default(now())
+
+  station FuelStation @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([stationId, fuelType, recordedAt])
+  @@map("fuel_price_history")
 }
 
 model Vehicle {

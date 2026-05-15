@@ -252,6 +252,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState('');
+  const pageRef = useRef(0);
   const [toast, setToast] = useState('');
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -289,6 +290,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [newPostsBanner, setNewPostsBanner] = useState(false);
   const latestKnownIdRef = useRef<string | null>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -296,11 +298,14 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
     toastTimer.current = setTimeout(() => setToast(''), 2500);
   }
 
+  const PAGE_SIZE = 20;
   const fetchFeed = useCallback(async (social: 'all' | 'friends', s: 'new' | 'hot', reset: boolean) => {
     reset ? setLoading(true) : setLoadingMore(true);
     setError('');
+    if (reset) pageRef.current = 0;
     try {
-      const res = await fetch(`/api/posts?filter=${social}&sort=${s}`);
+      const page = pageRef.current;
+      const res = await fetch(`/api/posts?filter=${social}&sort=${s}&page=${page}&limit=${PAGE_SIZE}`);
       if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b?.error ?? `HTTP ${res.status}`); }
       const data = await res.json();
       const incoming: FeedPost[] = Array.isArray(data?.data) ? data.data : [];
@@ -311,7 +316,8 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
       } else {
         setPosts((prev) => { const ids = new Set(prev.map((p) => p.id)); return [...prev, ...incoming.filter((p) => !ids.has(p.id))]; });
       }
-      setHasMore(incoming.length >= 10);
+      setHasMore(incoming.length >= PAGE_SIZE);
+      if (incoming.length > 0) pageRef.current = page + 1;
     } catch (e) {
       setError(`Nie udało się załadować. ${e instanceof Error ? e.message : ''}`);
     } finally {
@@ -320,6 +326,22 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
   }, []);
 
   useEffect(() => { fetchFeed(socialFilter, sort, true); }, [socialFilter, sort, fetchFeed]);
+
+  // IntersectionObserver — auto-load when sentinel div enters viewport
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && typeFilter === 'all' && !activeTag) {
+          fetchFeed(socialFilter, sort, false);
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, typeFilter, activeTag, socialFilter, sort, fetchFeed]);
 
   // Track the newest post ID and poll for new posts every 60s
   useEffect(() => {
@@ -891,15 +913,15 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
             );
           })}
 
-          {/* Load more */}
-          {hasMore && typeFilter === 'all' && !activeTag && (
-            <button onClick={() => fetchFeed(socialFilter, sort, false)} disabled={loadingMore}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-card-border bg-card-bg py-3 text-sm font-semibold text-muted transition hover:border-white/20 hover:text-foreground disabled:opacity-50">
-              {loadingMore
-                ? <><svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Ładuję…</>
-                : 'Załaduj więcej'
-              }
-            </button>
+          {/* Sentinel for IntersectionObserver auto-load */}
+          <div ref={sentinelRef} className="h-4" aria-hidden />
+          {loadingMore && (
+            <div className="flex justify-center py-3">
+              <svg className="h-5 w-5 animate-spin text-muted" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            </div>
           )}
         </div>
       )}

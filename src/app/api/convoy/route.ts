@@ -41,6 +41,11 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const ct = request.headers.get('content-type') ?? '';
+  if (!ct.includes('application/json')) {
+    return NextResponse.json({ error: 'Content-Type must be application/json' }, { status: 415 });
+  }
+
   try {
     const session = await auth();
 
@@ -98,6 +103,11 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const ctPut = request.headers.get('content-type') ?? '';
+  if (!ctPut.includes('application/json')) {
+    return NextResponse.json({ error: 'Content-Type must be application/json' }, { status: 415 });
+  }
+
   try {
     const session = await auth();
 

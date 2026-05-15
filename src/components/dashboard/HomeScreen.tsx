@@ -17,6 +17,7 @@ import XPActivityLog from '@/components/gamification/XPActivityLog';
 import Leaderboard from '@/components/gamification/Leaderboard';
 import DailyChallenge from '@/components/dashboard/DailyChallenge';
 import { getLevelInfo } from '@/lib/xp-shared';
+import WeatherRouteAlert from '@/components/map/WeatherRouteAlert';
 
 interface SpotifyNowPlaying {
   isPlaying: boolean;
@@ -468,6 +469,9 @@ export default function HomeScreen({
               <StatPill emoji="🚔" value={stats?.totalReports ?? '—'} label="Raporty" />
             </motion.div>
           )}
+
+          {/* Weather danger alert */}
+          <WeatherRouteAlert lat={userLocation?.latitude} lng={userLocation?.longitude} />
 
           {/* Weather */}
           {weather && (

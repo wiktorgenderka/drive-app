@@ -74,13 +74,19 @@ export default function ReportPanel({ onClose }: { onClose: () => void }) {
         ))}
       </div>
 
-      <textarea
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder="Opis (opcjonalnie)..."
-        className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-sm text-gray-100 placeholder-gray-500 focus:border-accent focus:outline-none resize-none mb-4"
-        rows={3}
-      />
+      <div className="mb-4">
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Opis (opcjonalnie)..."
+          maxLength={500}
+          className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-sm text-gray-100 placeholder-gray-500 focus:border-accent focus:outline-none resize-none"
+          rows={3}
+        />
+        <p className={`mt-1 text-right text-xs ${description.length > 450 ? 'text-yellow-400' : 'text-gray-500'}`}>
+          {description.length}/500
+        </p>
+      </div>
 
       {userLocation ? (
         <p className="text-xs text-gray-500 mb-3">

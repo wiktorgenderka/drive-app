@@ -181,6 +181,9 @@ export default function SettingsPanel() {
 
   // ── Stats ──
   const [stats, setStats] = useState<Stats | null>(null);
+  const [lifetimeStats, setLifetimeStats] = useState<{
+    totalKm: number; totalMinutes: number; totalTrips: number; maxSpeedKmh: number;
+  } | null>(null);
 
   // ── Password ──
   const [currentPwd, setCurrentPwd] = useState('');
@@ -262,6 +265,10 @@ export default function SettingsPanel() {
     fetch('/api/dashboard/stats')
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (d) setStats(d); })
+      .catch(() => {});
+    fetch('/api/stats/lifetime')
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d) setLifetimeStats(d); })
       .catch(() => {});
   }, []);
 
@@ -544,12 +551,13 @@ export default function SettingsPanel() {
         <SectionTitle>Statystyki ogólne</SectionTitle>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { label: 'Łączny dystans', value: `${overall.totalKm.toFixed(1)} km` },
-            { label: 'Max prędkość', value: `${Math.round(overall.maxSpeedKmh)} km/h` },
-            { label: 'Przejazdy', value: String(overall.totalTrips) },
-            { label: 'Czas jazdy', value: overall.totalMinutes >= 60
-              ? `${Math.floor(overall.totalMinutes / 60)}h ${overall.totalMinutes % 60}m`
-              : `${overall.totalMinutes} min` },
+            { label: 'Łączny dystans', value: lifetimeStats ? `${lifetimeStats.totalKm.toFixed(1)} km` : `${overall.totalKm.toFixed(1)} km` },
+            { label: 'Max prędkość', value: lifetimeStats ? `${lifetimeStats.maxSpeedKmh} km/h` : `${Math.round(overall.maxSpeedKmh)} km/h` },
+            { label: 'Przejazdy', value: lifetimeStats ? String(lifetimeStats.totalTrips) : String(overall.totalTrips) },
+            { label: 'Czas jazdy', value: (() => {
+              const min = lifetimeStats?.totalMinutes ?? overall.totalMinutes;
+              return min >= 60 ? `${Math.floor(min / 60)}h ${min % 60}m` : `${min} min`;
+            })() },
           ].map((s) => (
             <div key={s.label} className="flex flex-col rounded-xl border border-card-border bg-input-bg px-3 py-2.5">
               <span className="text-base font-extrabold" style={{ color: accentColor }}>{s.value}</span>

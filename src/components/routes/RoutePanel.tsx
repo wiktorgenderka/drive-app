@@ -159,6 +159,9 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
   const [scoresLoading, setScoresLoading] = useState<Record<string, boolean>>({});
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stoppingRef = useRef(false);
+  const gpxInputRef = useRef<HTMLInputElement | null>(null);
+  const [gpxImporting, setGpxImporting] = useState(false);
+  const [gpxError, setGpxError] = useState('');
 
   const { data: session } = useSession();
   const userLocation = useMapStore((s) => s.userLocation);
@@ -458,6 +461,38 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
     }
   }
 
+  async function handleGpxImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setGpxImporting(true);
+    setGpxError('');
+    try {
+      const text = await file.text();
+      const res = await fetch('/api/routes/import-gpx', {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/xml' },
+        body: text,
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error ?? 'Błąd importu');
+      }
+      const created = await res.json();
+      const fetched = await fetch('/api/routes');
+      if (fetched.ok) {
+        const data = await fetched.json();
+        setRoutes(Array.isArray(data) ? data : data.routes ?? []);
+      }
+      setActiveSection('saved');
+      setExpandedId(created.id);
+    } catch (err) {
+      setGpxError(err instanceof Error ? err.message : 'Błąd importu GPX');
+    } finally {
+      setGpxImporting(false);
+      if (gpxInputRef.current) gpxInputRef.current.value = '';
+    }
+  }
+
   async function saveSuggestedRoute(route: SuggestedRoute) {
     setSavingId(route.id);
     try {
@@ -592,16 +627,37 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-base font-semibold text-foreground">Twoje trasy</h2>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-orange-700"
-        >
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          Zaplanuj trasę
-        </button>
+        <div className="flex items-center gap-2">
+          <input ref={gpxInputRef} type="file" accept=".gpx,application/gpx+xml,text/xml" className="hidden" onChange={handleGpxImport} />
+          <button
+            onClick={() => gpxInputRef.current?.click()}
+            disabled={gpxImporting}
+            className="flex items-center gap-1.5 rounded-lg border border-card-border px-3 py-1.5 text-xs font-medium text-muted transition hover:bg-card-bg hover:text-foreground disabled:opacity-50"
+            title="Importuj GPX"
+          >
+            {gpxImporting ? (
+              <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+            ) : (
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V10m0 0l-3 3m3-3l3 3M3 17v3a1 1 0 001 1h16a1 1 0 001-1v-3" /></svg>
+            )}
+            GPX
+          </button>
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-1.5 rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-orange-700"
+          >
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Zaplanuj trasę
+          </button>
+        </div>
       </div>
+      {gpxError && (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
+          {gpxError}
+        </div>
+      )}
 
       {/* Error */}
       {error && (
@@ -1416,6 +1472,17 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                                 )}
                               </button>
                             )}
+                            <a
+                              href={`/api/routes/${route.id}/gpx`}
+                              download
+                              className="flex items-center justify-center gap-1.5 rounded-xl border border-card-border px-3 py-2.5 text-xs font-semibold text-muted transition hover:bg-green-500/10 hover:text-green-400 hover:border-green-500/30"
+                              title="Pobierz GPX"
+                            >
+                              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a1 1 0 001 1h16a1 1 0 001-1v-3" />
+                              </svg>
+                              GPX
+                            </a>
                             <button
                               onClick={() => deleteRoute(route.id)}
                               className="flex items-center justify-center gap-1.5 rounded-xl border border-card-border px-3 py-2.5 text-xs font-semibold text-muted transition hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30"

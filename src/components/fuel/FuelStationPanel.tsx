@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { FuelStation, FUEL_TYPE_LABELS } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import FuelPriceForm from './FuelPriceForm';
+import FuelPriceChart from './FuelPriceChart';
 import Button from '@/components/ui/Button';
 
 interface FuelStationPanelProps {
@@ -13,6 +14,7 @@ interface FuelStationPanelProps {
 
 export default function FuelStationPanel({ station, onClose }: FuelStationPanelProps) {
   const [showPriceForm, setShowPriceForm] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   return (
     <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 w-80">
@@ -42,13 +44,25 @@ export default function FuelStationPanel({ station, onClose }: FuelStationPanelP
         )}
       </div>
 
-      {showPriceForm ? (
+      <div className="flex gap-2 mb-2">
+        {!showPriceForm && (
+          <Button onClick={() => setShowPriceForm(true)} variant="secondary" className="flex-1">
+            Aktualizuj cenę
+          </Button>
+        )}
+        <button
+          onClick={() => setShowHistory((v) => !v)}
+          className="flex-1 rounded-lg border border-gray-600 text-sm text-gray-300 hover:bg-gray-700 transition-colors px-3 py-2"
+        >
+          {showHistory ? 'Ukryj historię' : 'Historia cen'}
+        </button>
+      </div>
+
+      {showPriceForm && (
         <FuelPriceForm stationId={station.id} onDone={() => setShowPriceForm(false)} />
-      ) : (
-        <Button onClick={() => setShowPriceForm(true)} variant="secondary" className="w-full">
-          Aktualizuj cenę
-        </Button>
       )}
+
+      {showHistory && <FuelPriceChart stationId={station.id} />}
     </div>
   );
 }

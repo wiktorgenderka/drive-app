@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 import { useMapStore } from '@/stores/useMapStore';
 import { calculateDistance, formatDistance } from '@/lib/utils';
 
-const ALERT_RADIUS = 5000; // Show alerts within 5 km
+const ALERT_RADIUS = 5000;   // show in list
+const AUDIO_RADIUS = 500;    // play audio + vibrate
 const MAX_ALERTS = 3;
 
 const REPORT_META: Record<string, { label: string; color: string; bg: string; border: string; icon: string }> = {
@@ -16,27 +17,66 @@ const REPORT_META: Record<string, { label: string; color: string; bg: string; bo
   SPEED_CAMERA:    { label: 'Fotoradar',            color: 'text-purple-400', bg: 'bg-purple-500/15', border: 'border-purple-500/30', icon: 'M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z' },
 };
 
+// POLICE/ACCIDENT — one-shot beep when entering radius (different from SpeedCameraAlert which loops)
+const AUDIO_TYPES = new Set(['POLICE', 'UNMARKED_POLICE', 'ACCIDENT']);
+
+function playAlert(ctx: AudioContext, type: string) {
+  try {
+    const freqs = type === 'ACCIDENT' ? [440, 330] : [880, 660, 880];
+    let t = ctx.currentTime;
+    for (const freq of freqs) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.3, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      osc.start(t);
+      osc.stop(t + 0.18);
+      t += 0.22;
+    }
+  } catch { /* autoplay blocked */ }
+}
+
 export default function NearbyReportAlert() {
   const userLocation = useMapStore((s) => s.userLocation);
   const reports = useMapStore((s) => s.reports);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const alertedRef = useRef<Set<string>>(new Set());
 
   const nearbyReports = useMemo(() => {
     if (!userLocation || reports.length === 0) return [];
-
     return reports
       .map((r) => ({
         ...r,
-        distance: calculateDistance(
-          userLocation.latitude,
-          userLocation.longitude,
-          r.latitude,
-          r.longitude
-        ),
+        distance: calculateDistance(userLocation.latitude, userLocation.longitude, r.latitude, r.longitude),
       }))
       .filter((r) => r.distance <= ALERT_RADIUS)
       .sort((a, b) => a.distance - b.distance)
       .slice(0, MAX_ALERTS);
   }, [userLocation, reports]);
+
+  // One-shot audio + vibration when entering AUDIO_RADIUS for POLICE/ACCIDENT types
+  useEffect(() => {
+    for (const r of nearbyReports) {
+      if (!AUDIO_TYPES.has(r.type)) continue;
+      if (r.distance > AUDIO_RADIUS) {
+        alertedRef.current.delete(r.id); // reset so alert can fire again when re-entering
+        continue;
+      }
+      if (alertedRef.current.has(r.id)) continue;
+      alertedRef.current.add(r.id);
+
+      if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
+      playAlert(audioCtxRef.current, r.type);
+
+      if ('vibrate' in navigator) {
+        navigator.vibrate(r.type === 'ACCIDENT' ? [300, 100, 300] : [200, 100, 200, 100, 200]);
+      }
+    }
+  }, [nearbyReports]);
 
   if (nearbyReports.length === 0) return null;
 
@@ -45,11 +85,12 @@ export default function NearbyReportAlert() {
       {nearbyReports.map((report) => {
         const meta = REPORT_META[report.type] ?? REPORT_META.OBSTACLE;
         const dist = formatDistance(report.distance);
+        const isClose = report.distance <= AUDIO_RADIUS;
 
         return (
           <div
             key={report.id}
-            className={`flex items-center gap-3 rounded-2xl border ${meta.border} ${meta.bg} px-4 py-2.5 shadow-xl backdrop-blur-md pointer-events-auto animate-slide-up`}
+            className={`flex items-center gap-3 rounded-2xl border ${meta.border} ${meta.bg} px-4 py-2.5 shadow-xl backdrop-blur-md pointer-events-auto animate-slide-up ${isClose ? 'ring-1 ring-white/20' : ''}`}
           >
             <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${meta.bg} ${meta.color}`}>
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
@@ -57,13 +98,10 @@ export default function NearbyReportAlert() {
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <p className={`text-sm font-semibold ${meta.color}`}>
-                {meta.label}
-              </p>
+              <p className={`text-sm font-semibold ${meta.color}`}>{meta.label}</p>
+              {isClose && <p className="text-[11px] text-white/60">Uwaga!</p>}
             </div>
-            <span className="shrink-0 text-sm font-bold text-foreground">
-              {dist}
-            </span>
+            <span className="shrink-0 text-sm font-bold text-foreground">{dist}</span>
           </div>
         );
       })}
