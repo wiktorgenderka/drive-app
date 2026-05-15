@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
@@ -89,7 +89,7 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
       const data = await res.json();
       setConvoys(Array.isArray(data) ? data : data.convoys ?? []);
     } catch {
-      setError('Nie udaĹ‚o siÄ™ zaĹ‚adowaÄ‡ konwojĂłw.');
+      setError('Nie udało się załadować konwojów.');
     } finally {
       setLoading(false);
     }
@@ -137,8 +137,8 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
 
   const leaveOrDelete = async (convoy: Convoy) => {
     const isOwner = convoy.ownerId === session?.user?.id;
-    const action = isOwner ? 'usunÄ…Ä‡' : 'opuĹ›ciÄ‡';
-    if (!confirm(`Czy na pewno chcesz ${action} konwĂłj "${convoy.name}"?`)) return;
+    const action = isOwner ? 'usunąć' : 'opuścić';
+    if (!confirm(`Czy na pewno chcesz ${action} konwój "${convoy.name}"?`)) return;
 
     setActionLoading(convoy.id);
     const joinedAt = joinedAtMap[convoy.id];
@@ -163,7 +163,7 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
       }
       await fetchConvoys();
     } catch {
-      setError('Operacja nie powiodĹ‚a siÄ™.');
+      setError('Operacja nie powiodła się.');
     } finally {
       setActionLoading(null);
     }
@@ -207,7 +207,7 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
       setDestInput('');
       await fetchConvoys();
     } catch {
-      setError('Nie udaĹ‚o siÄ™ ustawiÄ‡ celu.');
+      setError('Nie udało się ustawić celu.');
     } finally {
       setActionLoading(null);
     }
@@ -252,12 +252,12 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
           </button>
           <button
             onClick={() => setShowCreate(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accent-fg transition hover:opacity-90"
+            className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-emerald-700"
           >
             <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
               <path d="M12 5v14M5 12h14" />
             </svg>
-            UtwĂłrz
+            Utwórz
           </button>
         </div>
       </div>
@@ -269,7 +269,7 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
           <div className="flex flex-col gap-4">
             <div className="flex items-start justify-between gap-4">
               <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium text-foreground">Przycisk gĹ‚osowy na mapie</span>
+                <span className="text-sm font-medium text-foreground">Przycisk głosowy na mapie</span>
                 <span className="text-xs text-muted">Szybkie nagrywanie bez wychodzenia z mapy</span>
               </div>
               <button
@@ -290,7 +290,7 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
             <div className="flex items-start justify-between gap-4">
               <div className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium text-foreground">Powiadomienia na mapie</span>
-                <span className="text-xs text-muted">Pokazuj wiadomoĹ›ci konwoju podczas jazdy</span>
+                <span className="text-xs text-muted">Pokazuj wiadomości konwoju podczas jazdy</span>
               </div>
               <button
                 onClick={() => onToggleMapNotifications(!mapNotificationsEnabled)}
@@ -315,7 +315,7 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
       {error && (
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
           {error}
-          <button onClick={() => setError('')} className="ml-2 text-red-300 hover:text-red-200">âś•</button>
+          <button onClick={() => setError('')} className="ml-2 text-red-300 hover:text-red-200">✕</button>
         </div>
       )}
 
@@ -341,8 +341,8 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
             </svg>
           </div>
           <div>
-            <p className="text-sm font-medium text-foreground">Brak konwojĂłw</p>
-            <p className="mt-0.5 text-xs text-muted">UtwĂłrz konwĂłj i zaproĹ› znajomych!</p>
+            <p className="text-sm font-medium text-foreground">Brak konwojów</p>
+            <p className="mt-0.5 text-xs text-muted">Utwórz konwój i zaproś znajomych!</p>
           </div>
         </div>
       )}
@@ -377,8 +377,8 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
                     <div>
                       <p className="text-sm font-semibold text-foreground">{convoy.name}</p>
                       <p className="text-xs text-muted">
-                        {memberCount} {memberCount === 1 ? 'czĹ‚onek' : memberCount < 5 ? 'czĹ‚onkĂłw' : 'czĹ‚onkĂłw'}
-                        {isOwner && <span className="ml-1.5 text-emerald-500">Â· Lider</span>}
+                        {memberCount} {memberCount === 1 ? 'członek' : memberCount < 5 ? 'członków' : 'członków'}
+                        {isOwner && <span className="ml-1.5 text-emerald-500">· Lider</span>}
                       </p>
                     </div>
                   </div>
@@ -395,7 +395,7 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
                   <div className="border-t border-card-border px-4 py-3">
                     {/* Member list with live ETA */}
                     {convoy.members.length === 0 ? (
-                      <p className="py-2 text-center text-xs text-muted">Brak czĹ‚onkĂłw.</p>
+                      <p className="py-2 text-center text-xs text-muted">Brak członków.</p>
                     ) : (
                       <ul className="flex flex-col gap-1">
                         {convoy.members.map((member) => {
@@ -459,7 +459,7 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
                                 </span>
                               )}
                               {distKm === null && isMe && member.role !== 'OWNER' && (
-                                <span className="rounded-md bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-blue-400">
+                                <span className="rounded-md bg-blue-600/15 px-2 py-0.5 text-[10px] font-semibold text-blue-400">
                                   Ty
                                 </span>
                               )}
@@ -471,7 +471,7 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
 
                     {/* Shared destination */}
                     {convoy.destName && (
-                      <div className="mt-3 flex items-center gap-2 rounded-xl border border-accent/20 bg-accent/10 px-3 py-2">
+                      <div className="mt-3 flex items-center gap-2 rounded-xl border border-blue-500/20 bg-accent/10 px-3 py-2">
                         <svg className="h-3.5 w-3.5 shrink-0 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
                           <circle cx="12" cy="10" r="3" />
@@ -482,7 +482,7 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
                             onClick={() => { setDestConvoyId(convoy.id); setDestInput(''); }}
                             className="shrink-0 text-[10px] text-blue-400 hover:text-blue-300"
                           >
-                            ZmieĹ„
+                            Zmień
                           </button>
                         )}
                       </div>
@@ -496,13 +496,13 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
                           value={destInput}
                           onChange={(e) => setDestInput(e.target.value)}
                           onKeyDown={(e) => { if (e.key === 'Enter') setDestination(convoy.id, destInput); }}
-                          placeholder="Cel podrĂłĹĽy (np. Warszawa)"
+                          placeholder="Cel podróży (np. Warszawa)"
                           className="flex-1 rounded-xl border border-card-border bg-input-bg px-3 py-2 text-xs text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent"
                         />
                         <button
                           onClick={() => setDestination(convoy.id, destInput)}
                           disabled={actionLoading === `dest-${convoy.id}`}
-                          className="rounded-xl bg-accent px-3 py-2 text-xs font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-50"
+                          className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
                         >
                           OK
                         </button>
@@ -510,7 +510,7 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
                           onClick={() => setDestConvoyId(null)}
                           className="rounded-xl border border-card-border px-3 py-2 text-xs text-muted transition hover:bg-input-bg"
                         >
-                          âś•
+                          ✕
                         </button>
                       </div>
                     )}
@@ -526,12 +526,12 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
                           <circle cx="8.5" cy="7" r="4" />
                           <path d="M20 8v6M23 11h-6" />
                         </svg>
-                        ZaproĹ›
+                        Zaproś
                       </button>
                       {isOwner && !convoy.destName && destConvoyId !== convoy.id && (
                         <button
                           onClick={() => setDestConvoyId(convoy.id)}
-                          className="flex items-center gap-1 rounded-xl border border-accent/30 bg-accent/10 px-3 py-2.5 text-xs font-semibold text-blue-400 transition hover:bg-blue-500/20"
+                          className="flex items-center gap-1 rounded-xl border border-blue-500/30 bg-accent/10 px-3 py-2.5 text-xs font-semibold text-blue-400 transition hover:bg-blue-500/20"
                         >
                           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
@@ -554,7 +554,7 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
                       )}
                       <button
                         onClick={() => setDriveModeConvoy(convoy)}
-                        className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-accent py-2.5 text-xs font-semibold text-accent-fg transition hover:opacity-90"
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 py-2.5 text-xs font-semibold text-white transition hover:bg-emerald-700"
                       >
                         <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                           <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
@@ -571,14 +571,14 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
                           <circle cx="5.5" cy="18.5" r="2.5" />
                           <circle cx="18.5" cy="18.5" r="2.5" />
                         </svg>
-                        JedĹş
+                        Jedź
                       </button>
                       <button
                         onClick={() => leaveOrDelete(convoy)}
                         disabled={actionLoading === convoy.id}
                         className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2.5 text-xs font-semibold text-red-400 transition hover:bg-red-500/20 disabled:opacity-50"
                       >
-                        {actionLoading === convoy.id ? '...' : isOwner ? 'UsuĹ„' : 'OpuĹ›Ä‡'}
+                        {actionLoading === convoy.id ? '...' : isOwner ? 'Usuń' : 'Opuść'}
                       </button>
                     </div>
                   </div>
@@ -602,9 +602,9 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShareRouteConvoyId(null)}>
           <div className="w-full max-w-lg rounded-t-3xl border border-card-border bg-card-bg p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-1 h-1 w-12 rounded-full bg-card-border mx-auto" />
-            <h3 className="mt-3 mb-4 text-base font-bold text-foreground">UdostÄ™pnij trasÄ™ konwojowi</h3>
+            <h3 className="mt-3 mb-4 text-base font-bold text-foreground">Udostępnij trasę konwojowi</h3>
             {myRoutes.length === 0 ? (
-              <p className="py-4 text-center text-sm text-muted">Brak zapisanych tras. Najpierw stwĂłrz trasÄ™.</p>
+              <p className="py-4 text-center text-sm text-muted">Brak zapisanych tras. Najpierw stwórz trasę.</p>
             ) : (
               <div className="flex flex-col gap-2 max-h-72 overflow-y-auto">
                 {myRoutes.map((route) => (
@@ -613,7 +613,7 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
                     onClick={() => shareRoute(shareRouteConvoyId, route.id, route.name)}
                     className="flex items-center gap-3 rounded-xl border border-card-border bg-input-bg px-4 py-3 text-left transition hover:border-violet-500/40 hover:bg-violet-500/5"
                   >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-violet-400">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-600/15 text-violet-400">
                       <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                         <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                       </svg>
@@ -645,13 +645,13 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
       {sharedRouteNotif && (
         <div className="fixed bottom-28 left-1/2 z-50 -translate-x-1/2">
           <div className="flex items-center gap-3 rounded-2xl border border-violet-500/30 bg-card-bg/95 px-4 py-3 shadow-xl backdrop-blur-md">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/20 text-violet-400">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-600/20 text-violet-400">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-foreground">Lider udostÄ™pniĹ‚ trasÄ™</p>
+              <p className="text-xs font-semibold text-foreground">Lider udostępnił trasę</p>
               <p className="truncate text-xs text-violet-400 font-medium max-w-[200px]">{sharedRouteNotif.routeName}</p>
             </div>
             <button onClick={() => setSharedRouteNotif(null)} className="ml-1 text-muted hover:text-foreground">
@@ -672,9 +672,9 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
 
             <div className="p-6">
               <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600/20 text-2xl">đźŹ</div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600/20 text-2xl">🏁</div>
                 <div>
-                  <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">KonwĂłj zakoĹ„czony</p>
+                  <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">Konwój zakończony</p>
                   <h3 className="text-base font-bold text-foreground truncate">{postConvoyStats.name}</h3>
                 </div>
               </div>
@@ -683,7 +683,7 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
               <div className="grid grid-cols-3 gap-2 mb-4">
                 <div className="rounded-xl bg-input-bg p-3 text-center">
                   <p className="text-lg font-black text-foreground">{postConvoyStats.memberCount}</p>
-                  <p className="text-[10px] text-muted">uczestnikĂłw</p>
+                  <p className="text-[10px] text-muted">uczestników</p>
                 </div>
                 <div className="rounded-xl bg-input-bg p-3 text-center">
                   <p className="text-lg font-black text-accent tabular-nums">{postConvoyStats.totalKm.toFixed(1)}</p>
@@ -697,7 +697,7 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
                     </>
                   ) : (
                     <>
-                      <p className="text-lg">đź›Łď¸Ź</p>
+                      <p className="text-lg">🛣️</p>
                       <p className="text-[10px] text-muted">wolna trasa</p>
                     </>
                   )}
@@ -727,7 +727,7 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
                               <p className="text-[10px] text-muted tabular-nums">{Math.round(m.maxSpeedKmh)} km/h max</p>
                             )}
                           </div>
-                          {i === 0 && <span className="text-base">đźĄ‡</span>}
+                          {i === 0 && <span className="text-base">🥇</span>}
                         </div>
                       </div>
                     ))}
@@ -736,12 +736,12 @@ export default function ConvoyPanel({ mapVoiceEnabled, onToggleMapVoice, mapNoti
               )}
 
               {postConvoyStats.members.length === 0 && (
-                <p className="mb-4 text-center text-sm text-muted">Dobra jazda! XP zostaĹ‚y zapisane.</p>
+                <p className="mb-4 text-center text-sm text-muted">Dobra jazda! XP zostały zapisane.</p>
               )}
 
               <button
                 onClick={() => setPostConvoyStats(null)}
-                className="w-full rounded-2xl bg-accent py-3 text-sm font-bold text-accent-fg transition hover:opacity-90"
+                className="w-full rounded-2xl bg-accent py-3 text-sm font-bold text-white transition hover:opacity-90"
               >
                 Zamknij
               </button>

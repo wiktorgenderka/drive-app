@@ -23,7 +23,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
           <svg
-            className="h-8 w-8 animate-spin text-blue-500"
+            className="h-8 w-8 animate-spin text-accent"
             viewBox="0 0 24 24"
             fill="none"
           >

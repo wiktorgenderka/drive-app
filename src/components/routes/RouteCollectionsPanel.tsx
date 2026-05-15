@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 
@@ -125,7 +125,7 @@ export default function RouteCollectionsPanel() {
         <h3 className="text-sm font-semibold text-foreground">Kolekcje tras</h3>
         <button
           onClick={() => setCreating((v) => !v)}
-          className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accent-fg transition hover:opacity-90"
+          className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
         >
           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
             <path d="M12 5v14M5 12h14" />
@@ -140,7 +140,7 @@ export default function RouteCollectionsPanel() {
             type="text"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            placeholder="Nazwa kolekcjiâ€¦"
+            placeholder="Nazwa kolekcji…"
             maxLength={100}
             className="rounded-lg border border-input-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent"
           />
@@ -148,7 +148,7 @@ export default function RouteCollectionsPanel() {
             type="text"
             value={newDesc}
             onChange={(e) => setNewDesc(e.target.value)}
-            placeholder="Opis (opcjonalnie)â€¦"
+            placeholder="Opis (opcjonalnie)…"
             maxLength={300}
             className="rounded-lg border border-input-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent"
           />
@@ -156,9 +156,9 @@ export default function RouteCollectionsPanel() {
             <button
               onClick={createCollection}
               disabled={!newName.trim()}
-              className="flex-1 rounded-lg bg-accent py-2 text-sm font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-50"
+              className="flex-1 rounded-lg bg-accent py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
             >
-              UtwĂłrz
+              Utwórz
             </button>
             <button
               onClick={() => { setCreating(false); setNewName(''); setNewDesc(''); }}
@@ -171,7 +171,7 @@ export default function RouteCollectionsPanel() {
       )}
 
       {collections.length === 0 && !creating && (
-        <p className="py-6 text-center text-sm text-muted">Nie masz jeszcze ĹĽadnych kolekcji.</p>
+        <p className="py-6 text-center text-sm text-muted">Nie masz jeszcze żadnych kolekcji.</p>
       )}
 
       {collections.map((col) => (
@@ -214,7 +214,7 @@ export default function RouteCollectionsPanel() {
                     <button
                       onClick={() => removeRouteFromCollection(col.id, rt.id)}
                       className="shrink-0 text-muted hover:text-red-400 transition"
-                      title="UsuĹ„ z kolekcji"
+                      title="Usuń z kolekcji"
                     >
                       <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                         <path d="M18 6L6 18M6 6l12 12" />
@@ -231,7 +231,7 @@ export default function RouteCollectionsPanel() {
                     onChange={(e) => setSelectedRouteId(e.target.value)}
                     className="flex-1 rounded-lg border border-input-border bg-background px-2 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
                   >
-                    <option value="">Wybierz trasÄ™â€¦</option>
+                    <option value="">Wybierz trasę…</option>
                     {userRoutes
                       .filter((r) => !col.routes.some((cr) => cr.id === r.id))
                       .map((r) => (
@@ -241,7 +241,7 @@ export default function RouteCollectionsPanel() {
                   <button
                     onClick={() => addRouteToCollection(col.id)}
                     disabled={!selectedRouteId}
-                    className="rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-50"
+                    className="rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
                   >
                     Dodaj
                   </button>
@@ -261,14 +261,14 @@ export default function RouteCollectionsPanel() {
                     <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                       <path d="M12 5v14M5 12h14" />
                     </svg>
-                    Dodaj trasÄ™
+                    Dodaj trasę
                   </button>
-                  <span className="text-muted">Â·</span>
+                  <span className="text-muted">·</span>
                   <button
                     onClick={() => deleteCollection(col.id)}
                     className="text-xs text-muted hover:text-red-400 transition"
                   >
-                    UsuĹ„ kolekcjÄ™
+                    Usuń kolekcję
                   </button>
                 </div>
               )}

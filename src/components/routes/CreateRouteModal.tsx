@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useRef, useCallback, useEffect, type FormEvent } from 'react';
 import dynamic from 'next/dynamic';
@@ -144,7 +144,7 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
     waypoints[0].latitude === waypoints[waypoints.length - 1].latitude &&
     waypoints[0].longitude === waypoints[waypoints.length - 1].longitude;
 
-  // Route preview â€” distance & duration from Mapbox Directions API
+  // Route preview — distance & duration from Mapbox Directions API
   const [routePreview, setRoutePreview] = useState<{ distanceKm: number; durationMin: number } | null>(null);
   const previewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -205,7 +205,7 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error ?? 'Nie udaĹ‚o siÄ™ utworzyÄ‡ trasy.');
+        setError(data.error ?? 'Nie udało się utworzyć trasy.');
         return;
       }
 
@@ -215,7 +215,7 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
       setIsPublic(false);
       onCreated?.();
     } catch {
-      setError('WystÄ…piĹ‚ nieoczekiwany bĹ‚Ä…d.');
+      setError('Wystąpił nieoczekiwany błąd.');
     } finally {
       setLoading(false);
     }
@@ -233,7 +233,7 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
       <div className="w-full max-w-md rounded-2xl border border-card-border bg-card-bg shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
-          <h3 className="text-lg font-semibold text-foreground">Zaplanuj trasÄ™</h3>
+          <h3 className="text-lg font-semibold text-foreground">Zaplanuj trasę</h3>
           <button
             onClick={onClose}
             className="rounded-lg p-1.5 text-muted transition hover:bg-input-bg hover:text-foreground"
@@ -264,7 +264,7 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="np. Weekendowa przejaĹĽdĹĽka"
+              placeholder="np. Weekendowa przejażdżka"
               className="w-full rounded-xl border border-card-border bg-input-bg px-4 py-2.5 text-sm text-foreground placeholder-muted outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
             />
           </div>
@@ -278,7 +278,7 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
               id="route-desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="KrĂłtki opis trasy..."
+              placeholder="Krótki opis trasy..."
               rows={2}
               className="w-full resize-none rounded-xl border border-card-border bg-input-bg px-4 py-2.5 text-sm text-foreground placeholder-muted outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
             />
@@ -392,7 +392,7 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
                   >
                     <span
                       className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${
-                        index === 0 ? 'bg-emerald-600' : index === waypoints.length - 1 ? 'bg-red-500' : 'bg-accent'
+                        index === 0 ? 'bg-emerald-600' : index === waypoints.length - 1 ? 'bg-red-500' : 'bg-orange-600'
                       }`}
                     >
                       {index + 1}
@@ -401,12 +401,12 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
                       {wp.label}
                     </span>
                     <div className="flex items-center gap-0.5">
-                      {/* Loop button â€” only on first waypoint when 2+ wps and not already a loop */}
+                      {/* Loop button — only on first waypoint when 2+ wps and not already a loop */}
                       {index === 0 && waypoints.length >= 2 && !isLoop && (
                         <button
                           type="button"
                           onClick={closeLoop}
-                          title="Ustaw jako punkt koĹ„cowy (pÄ™tla)"
+                          title="Ustaw jako punkt końcowy (pętla)"
                           className="rounded p-1 text-muted transition hover:text-emerald-400"
                         >
                           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -464,8 +464,8 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
                 className="h-4 w-4 shrink-0 accent-orange-500"
               />
               <div>
-                <p className="text-xs font-semibold text-foreground">Unikaj pĹ‚atnych drĂłg</p>
-                <p className="text-[10px] text-muted mt-0.5">Bez autostrad pĹ‚atnych</p>
+                <p className="text-xs font-semibold text-foreground">Unikaj płatnych dróg</p>
+                <p className="text-[10px] text-muted mt-0.5">Bez autostrad płatnych</p>
               </div>
             </label>
             <label className="flex flex-1 items-center gap-2.5 rounded-xl border border-card-border bg-input-bg px-3 py-2.5 cursor-pointer transition hover:border-orange-500/60">
@@ -491,9 +491,9 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
               className="mt-0.5 h-4 w-4 shrink-0 accent-orange-500"
             />
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-foreground">UdostÄ™pnij publicznie</p>
+              <p className="text-xs font-semibold text-foreground">Udostępnij publicznie</p>
               <p className="mt-0.5 text-[11px] leading-4 text-muted">
-                Trasa pojawi siÄ™ w <span className="text-foreground">Trasy â†’ Publiczne</span> â€” inni kierowcy bÄ™dÄ… mogli jÄ… pokazaÄ‡ na mapie i dodaÄ‡ do swoich.
+                Trasa pojawi się w <span className="text-foreground">Trasy → Publiczne</span> — inni kierowcy będą mogli ją pokazać na mapie i dodać do swoich.
               </p>
             </div>
           </label>
@@ -520,7 +520,7 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
               </div>
               <span className="ml-auto text-[10px] text-muted opacity-60">
                 {avoidTolls || avoidHighways
-                  ? [avoidTolls && 'bez pĹ‚atnych', avoidHighways && 'bez autostrad'].filter(Boolean).join(', ')
+                  ? [avoidTolls && 'bez płatnych', avoidHighways && 'bez autostrad'].filter(Boolean).join(', ')
                   : 'szacowany czas jazdy'}
               </span>
             </div>
@@ -538,7 +538,7 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
             <button
               type="submit"
               disabled={loading}
-              className="flex flex-1 items-center justify-center rounded-xl bg-accent py-2.5 text-sm font-medium text-accent-fg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex flex-1 items-center justify-center rounded-xl bg-orange-600 py-2.5 text-sm font-medium text-white transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? (
                 <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -546,7 +546,7 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
               ) : (
-                'UtwĂłrz trasÄ™'
+                'Utwórz trasę'
               )}
             </button>
           </div>

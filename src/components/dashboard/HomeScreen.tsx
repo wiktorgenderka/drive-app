@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
@@ -90,28 +90,28 @@ interface HomeScreenProps {
 }
 
 const REPORT_LABELS: Record<string, { label: string; color: string; bg: string; emoji: string }> = {
-  POLICE:          { label: REPORT_TYPE_LABELS.POLICE,          color: 'text-blue-400',   bg: 'bg-blue-500/15',   emoji: 'đźš”' },
-  UNMARKED_POLICE: { label: REPORT_TYPE_LABELS.UNMARKED_POLICE, color: 'text-indigo-400', bg: 'bg-indigo-500/15', emoji: 'đź•µď¸Ź' },
-  SPEED_TRAP:      { label: REPORT_TYPE_LABELS.SPEED_TRAP,      color: 'text-yellow-400', bg: 'bg-yellow-500/15', emoji: 'đź“Ź' },
-  ACCIDENT:        { label: REPORT_TYPE_LABELS.ACCIDENT,        color: 'text-red-400',    bg: 'bg-red-500/15',    emoji: 'đźš¨' },
-  OBSTACLE:        { label: REPORT_TYPE_LABELS.OBSTACLE,        color: 'text-orange-400', bg: 'bg-orange-500/15', emoji: 'âš ď¸Ź' },
-  SPEED_CAMERA:    { label: REPORT_TYPE_LABELS.SPEED_CAMERA,    color: 'text-purple-400', bg: 'bg-purple-500/15', emoji: 'đź“·' },
+  POLICE:          { label: REPORT_TYPE_LABELS.POLICE,          color: 'text-blue-400',   bg: 'bg-blue-500/15',   emoji: '🚔' },
+  UNMARKED_POLICE: { label: REPORT_TYPE_LABELS.UNMARKED_POLICE, color: 'text-indigo-400', bg: 'bg-indigo-500/15', emoji: '🕵️' },
+  SPEED_TRAP:      { label: REPORT_TYPE_LABELS.SPEED_TRAP,      color: 'text-yellow-400', bg: 'bg-yellow-500/15', emoji: '📏' },
+  ACCIDENT:        { label: REPORT_TYPE_LABELS.ACCIDENT,        color: 'text-red-400',    bg: 'bg-red-500/15',    emoji: '🚨' },
+  OBSTACLE:        { label: REPORT_TYPE_LABELS.OBSTACLE,        color: 'text-orange-400', bg: 'bg-orange-500/15', emoji: '⚠️' },
+  SPEED_CAMERA:    { label: REPORT_TYPE_LABELS.SPEED_CAMERA,    color: 'text-purple-400', bg: 'bg-purple-500/15', emoji: '📷' },
 };
 
 function WeatherIcon({ code, isDay }: { code: number; isDay: boolean }) {
-  if (code === 0) return isDay ? <span className="text-xl">â€ď¸Ź</span> : <span className="text-xl">đźŚ™</span>;
-  if (code <= 3)  return <span className="text-xl">â›…</span>;
-  if (code <= 48) return <span className="text-xl">đźŚ«ď¸Ź</span>;
-  if (code <= 82) return <span className="text-xl">đźŚ§ď¸Ź</span>;
-  return <span className="text-xl">â›ď¸Ź</span>;
+  if (code === 0) return isDay ? <span className="text-xl">☀️</span> : <span className="text-xl">🌙</span>;
+  if (code <= 3)  return <span className="text-xl">⛅</span>;
+  if (code <= 48) return <span className="text-xl">🌫️</span>;
+  if (code <= 82) return <span className="text-xl">🌧️</span>;
+  return <span className="text-xl">⛈️</span>;
 }
 
 function getGreeting(): string {
   const h = new Date().getHours();
   if (h < 6)  return 'Dobrej nocy';
-  if (h < 12) return 'DzieĹ„ dobry';
-  if (h < 18) return 'CzeĹ›Ä‡';
-  return 'Dobry wieczĂłr';
+  if (h < 12) return 'Dzień dobry';
+  if (h < 18) return 'Cześć';
+  return 'Dobry wieczór';
 }
 
 function StatPill({ emoji, value, label }: { emoji: string; value: string | number; label: string }) {
@@ -124,24 +124,24 @@ function StatPill({ emoji, value, label }: { emoji: string; value: string | numb
   );
 }
 
-function ShortcutTile({ onClick, label, sub, gradient, icon, badge }: {
-  onClick: () => void; label: string; sub: string; gradient: string; icon: React.ReactNode; badge?: number;
+function ShortcutTile({ onClick, label, sub, icon, badge }: {
+  onClick: () => void; label: string; sub: string; icon: React.ReactNode; badge?: number;
 }) {
   return (
     <motion.button
       whileTap={{ scale: 0.96 }}
       onClick={() => { navigator.vibrate?.(8); onClick(); }}
-      className={`relative flex h-28 flex-col justify-between rounded-2xl bg-gradient-to-br ${gradient} p-3 text-left text-white shadow-lg transition hover:brightness-110`}
+      className="relative flex h-28 flex-col justify-between rounded-2xl bg-accent p-3 text-left text-accent-fg shadow-lg transition hover:opacity-90"
     >
       <div className="flex items-start justify-between">
-        <span className="rounded-lg bg-white/20 p-1.5">{icon}</span>
+        <span className="rounded-lg bg-accent-fg/20 p-1.5">{icon}</span>
         {badge && badge > 0 ? (
-          <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-black text-foreground">{badge}</span>
+          <span className="rounded-full bg-accent-fg px-1.5 py-0.5 text-[10px] font-black text-accent">{badge}</span>
         ) : null}
       </div>
       <div className="leading-tight">
         <p className="text-sm font-bold">{label}</p>
-        <p className="text-[10px] font-medium text-white/80">{sub}</p>
+        <p className="text-[10px] font-medium text-accent-fg/70">{sub}</p>
       </div>
     </motion.button>
   );
@@ -201,7 +201,7 @@ export default function HomeScreen({
 
   const weather = useWeather(userLocation?.latitude, userLocation?.longitude);
 
-  // Cache static map URL â€” only regenerate when coarse location changes (~1 km grid)
+  // Cache static map URL — only regenerate when coarse location changes (~1 km grid)
   const coarseLat = userLocation ? Math.round(userLocation.latitude * 100) : null;
   const coarseLng = userLocation ? Math.round(userLocation.longitude * 100) : null;
   const staticMapUrl = useMemo(() => {
@@ -373,7 +373,7 @@ export default function HomeScreen({
                 </svg>
               </button>
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/20 text-xl">
-                âšˇ
+                ⚡
               </div>
               <h2 className="flex-1 text-lg font-bold text-foreground">Historia XP</h2>
             </div>
@@ -404,7 +404,7 @@ export default function HomeScreen({
                 </svg>
               </button>
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-yellow-500/20 text-xl">
-                đźŹ…
+                🏅
               </div>
               <h2 className="flex-1 text-lg font-bold text-foreground">Kolekcja odznak</h2>
             </div>
@@ -422,11 +422,11 @@ export default function HomeScreen({
           <motion.div variants={fadeUp}>
             <p className="text-xs font-medium uppercase tracking-wider text-muted">{today}</p>
             <h1 className="mt-1 text-2xl font-bold text-foreground">
-              {getGreeting()}, {firstName} {xpData && <span className="text-accent">âšˇ</span>}
+              {getGreeting()}, {firstName} {xpData && <span className="text-accent">⚡</span>}
             </h1>
           </motion.div>
 
-          {/* XP Bar â€” tap to open activity log */}
+          {/* XP Bar — tap to open activity log */}
           {xpData && (
             <motion.div variants={fadeUp}>
               <button onClick={() => setShowXPLog(true)} className="w-full text-left">
@@ -469,14 +469,14 @@ export default function HomeScreen({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-foreground">Powiadomienia o trasie</p>
-                  <p className="text-xs text-muted mt-0.5">BÄ…dĹş na bieĹĽÄ…co z raportami w konwoju i zaproszeniami</p>
+                  <p className="text-xs text-muted mt-0.5">Bądź na bieżąco z raportami w konwoju i zaproszeniami</p>
                   <div className="mt-2 flex gap-2">
                     <button
                       onClick={requestNotifPermission}
                       disabled={notifRequesting}
                       className="rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-50"
                     >
-                      WĹ‚Ä…cz
+                      Włącz
                     </button>
                     <button
                       onClick={dismissNotifBanner}
@@ -503,8 +503,8 @@ export default function HomeScreen({
                   />
                 </div>
               )}
-              <StatPill emoji="đź›Łď¸Ź" value={stats?.totalRoutes ?? 'â€”'} label="Trasy" />
-              <StatPill emoji="đźš”" value={stats?.totalReports ?? 'â€”'} label="Raporty" />
+              <StatPill emoji="🛣️" value={stats?.totalRoutes ?? '—'} label="Trasy" />
+              <StatPill emoji="🚔" value={stats?.totalReports ?? '—'} label="Raporty" />
             </motion.div>
           )}
 
@@ -520,7 +520,7 @@ export default function HomeScreen({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-foreground">
-                    {weather.temp}Â°C
+                    {weather.temp}°C
                     <span className="ml-2 text-xs font-normal text-muted">{weather.label}</span>
                   </p>
                   <p className="text-xs text-muted">Wiatr {weather.windKmh} km/h</p>
@@ -538,12 +538,12 @@ export default function HomeScreen({
           {/* Weather driving tip */}
           {weather && (() => {
             const tips: [number, number, string, string][] = [
-              [51, 82, 'đźŚ§ď¸Ź', 'Pada deszcz â€” zwiÄ™ksz odstÄ™p i jedĹş wolniej'],
-              [85, 86, 'đźŚ¨ď¸Ź', 'Ĺšnieg â€” uĹĽywaj opon zimowych i jedĹş ostroĹĽnie'],
-              [71, 77, 'đźŚ¨ď¸Ź', 'Opady Ĺ›niegu â€” ogranicz prÄ™dkoĹ›Ä‡ i zwiÄ™ksz odstÄ™p'],
-              [45, 48, 'đźŚ«ď¸Ź', 'MgĹ‚a â€” wĹ‚Ä…cz Ĺ›wiatĹ‚a przeciwmgielne'],
-              [95, 99, 'â›ď¸Ź', 'Burza â€” unikaj jazdy jeĹ›li moĹĽliwe'],
-              [0, 3, 'â€ď¸Ź', 'Dobra pogoda â€” idealne warunki do jazdy'],
+              [51, 82, '🌧️', 'Pada deszcz — zwiększ odstęp i jedź wolniej'],
+              [85, 86, '🌨️', 'Śnieg — używaj opon zimowych i jedź ostrożnie'],
+              [71, 77, '🌨️', 'Opady śniegu — ogranicz prędkość i zwiększ odstęp'],
+              [45, 48, '🌫️', 'Mgła — włącz światła przeciwmgielne'],
+              [95, 99, '⛈️', 'Burza — unikaj jazdy jeśli możliwe'],
+              [0, 3, '☀️', 'Dobra pogoda — idealne warunki do jazdy'],
             ];
             const tip = tips.find(([min, max]) => weather.code >= min && weather.code <= max);
             if (!tip) return null;
@@ -563,7 +563,7 @@ export default function HomeScreen({
             <motion.div variants={fadeUp}>
               <div className="flex items-center gap-3 rounded-2xl border border-card-border bg-card-bg px-4 py-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600/15 text-xl">
-                  â›˝
+                  ⛽
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-foreground truncate">
@@ -595,7 +595,7 @@ export default function HomeScreen({
           {(cheapestStations.PETROL_95 || cheapestStations.DIESEL) && (
             <motion.div variants={fadeUp}>
               <div className="rounded-2xl border border-card-border bg-card-bg px-4 py-3">
-                <p className="mb-2 text-xs font-semibold text-muted">NajtaĹ„sze w okolicy (5 km)</p>
+                <p className="mb-2 text-xs font-semibold text-muted">Najtańsze w okolicy (5 km)</p>
                 <div className="flex gap-3">
                   {(['PETROL_95', 'DIESEL'] as const).map((type) => {
                     const s = cheapestStations[type];
@@ -604,13 +604,13 @@ export default function HomeScreen({
                     return (
                       <div key={type} className="flex flex-1 items-center gap-2.5 rounded-xl bg-input-bg px-3 py-2">
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-600/15 text-sm">
-                          {type === 'PETROL_95' ? 'đźź˘' : 'đź”µ'}
+                          {type === 'PETROL_95' ? '🟢' : '🔵'}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold text-emerald-400 tabular-nums">{s.price.toFixed(2)} zĹ‚</p>
+                          <p className="text-xs font-bold text-emerald-400 tabular-nums">{s.price.toFixed(2)} zł</p>
                           <p className="truncate text-[10px] text-muted">{s.brand ?? s.name}</p>
                           <p className="text-[10px] text-muted/60">
-                            {s.distKm < 1 ? `${Math.round(s.distKm * 1000)} m` : `${s.distKm.toFixed(1)} km`} Â· {label}
+                            {s.distKm < 1 ? `${Math.round(s.distKm * 1000)} m` : `${s.distKm.toFixed(1)} km`} · {label}
                           </p>
                         </div>
                       </div>
@@ -635,15 +635,15 @@ export default function HomeScreen({
             >
               <img
                 src={staticMapUrl ?? undefined}
-                alt="PodglÄ…d mapy"
+                alt="Podgląd mapy"
                 className="h-full w-full object-cover"
               />
               <div className="absolute inset-0 flex items-center justify-center bg-black/35">
                 <div className="flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 shadow-lg">
-                  <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <svg className="h-4 w-4 text-accent-fg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                     <path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z" /><path d="M8 2v16M16 6v16" />
                   </svg>
-                  <span className="text-sm font-semibold text-white">OtwĂłrz mapÄ™</span>
+                  <span className="text-sm font-semibold text-accent-fg">Otwórz mapę</span>
                 </div>
               </div>
             </button>
@@ -666,7 +666,7 @@ export default function HomeScreen({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-foreground">{stats.activeConvoy.name}</p>
-                  <p className="text-xs text-muted">{stats.activeConvoy.memberCount} uczestnikĂłw â€˘ KonwĂłj aktywny</p>
+                  <p className="text-xs text-muted">{stats.activeConvoy.memberCount} uczestników • Konwój aktywny</p>
                 </div>
                 <div className="flex h-2 w-2 shrink-0 rounded-full bg-emerald-500 animate-pulse" />
               </button>
@@ -699,12 +699,12 @@ export default function HomeScreen({
                       <span className="text-xl font-extrabold text-foreground tabular-nums">
                         {stats.todayTripCount}
                       </span>
-                      <span className="text-[10px] text-muted">{stats.todayTripCount === 1 ? 'podrĂłĹĽ' : 'podrĂłĹĽe'}</span>
+                      <span className="text-[10px] text-muted">{stats.todayTripCount === 1 ? 'podróż' : 'podróże'}</span>
                     </div>
                   </div>
                   {stats.weekKm > 0 && (
                     <p className="mt-2 text-[11px] text-muted text-center">
-                      Ten tydzieĹ„: <span className="font-semibold text-foreground">{stats.weekKm.toFixed(0)} km</span>
+                      Ten tydzień: <span className="font-semibold text-foreground">{stats.weekKm.toFixed(0)} km</span>
                     </p>
                   )}
                 </div>
@@ -716,24 +716,21 @@ export default function HomeScreen({
           <motion.div variants={fadeUp} className="grid grid-cols-3 gap-3">
             <ShortcutTile
               onClick={onNavigateToConvoy}
-              label="KonwĂłj"
-              sub={stats?.activeConvoy ? `${stats.activeConvoy.memberCount} osĂłb` : 'JedĹş razem'}
-              gradient="from-emerald-500 to-teal-700"
+              label="Konwój"
+              sub={stats?.activeConvoy ? `${stats.activeConvoy.memberCount} osób` : 'Jedź razem'}
               icon={<svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><rect x="1" y="3" width="15" height="13" rx="2" /><path d="M16 8h4l3 3v5a1 1 0 01-1 1h-2" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>}
             />
             <ShortcutTile
               onClick={onNavigateToFriends}
               label="Znajomi"
-              sub={stats?.pendingRequests ? `${stats.pendingRequests} zaproszeĹ„` : 'Twoja paczka'}
-              gradient="from-pink-500 to-rose-700"
+              sub={stats?.pendingRequests ? `${stats.pendingRequests} zaproszeń` : 'Twoja paczka'}
               badge={stats?.pendingRequests ?? 0}
               icon={<svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" /></svg>}
             />
             <ShortcutTile
               onClick={onNavigateToRoutes}
               label="Trasy"
-              sub={stats?.totalRoutes ? `${stats.totalRoutes} zapisanych` : 'Zaplanuj jazdÄ™'}
-              gradient="from-accent to-orange-700"
+              sub={stats?.totalRoutes ? `${stats.totalRoutes} zapisanych` : 'Zaplanuj jazdę'}
               icon={<svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx="6" cy="19" r="3" /><path d="M9 19h8.5a3.5 3.5 0 000-7h-11a3.5 3.5 0 010-7H15" /><circle cx="18" cy="5" r="3" /></svg>}
             />
           </motion.div>
@@ -743,12 +740,12 @@ export default function HomeScreen({
             <motion.div variants={fadeUp}>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted">Polecane trasy</p>
-                <button onClick={onNavigateToRoutes} className="text-xs font-medium text-accent hover:opacity-80">Wszystkie â†’</button>
+                <button onClick={onNavigateToRoutes} className="text-xs font-medium text-accent hover:opacity-80">Wszystkie →</button>
               </div>
               <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
                 {suggestedRoutes.map((route) => {
                   const TYPE_EMOJI: Record<string, string> = {
-                    scenic: 'đźŚ„', mountain: 'â›°ď¸Ź', coastal: 'đźŚŠ', city: 'đźŹ™ď¸Ź', countryside: 'đźŚľ',
+                    scenic: '🌄', mountain: '⛰️', coastal: '🌊', city: '🏙️', countryside: '🌾',
                   };
                   return (
                     <button
@@ -757,7 +754,7 @@ export default function HomeScreen({
                       className="flex shrink-0 w-44 flex-col gap-2 rounded-2xl border border-card-border bg-card-bg p-3 text-left transition hover:border-accent/40"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-2xl">{TYPE_EMOJI[route.type] ?? 'đź—şď¸Ź'}</span>
+                        <span className="text-2xl">{TYPE_EMOJI[route.type] ?? '🗺️'}</span>
                         <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-bold text-accent">
                           {route.distance.toFixed(0)} km
                         </span>
@@ -793,9 +790,9 @@ export default function HomeScreen({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-foreground">
-                    {stats.pendingRequests} zaproszeni{stats.pendingRequests === 1 ? 'e' : stats.pendingRequests < 5 ? 'a' : 'Ĺ„'}
+                    {stats.pendingRequests} zaproszeni{stats.pendingRequests === 1 ? 'e' : stats.pendingRequests < 5 ? 'a' : 'ń'}
                   </p>
-                  <p className="text-xs text-muted">KtoĹ› chce CiÄ™ dodaÄ‡ do znajomych</p>
+                  <p className="text-xs text-muted">Ktoś chce Cię dodać do znajomych</p>
                 </div>
                 <svg className="h-4 w-4 text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                   <path d="M9 18l6-6-6-6" />
@@ -838,7 +835,7 @@ export default function HomeScreen({
                   onClick={() => setShowAchievements(true)}
                   className="text-xs font-medium text-accent hover:opacity-80"
                 >
-                  Wszystkie â†’
+                  Wszystkie →
                 </button>
               </div>
               {xpData.achievements.length > 0 ? (
@@ -858,7 +855,7 @@ export default function HomeScreen({
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-dashed border-card-border text-muted text-lg">
                       +
                     </div>
-                    <span className="text-[9px] text-muted">WiÄ™cej</span>
+                    <span className="text-[9px] text-muted">Więcej</span>
                   </button>
                 </div>
               ) : (
@@ -866,8 +863,8 @@ export default function HomeScreen({
                   onClick={() => setShowAchievements(true)}
                   className="flex w-full items-center gap-3 rounded-xl border border-dashed border-card-border px-4 py-3 text-left text-muted transition hover:border-accent/40"
                 >
-                  <span className="text-xl">đźŹ…</span>
-                  <span className="text-sm">Zacznij zbieraÄ‡ odznaki</span>
+                  <span className="text-xl">🏅</span>
+                  <span className="text-sm">Zacznij zbierać odznaki</span>
                 </button>
               )}
             </motion.div>
@@ -884,12 +881,12 @@ export default function HomeScreen({
                   </span>
                 </h2>
                 <button onClick={onNavigateToMap} className="text-xs font-medium text-accent hover:opacity-80">
-                  Mapa â†’
+                  Mapa →
                 </button>
               </div>
               <div className="flex flex-col gap-2">
                 {reports.map((report) => {
-                  const meta = REPORT_LABELS[report.type] ?? { label: report.type, color: 'text-zinc-400', bg: 'bg-zinc-500/15', emoji: 'âš ď¸Ź' };
+                  const meta = REPORT_LABELS[report.type] ?? { label: report.type, color: 'text-zinc-400', bg: 'bg-zinc-500/15', emoji: '⚠️' };
                   return (
                     <div key={report.id} className="flex items-center gap-3 rounded-xl border border-card-border bg-card-bg px-4 py-3">
                       <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-lg ${meta.bg}`}>
@@ -897,7 +894,7 @@ export default function HomeScreen({
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground">{meta.label}</p>
-                        <p className="text-xs text-muted truncate">{report.user.name} Â· {timeAgo(report.createdAt)}</p>
+                        <p className="text-xs text-muted truncate">{report.user.name} · {timeAgo(report.createdAt)}</p>
                       </div>
                     </div>
                   );
@@ -915,7 +912,7 @@ export default function HomeScreen({
                   </svg>
                 </div>
                 <p className="text-sm font-medium text-foreground">Czysto w okolicy</p>
-                <p className="mt-0.5 text-xs text-muted">Brak raportĂłw o zagroĹĽeniach</p>
+                <p className="mt-0.5 text-xs text-muted">Brak raportów o zagrożeniach</p>
               </div>
             </motion.div>
           )}
@@ -923,7 +920,7 @@ export default function HomeScreen({
           {/* Leaderboard */}
           {session?.user?.id && (
             <motion.div variants={fadeUp}>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">đźŹ† Ranking tygodnia</p>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">🏆 Ranking tygodnia</p>
               <Leaderboard currentUserId={session.user.id} />
             </motion.div>
           )}

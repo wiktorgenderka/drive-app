@@ -1,4 +1,4 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
 
 export default function NotFound() {
   return (
@@ -10,7 +10,7 @@ export default function NotFound() {
             404
           </div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-6xl">đź—şď¸Ź</span>
+            <span className="text-6xl">🗺️</span>
           </div>
         </div>
 
@@ -18,7 +18,7 @@ export default function NotFound() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Trasa nie znaleziona</h1>
           <p className="mt-2 text-sm text-muted max-w-xs">
-            Ta droga nie istnieje w naszej bazie. MoĹĽe skrÄ™ciĹ‚eĹ› za wczeĹ›nie?
+            Ta droga nie istnieje w naszej bazie. Może skręciłeś za wcześnie?
           </p>
         </div>
 
@@ -27,7 +27,7 @@ export default function NotFound() {
           href="/dashboard"
           className="rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-accent-fg shadow-lg transition hover:opacity-90"
         >
-          WrĂłÄ‡ na gĹ‚ĂłwnÄ…
+          Wróć na główną
         </Link>
       </div>
     </div>

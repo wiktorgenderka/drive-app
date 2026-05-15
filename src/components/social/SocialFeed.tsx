@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useSession } from 'next-auth/react';
@@ -6,7 +6,7 @@ import { useMapStore } from '@/stores/useMapStore';
 import { resizeImageForPost } from '@/lib/imageResize';
 import ReportAbuseButton from '@/components/ui/ReportAbuseButton';
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface PostUser { id: string; name: string; image: string | null; carDisplay: string | null; }
 interface CommentUser { id: string; name: string; image: string | null; }
@@ -20,11 +20,11 @@ interface FeedPost {
 }
 interface SocialFeedProps { onShowProfile?: (userId: string) => void; }
 
-// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function timeAgo(iso: string): string {
   const sec = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
-  if (sec < 60) return 'przed chwilÄ…';
+  if (sec < 60) return 'przed chwilą';
   const min = Math.floor(sec / 60);
   if (min < 60) return `${min} min`;
   const h = Math.floor(min / 60);
@@ -42,7 +42,7 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
 
 function extractHashtags(content: string | null): string[] {
   if (!content) return [];
-  const m = content.match(/#[\wĂ€-ÉŹ]+/g) ?? [];
+  const m = content.match(/#[\wÀ-ɏ]+/g) ?? [];
   return [...new Set(m.map((t) => t.toLowerCase()))];
 }
 
@@ -60,23 +60,23 @@ function detectKind(post: FeedPost): PostKind {
 }
 
 const KIND_META: Record<PostKind, { label: string; icon: string; tw: string } | null> = {
-  photo:   { label: 'ZdjÄ™cie',  icon: 'đź“·', tw: 'bg-violet-500/15 text-violet-300 border-violet-500/30' },
-  checkin: { label: 'Check-in', icon: 'đź“Ť', tw: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
-  route:   { label: 'Trasa',    icon: 'đź—şď¸Ź', tw: 'bg-sky-500/15 text-sky-300 border-sky-500/30' },
-  record:  { label: 'Rekord',   icon: 'âšˇ', tw: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
-  event:   { label: 'Zlot',     icon: 'đźŽ‰', tw: 'bg-pink-500/15 text-pink-300 border-pink-500/30' },
+  photo:   { label: 'Zdjęcie',  icon: '📷', tw: 'bg-violet-500/15 text-violet-300 border-violet-500/30' },
+  checkin: { label: 'Check-in', icon: '📍', tw: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
+  route:   { label: 'Trasa',    icon: '🗺️', tw: 'bg-sky-500/15 text-sky-300 border-sky-500/30' },
+  record:  { label: 'Rekord',   icon: '⚡', tw: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
+  event:   { label: 'Zlot',     icon: '🎉', tw: 'bg-pink-500/15 text-pink-300 border-pink-500/30' },
   normal:  null,
 };
 
 const POST_TYPES = [
-  { id: 'normal' as const, label: 'Post',   icon: 'đź’¬', tag: '' },
-  { id: 'route'  as const, label: 'Trasa',  icon: 'đź—şď¸Ź', tag: ' #trasa' },
-  { id: 'record' as const, label: 'Rekord', icon: 'âšˇ', tag: ' #rekord' },
-  { id: 'event'  as const, label: 'Zlot',   icon: 'đźŽ‰', tag: ' #zlot' },
+  { id: 'normal' as const, label: 'Post',   icon: '💬', tag: '' },
+  { id: 'route'  as const, label: 'Trasa',  icon: '🗺️', tag: ' #trasa' },
+  { id: 'record' as const, label: 'Rekord', icon: '⚡', tag: ' #rekord' },
+  { id: 'event'  as const, label: 'Zlot',   icon: '🎉', tag: ' #zlot' },
 ];
 type ComposeType = (typeof POST_TYPES)[number]['id'];
 
-// â”€â”€â”€ Avatar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Avatar ───────────────────────────────────────────────────────────────────
 
 function Avatar({ src, name, size = 40, online }: { src?: string | null; name: string; size?: number; online?: boolean }) {
   const bg = `hsl(${(name.charCodeAt(0) * 47) % 360},50%,35%)`;
@@ -95,7 +95,7 @@ function Avatar({ src, name, size = 40, online }: { src?: string | null; name: s
   );
 }
 
-// â”€â”€â”€ Skeleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function PostSkeleton() {
   return (
@@ -119,7 +119,7 @@ function PostSkeleton() {
   );
 }
 
-// â”€â”€â”€ Online strip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Online strip ─────────────────────────────────────────────────────────────
 
 function OnlineStrip({ onShowProfile }: { onShowProfile?: (id: string) => void }) {
   const friendLocations = useMapStore((s) => s.friendLocations);
@@ -150,7 +150,7 @@ function OnlineStrip({ onShowProfile }: { onShowProfile?: (id: string) => void }
   );
 }
 
-// â”€â”€â”€ Trending hashtags â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Trending hashtags ────────────────────────────────────────────────────────
 
 function TrendingHashtags({ posts, activeTag, onTagClick }: {
   posts: FeedPost[]; activeTag: string | null; onTagClick: (t: string | null) => void;
@@ -168,19 +168,19 @@ function TrendingHashtags({ posts, activeTag, onTagClick }: {
       {activeTag && (
         <button onClick={() => onTagClick(null)}
           className="flex shrink-0 items-center gap-1 rounded-full border border-card-border bg-input-bg px-3 py-1 text-xs text-muted transition hover:text-foreground">
-          âś• wyczyĹ›Ä‡
+          ✕ wyczyść
         </button>
       )}
       {trending.map(([tag, count]) => (
         <button key={tag} onClick={() => onTagClick(activeTag === tag ? null : tag)}
           className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition ${
             activeTag === tag
-              ? 'border-orange-500 bg-accent/20 text-orange-400'
+              ? 'border-orange-500 bg-orange-600/20 text-orange-400'
               : 'border-card-border bg-input-bg text-muted hover:border-orange-500/40 hover:text-orange-300'
           }`}>
           {tag}
           <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
-            activeTag === tag ? 'bg-orange-500/30 text-orange-300' : 'bg-white/8 text-accent-fg/40'
+            activeTag === tag ? 'bg-orange-500/30 text-orange-300' : 'bg-white/8 text-white/40'
           }`}>{count}</span>
         </button>
       ))}
@@ -188,14 +188,14 @@ function TrendingHashtags({ posts, activeTag, onTagClick }: {
   );
 }
 
-// â”€â”€â”€ Rich content (hashtags + mentions) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Rich content (hashtags + mentions) ──────────────────────────────────────
 
 function RichContent({ text, activeTag, onTagClick }: { text: string; activeTag: string | null; onTagClick: (t: string) => void }) {
-  const parts = text.split(/(#[\wĂ€-ÉŹ]+|@\S+)/g);
+  const parts = text.split(/(#[\wÀ-ɏ]+|@\S+)/g);
   return (
     <>
       {parts.map((part, i) => {
-        if (/^#[\wĂ€-ÉŹ]+$/.test(part)) {
+        if (/^#[\wÀ-ɏ]+$/.test(part)) {
           const tag = part.toLowerCase();
           return (
             <button key={i} onClick={() => onTagClick(tag)}
@@ -211,7 +211,7 @@ function RichContent({ text, activeTag, onTagClick }: { text: string; activeTag:
   );
 }
 
-// â”€â”€â”€ Empty state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Empty state ──────────────────────────────────────────────────────────────
 
 function EmptyState({ socialFilter, typeFilter, activeTag, onClear }: {
   socialFilter: string; typeFilter: string; activeTag: string | null; onClear: () => void;
@@ -220,29 +220,29 @@ function EmptyState({ socialFilter, typeFilter, activeTag, onClear }: {
   return (
     <div className="rounded-2xl border border-dashed border-card-border bg-card-bg/60 px-4 py-12 text-center">
       <div className="mb-2 text-3xl">
-        {hasFilters ? 'đź”Ť' : socialFilter === 'friends' ? 'đź‘Ą' : 'đź“­'}
+        {hasFilters ? '🔍' : socialFilter === 'friends' ? '👥' : '📭'}
       </div>
       <p className="text-sm font-semibold text-foreground">
-        {hasFilters ? 'Brak pasujÄ…cych postĂłw'
+        {hasFilters ? 'Brak pasujących postów'
           : socialFilter === 'friends' ? 'Znajomi jeszcze nic nie wrzucili'
-          : 'BÄ…dĹş pierwszy!'}
+          : 'Bądź pierwszy!'}
       </p>
       <p className="mt-1 text-xs text-muted">
-        {hasFilters ? 'SprĂłbuj zmieniÄ‡ filtry.'
-          : socialFilter === 'friends' ? 'PrzeĹ‚Ä…cz na "Wszyscy" lub dodaj znajomych.'
-          : 'Podziel siÄ™ trasÄ…, zdjÄ™ciem lub myĹ›lÄ….'}
+        {hasFilters ? 'Spróbuj zmienić filtry.'
+          : socialFilter === 'friends' ? 'Przełącz na "Wszyscy" lub dodaj znajomych.'
+          : 'Podziel się trasą, zdjęciem lub myślą.'}
       </p>
       {hasFilters && (
         <button onClick={onClear}
-          className="mt-3 rounded-lg bg-accent/20 px-4 py-2 text-xs font-semibold text-orange-400 transition hover:bg-accent/30">
-          WyczyĹ›Ä‡ filtry
+          className="mt-3 rounded-lg bg-orange-600/20 px-4 py-2 text-xs font-semibold text-orange-400 transition hover:bg-orange-600/30">
+          Wyczyść filtry
         </button>
       )}
     </div>
   );
 }
 
-// â”€â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
   const { data: session } = useSession();
@@ -320,7 +320,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
       setHasMore(incoming.length >= PAGE_SIZE);
       if (incoming.length > 0) pageRef.current = page + 1;
     } catch (e) {
-      setError(`Nie udaĹ‚o siÄ™ zaĹ‚adowaÄ‡. ${e instanceof Error ? e.message : ''}`);
+      setError(`Nie udało się załadować. ${e instanceof Error ? e.message : ''}`);
     } finally {
       setLoading(false); setLoadingMore(false);
     }
@@ -328,7 +328,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
 
   useEffect(() => { fetchFeed(socialFilter, sort, true); }, [socialFilter, sort, fetchFeed]);
 
-  // IntersectionObserver â€” auto-load when sentinel div enters viewport
+  // IntersectionObserver — auto-load when sentinel div enters viewport
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
@@ -398,7 +398,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
     if (!file) return;
     setImageLoading(true);
     try { setImageData(await resizeImageForPost(file)); }
-    catch (err) { setError(`BĹ‚Ä…d zdjÄ™cia. ${err instanceof Error ? err.message : ''}`); }
+    catch (err) { setError(`Błąd zdjęcia. ${err instanceof Error ? err.message : ''}`); }
     finally { setImageLoading(false); }
   }
 
@@ -406,7 +406,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
     if (submitting) return;
     const typeTag = POST_TYPES.find((t) => t.id === composeType)?.tag ?? '';
     const finalContent = content.trim() + typeTag;
-    if (!finalContent.trim() && !imageData) { setError('Dodaj tekst lub zdjÄ™cie.'); return; }
+    if (!finalContent.trim() && !imageData) { setError('Dodaj tekst lub zdjęcie.'); return; }
     setSubmitting(true);
     try {
       const body: Record<string, unknown> = {};
@@ -418,8 +418,8 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
       const post = await res.json();
       setPosts((p) => [post, ...p]);
       setContent(''); setImageData(null); setAttachLocation(false); setComposeOpen(false); setComposeType('normal');
-      showToast('Post opublikowany! âś“');
-    } catch (err) { setError(`BĹ‚Ä…d. ${err instanceof Error ? err.message : ''}`); }
+      showToast('Post opublikowany! ✓');
+    } catch (err) { setError(`Błąd. ${err instanceof Error ? err.message : ''}`); }
     finally { setSubmitting(false); }
   }
 
@@ -444,7 +444,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
       if (!res.ok) throw new Error();
       const data = await res.json();
       setAllComments((p) => ({ ...p, [postId]: Array.isArray(data?.data) ? data.data : [] }));
-    } catch { setError('Nie udaĹ‚o siÄ™ zaĹ‚adowaÄ‡ komentarzy.'); }
+    } catch { setError('Nie udało się załadować komentarzy.'); }
     finally { setCommentsLoading((p) => ({ ...p, [postId]: false })); }
   }
 
@@ -463,19 +463,19 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
       setAllComments((p) => ({ ...p, [postId]: [...(p[postId] ?? []), data.comment] }));
       setPosts((arr) => arr.map((p) => p.id === postId ? { ...p, commentCount: data.commentCount, comments: [data.comment, ...(p.comments ?? [])].slice(0, 2) } : p));
       setDraftComments((p) => ({ ...p, [postId]: '' }));
-    } catch (e) { setError(`BĹ‚Ä…d komentarza. ${e instanceof Error ? e.message : ''}`); }
+    } catch (e) { setError(`Błąd komentarza. ${e instanceof Error ? e.message : ''}`); }
     finally { setSubmittingComment(null); }
   }
 
   async function deletePost(postId: string) {
-    if (!confirm('UsunÄ…Ä‡ ten post?')) return;
+    if (!confirm('Usunąć ten post?')) return;
     setDeletingId(postId);
     try {
       const res = await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
       setPosts((arr) => arr.filter((p) => p.id !== postId));
-      showToast('Post usuniÄ™ty.');
-    } catch { setError('Nie udaĹ‚o siÄ™ usunÄ…Ä‡.'); }
+      showToast('Post usunięty.');
+    } catch { setError('Nie udało się usunąć.'); }
     finally { setDeletingId(null); }
   }
 
@@ -486,7 +486,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
       const data: { commentCount: number } = await res.json();
       setAllComments((p) => ({ ...p, [postId]: (p[postId] ?? []).filter((c) => c.id !== commentId) }));
       setPosts((arr) => arr.map((p) => p.id === postId ? { ...p, commentCount: data.commentCount, comments: p.comments.filter((c) => c.id !== commentId) } : p));
-    } catch { setError('Nie udaĹ‚o siÄ™ usunÄ…Ä‡ komentarza.'); }
+    } catch { setError('Nie udało się usunąć komentarza.'); }
   }
 
   async function sharePost(post: FeedPost) {
@@ -524,7 +524,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
           {(['new', 'hot'] as const).map((s) => (
             <button key={s} onClick={() => setSort(s)}
               className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition ${sort === s ? 'bg-card-bg text-foreground shadow-sm' : 'text-muted hover:text-foreground'}`}>
-              {s === 'new' ? 'Nowe' : 'đź”Ą Top'}
+              {s === 'new' ? 'Nowe' : '🔥 Top'}
             </button>
           ))}
         </div>
@@ -547,17 +547,17 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
       {/* Type filter chips */}
       <div className="flex gap-2 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
         {([
-          { id: 'all'      as const, label: 'Wszystko', icon: 'âś¦' },
-          { id: 'photo'    as const, label: 'ZdjÄ™cia',  icon: 'đź“·' },
-          { id: 'location' as const, label: 'Miejsca',  icon: 'đź“Ť' },
-          { id: 'near'     as const, label: 'Pobliskie', icon: 'đź§­' },
+          { id: 'all'      as const, label: 'Wszystko', icon: '✦' },
+          { id: 'photo'    as const, label: 'Zdjęcia',  icon: '📷' },
+          { id: 'location' as const, label: 'Miejsca',  icon: '📍' },
+          { id: 'near'     as const, label: 'Pobliskie', icon: '🧭' },
         ]).map((f) => (
           <button key={f.id}
             disabled={f.id === 'near' && !userLocation}
             onClick={() => setTypeFilter(f.id)}
             className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition disabled:opacity-40 ${
               typeFilter === f.id
-                ? 'border-orange-500 bg-accent/20 text-orange-400'
+                ? 'border-orange-500 bg-orange-600/20 text-orange-400'
                 : 'border-card-border bg-input-bg text-muted hover:text-foreground'
             }`}>
             <span>{f.icon}</span>{f.label}
@@ -573,7 +573,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
               <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
             </svg>
             <input autoFocus type="text" value={searchQuery} onChange={(e) => handleSearchInput(e.target.value)}
-              placeholder="Szukaj uĹĽytkownikaâ€¦"
+              placeholder="Szukaj użytkownika…"
               className="w-full rounded-xl border border-card-border bg-input-bg py-2 pl-10 pr-4 text-sm text-foreground placeholder-muted outline-none transition focus:border-orange-500" />
             {searchLoading && (
               <svg className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-orange-500" viewBox="0 0 24 24" fill="none">
@@ -585,7 +585,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
           {searchQuery.trim().length >= 2 && (
             <div className="mt-2">
               {!searchLoading && searchResults.length === 0
-                ? <p className="py-3 text-center text-xs text-muted">Brak wynikĂłw</p>
+                ? <p className="py-3 text-center text-xs text-muted">Brak wyników</p>
                 : <ul className="flex flex-col gap-1">
                     {searchResults.map((u) => (
                       <li key={u.id}>
@@ -612,8 +612,8 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
         <button onClick={() => setComposeOpen(true)}
           className="flex w-full items-center gap-3 rounded-2xl border border-card-border bg-card-bg px-4 py-3 text-left transition hover:border-orange-500/40">
           <Avatar src={session?.user?.image} name={session?.user?.name ?? '?'} size={36} />
-          <span className="flex-1 text-sm text-muted/70">Co u Ciebie? Podziel siÄ™ ze spoĹ‚ecznoĹ›ciÄ…â€¦</span>
-          <span className="rounded-lg bg-accent px-2.5 py-1 text-xs font-semibold text-accent-fg">+ Post</span>
+          <span className="flex-1 text-sm text-muted/70">Co u Ciebie? Podziel się ze społecznością…</span>
+          <span className="rounded-lg bg-orange-600 px-2.5 py-1 text-xs font-semibold text-white">+ Post</span>
         </button>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-card-border bg-card-bg">
@@ -622,7 +622,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
             {POST_TYPES.map((t) => (
               <button key={t.id} onClick={() => setComposeType(t.id)}
                 className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-semibold transition ${
-                  composeType === t.id ? 'bg-accent/10 text-orange-400 border-b-2 border-orange-500 -mb-px' : 'text-muted hover:text-foreground'
+                  composeType === t.id ? 'bg-orange-600/10 text-orange-400 border-b-2 border-orange-500 -mb-px' : 'text-muted hover:text-foreground'
                 }`}>
                 <span className="text-base leading-none">{t.icon}</span>
                 <span>{t.label}</span>
@@ -635,10 +635,10 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
               <div className="min-w-0 flex-1">
                 <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={3} maxLength={1000}
                   placeholder={
-                    composeType === 'route'  ? 'Opisz trasÄ™â€¦ #trasa #bmw' :
+                    composeType === 'route'  ? 'Opisz trasę… #trasa #bmw' :
                     composeType === 'record' ? 'Nowy rekord! Ile km/h? #rekord' :
-                    composeType === 'event'  ? 'Zapraszam na zlot! Data, miejsceâ€¦ #zlot' :
-                    'Co u Ciebie? Podziel siÄ™ trasÄ…, zdjÄ™ciem albo myĹ›lÄ…â€¦'
+                    composeType === 'event'  ? 'Zapraszam na zlot! Data, miejsce… #zlot' :
+                    'Co u Ciebie? Podziel się trasą, zdjęciem albo myślą…'
                   }
                   className="w-full resize-none rounded-xl border border-card-border bg-input-bg px-3 py-2 text-sm text-foreground placeholder-muted outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500" />
 
@@ -657,15 +657,15 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
                   <button type="button" onClick={() => fileInputRef.current?.click()} disabled={imageLoading}
                     className="flex items-center gap-1.5 rounded-lg border border-card-border bg-input-bg px-2.5 py-1.5 text-xs font-semibold text-muted transition hover:text-foreground disabled:opacity-50">
                     <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
-                    {imageLoading ? 'WczytujÄ™â€¦' : imageData ? 'ZmieĹ„' : 'ZdjÄ™cie'}
+                    {imageLoading ? 'Wczytuję…' : imageData ? 'Zmień' : 'Zdjęcie'}
                   </button>
                   <button type="button" onClick={() => setAttachLocation((v) => !v)} disabled={!userLocation}
-                    title={userLocation ? 'DoĹ‚Ä…cz lokalizacjÄ™' : 'Brak GPS'}
+                    title={userLocation ? 'Dołącz lokalizację' : 'Brak GPS'}
                     className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition disabled:opacity-50 ${
                       attachLocation ? 'border-emerald-500/40 bg-emerald-600/15 text-emerald-400' : 'border-card-border bg-input-bg text-muted hover:text-foreground'
                     }`}>
                     <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>
-                    {attachLocation ? 'GPS âś“' : 'Lokalizacja'}
+                    {attachLocation ? 'GPS ✓' : 'Lokalizacja'}
                   </button>
 
                   {/* circular char counter */}
@@ -686,8 +686,8 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
                     Anuluj
                   </button>
                   <button onClick={submitPost} disabled={submitting || (!content.trim() && !imageData)}
-                    className="flex-1 rounded-xl bg-accent py-2 text-xs font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-50">
-                    {submitting ? 'PublikujÄ™â€¦' : `${selectedType.icon} Opublikuj`}
+                    className="flex-1 rounded-xl bg-orange-600 py-2 text-xs font-semibold text-white transition hover:bg-orange-700 disabled:opacity-50">
+                    {submitting ? 'Publikuję…' : `${selectedType.icon} Opublikuj`}
                   </button>
                 </div>
               </div>
@@ -700,7 +700,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
       {error && (
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
           {error}
-          <button onClick={() => setError('')} className="ml-2 text-red-300 hover:text-red-200">âś•</button>
+          <button onClick={() => setError('')} className="ml-2 text-red-300 hover:text-red-200">✕</button>
         </div>
       )}
 
@@ -722,7 +722,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
             <path d="M12 19V5M5 12l7-7 7 7" />
           </svg>
-          Nowe posty â€” kliknij aby odĹ›wieĹĽyÄ‡
+          Nowe posty — kliknij aby odświeżyć
         </button>
       )}
 
@@ -764,10 +764,10 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
                       )}
                     </div>
                     <p className="flex flex-wrap items-center gap-x-1.5 text-[11px] text-muted">
-                      {post.user.carDisplay && <><span className="text-muted/80">{post.user.carDisplay}</span><span>Â·</span></>}
+                      {post.user.carDisplay && <><span className="text-muted/80">{post.user.carDisplay}</span><span>·</span></>}
                       <span>{timeAgo(post.createdAt)}</span>
                       {dist != null && (
-                        <><span>Â·</span>
+                        <><span>·</span>
                         <span className="inline-flex items-center gap-0.5 text-emerald-400">
                           <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" /></svg>
                           {dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`}
@@ -776,14 +776,14 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-0.5">
-                    <button onClick={() => sharePost(post)} title="UdostÄ™pnij"
+                    <button onClick={() => sharePost(post)} title="Udostępnij"
                       className="rounded-lg p-1.5 text-muted transition hover:bg-input-bg hover:text-foreground">
                       <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                         <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" />
                       </svg>
                     </button>
                     {isOwner ? (
-                      <button onClick={() => deletePost(post.id)} disabled={deletingId === post.id} title="UsuĹ„"
+                      <button onClick={() => deletePost(post.id)} disabled={deletingId === post.id} title="Usuń"
                         className="rounded-lg p-1.5 text-muted transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50">
                         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                           <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
@@ -815,7 +815,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
                   <div className="flex items-center justify-between px-4 py-1.5 text-[11px] text-muted">
                     {post.likeCount > 0 && (
                       <span className="flex items-center gap-1">
-                        <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-pink-600 text-[9px] text-white">â™Ą</span>
+                        <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-pink-600 text-[9px] text-white">♥</span>
                         {post.likeCount}
                       </span>
                     )}
@@ -834,7 +834,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
                     <svg className="h-4 w-4" viewBox="0 0 24 24" fill={post.myLiked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2}>
                       <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
                     </svg>
-                    {post.myLiked ? 'LubiÄ™' : 'Polub'}
+                    {post.myLiked ? 'Lubię' : 'Polub'}
                   </button>
                   <button onClick={() => toggleCommentsOpen(post.id)}
                     className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold text-muted transition hover:bg-input-bg hover:text-foreground">
@@ -848,7 +848,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
                     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                       <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" />
                     </svg>
-                    UdostÄ™pnij
+                    Udostępnij
                   </button>
                 </div>
 
@@ -878,7 +878,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
                               </div>
                               <p className="mt-0.5 whitespace-pre-wrap text-xs text-foreground">{c.content}</p>
                               {c.userId === myId && (
-                                <button onClick={() => deleteComment(post.id, c.id)} className="mt-1 text-[10px] text-muted hover:text-red-400">UsuĹ„</button>
+                                <button onClick={() => deleteComment(post.id, c.id)} className="mt-1 text-[10px] text-muted hover:text-red-400">Usuń</button>
                               )}
                             </div>
                           </li>
@@ -886,7 +886,7 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
                         {!open && post.commentCount > previewComments.length && (
                           <li>
                             <button onClick={() => toggleCommentsOpen(post.id)} className="text-[11px] font-semibold text-orange-400/70 hover:text-orange-400">
-                              PokaĹĽ wszystkie ({post.commentCount}) â†“
+                              Pokaż wszystkie ({post.commentCount}) ↓
                             </button>
                           </li>
                         )}
@@ -900,12 +900,12 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
                             value={draftComments[post.id] ?? ''}
                             onChange={(e) => setDraftComments((p) => ({ ...p, [post.id]: e.target.value }))}
                             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(post.id); } }}
-                            maxLength={500} placeholder="Napisz komentarzâ€¦"
+                            maxLength={500} placeholder="Napisz komentarz…"
                             className="flex-1 bg-transparent text-xs text-foreground placeholder-muted outline-none" />
                           <button onClick={() => submitComment(post.id)}
                             disabled={submittingComment === post.id || !(draftComments[post.id] ?? '').trim()}
-                            className="shrink-0 rounded-lg bg-accent px-2.5 py-1 text-xs font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-50">
-                            {submittingComment === post.id ? 'â€¦' : 'â†‘'}
+                            className="shrink-0 rounded-lg bg-orange-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-orange-700 disabled:opacity-50">
+                            {submittingComment === post.id ? '…' : '↑'}
                           </button>
                         </div>
                       </div>

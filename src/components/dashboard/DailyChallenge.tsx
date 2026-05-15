@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,51 +24,51 @@ interface DailyChallengeProps {
 
 const CHALLENGES: Challenge[] = [
   {
-    emoji: 'đź›Łď¸Ź',
-    title: 'Dzienna trasĂłwka',
-    description: 'PrzejedĹş 20 km dzisiaj',
+    emoji: '🛣️',
+    title: 'Dzienna trasówka',
+    description: 'Przejedź 20 km dzisiaj',
     xpReward: 150,
     check: (s) => ({ current: s.todayKm, target: 20 }),
   },
   {
-    emoji: 'đźš¨',
-    title: 'StraĹĽnik drĂłg',
+    emoji: '🚨',
+    title: 'Strażnik dróg',
     description: 'Dodaj 2 raporty drogowe',
     xpReward: 80,
     check: (s) => ({ current: s.todayReports, target: 2 }),
   },
   {
-    emoji: 'đźŹ',
-    title: 'PodrĂłĹĽnik',
-    description: 'UkoĹ„cz 2 podrĂłĹĽe',
+    emoji: '🏁',
+    title: 'Podróżnik',
+    description: 'Ukończ 2 podróże',
     xpReward: 100,
     check: (s) => ({ current: s.todayTripCount, target: 2 }),
   },
   {
-    emoji: 'đź”Ą',
+    emoji: '🔥',
     title: 'Utrzymaj streak',
-    description: 'BÄ…dĹş aktywny przez 3 dni z rzÄ™du',
+    description: 'Bądź aktywny przez 3 dni z rzędu',
     xpReward: 200,
     check: (s) => ({ current: s.streakCurrent, target: 3 }),
   },
   {
-    emoji: 'đźŚ„',
+    emoji: '🌄',
     title: 'Poranna trasa',
-    description: 'PrzejedĹş 10 km przed poĹ‚udniem',
+    description: 'Przejedź 10 km przed południem',
     xpReward: 120,
     check: (s) => ({ current: new Date().getHours() < 12 ? s.todayKm : 0, target: 10 }),
   },
   {
-    emoji: 'đź—şď¸Ź',
+    emoji: '🗺️',
     title: 'Odkrywca',
-    description: 'PrzejedĹş 50 km dzisiaj',
+    description: 'Przejedź 50 km dzisiaj',
     xpReward: 300,
     check: (s) => ({ current: s.todayKm, target: 50 }),
   },
   {
-    emoji: 'đźš—',
-    title: 'Aktywny dzieĹ„',
-    description: 'PrzejedĹş 3 trasy',
+    emoji: '🚗',
+    title: 'Aktywny dzień',
+    description: 'Przejedź 3 trasy',
     xpReward: 130,
     check: (s) => ({ current: s.todayTripCount, target: 3 }),
   },
@@ -146,12 +146,12 @@ export default function DailyChallenge({ stats }: DailyChallengeProps) {
                 whileTap={{ scale: 0.94 }}
                 onClick={handleClaim}
                 disabled={claiming}
-                className="shrink-0 flex items-center gap-1.5 rounded-xl bg-accent px-3 py-1.5 text-xs font-bold text-accent-fg shadow transition hover:opacity-90 disabled:opacity-60"
+                className="shrink-0 flex items-center gap-1.5 rounded-xl bg-accent px-3 py-1.5 text-xs font-bold text-white shadow transition hover:opacity-90 disabled:opacity-60"
               >
                 <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                   <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                 </svg>
-                {claiming ? 'â€¦' : `Odbierz +${challenge.xpReward}`}
+                {claiming ? '…' : `Odbierz +${challenge.xpReward}`}
               </motion.button>
             ) : (
               <motion.div

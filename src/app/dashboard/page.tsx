@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { Suspense, useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -36,7 +36,6 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import Link from 'next/link';
 import MapErrorBoundary from '@/components/map/MapErrorBoundary';
 import RouteCollectionsPanel from '@/components/routes/RouteCollectionsPanel';
-import MapWalkieTalkie from '@/components/map/MapWalkieTalkie';
 
 const MapView = dynamic(() => import('@/components/map/MapView'), {
   ssr: false,
@@ -47,7 +46,7 @@ const MapView = dynamic(() => import('@/components/map/MapView'), {
           <div className="absolute inset-0 rounded-full border-2 border-accent/30" />
           <div className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-accent" />
         </div>
-        <span className="text-xs text-muted">Ĺadowanie mapyâ€¦</span>
+        <span className="text-xs text-muted">Ładowanie mapy…</span>
       </div>
     </div>
   ),
@@ -59,16 +58,16 @@ type LayerKey = 'showReports' | 'showFuelStations' | 'showConvoyMembers' | 'show
 const LAYER_CONFIG: { key: LayerKey; label: string }[] = [
   { key: 'showReports', label: 'Raporty' },
   { key: 'showFuelStations', label: 'Stacje paliw' },
-  { key: 'showConvoyMembers', label: 'KonwĂłj' },
+  { key: 'showConvoyMembers', label: 'Konwój' },
   { key: 'showSpots', label: 'Spoty' },
   { key: 'showFriends', label: 'Znajomi' },
 ];
 
-// Bottom nav â€” 5 gĹ‚Ăłwnych tabĂłw
+// Bottom nav — 5 głównych tabów
 const NAV_ITEMS: { id: Tab; icon: React.ReactNode; label: string }[] = [
   {
     id: 'home',
-    label: 'GĹ‚Ăłwna',
+    label: 'Główna',
     icon: (
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 12l9-9 9 9" /><path d="M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10" />
@@ -86,7 +85,7 @@ const NAV_ITEMS: { id: Tab; icon: React.ReactNode; label: string }[] = [
   },
   {
     id: 'car',
-    label: 'KonwĂłj',
+    label: 'Konwój',
     icon: (
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <path d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
@@ -104,7 +103,7 @@ const NAV_ITEMS: { id: Tab; icon: React.ReactNode; label: string }[] = [
   },
   {
     id: 'feed',
-    label: 'SpoĹ‚ecznoĹ›Ä‡',
+    label: 'Społeczność',
     icon: (
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -115,10 +114,10 @@ const NAV_ITEMS: { id: Tab; icon: React.ReactNode; label: string }[] = [
 
 const SECTION_META: Record<Exclude<Tab, 'home' | 'map'>, { title: string; color: string }> = {
   profile: { title: 'Profil', color: 'bg-accent' },
-  car:     { title: 'KonwĂłj', color: 'bg-accent' },
+  car:     { title: 'Konwój', color: 'bg-accent' },
   routes:  { title: 'Trasy',  color: 'bg-accent' },
   friends: { title: 'Znajomi', color: 'bg-accent' },
-  feed:    { title: 'SpoĹ‚ecznoĹ›Ä‡', color: 'bg-accent' },
+  feed:    { title: 'Społeczność', color: 'bg-accent' },
 };
 
 const sectionVariants: Variants = {
@@ -271,11 +270,11 @@ function DashboardContent() {
                   <line x1="9" y1="9" x2="15" y2="15" /><line x1="15" y1="9" x2="9" y2="15" />
                 </svg>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-red-300">Lokalizacja niedostÄ™pna</p>
+                  <p className="text-xs font-semibold text-red-300">Lokalizacja niedostępna</p>
                   <p className="mt-0.5 text-[11px] leading-4 text-red-200/90">{geo.error}</p>
                   <div className="mt-2 flex gap-2">
                     <button onClick={() => geo.startTracking()} className="rounded-md bg-red-600 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-red-700">
-                      SprĂłbuj ponownie
+                      Spróbuj ponownie
                     </button>
                     <button onClick={() => setGeoBannerDismissed(true)} className="rounded-md border border-red-500/40 px-2.5 py-1 text-[11px] font-semibold text-red-200 transition hover:bg-red-500/10">
                       Ukryj
@@ -348,7 +347,7 @@ function DashboardContent() {
                     <div className="min-w-0">
                       <span className="text-xs font-semibold text-foreground">{mapToast.name}</span>
                       <span className="ml-1.5 text-xs text-muted">
-                        {mapToast.type === 'voice' ? 'wysĹ‚aĹ‚ gĹ‚osĂłwkÄ™' : 'napisaĹ‚ wiadomoĹ›Ä‡'}
+                        {mapToast.type === 'voice' ? 'wysłał głosówkę' : 'napisał wiadomość'}
                       </span>
                     </div>
                   </div>
@@ -380,136 +379,127 @@ function DashboardContent() {
                 )}
               </div>
 
-              <Link
-                href="/settings"
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-card-bg/90 shadow-lg backdrop-blur-md border border-card-border text-muted transition hover:text-foreground"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
-                </svg>
-              </Link>
-            </div>
-
-            {/* Right-side floating action buttons â€” stacked from bottom */}
-            <div className="absolute right-4 bottom-44 z-20 flex flex-col gap-2">
-              {/* Layer toggle */}
-              <div className="relative">
-                <button
-                  onClick={() => { setShowLayerMenu(!showLayerMenu); setShowAddReport(false); }}
-                  className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition ${
-                    showLayerMenu ? 'bg-accent text-accent-fg' : 'text-muted hover:text-foreground'
-                  }`}
-                  style={!showLayerMenu ? { backgroundColor: 'rgba(24,24,27,0.9)', border: '1px solid #3f3f46', backdropFilter: 'blur(8px)' } : {}}
-                  title="Warstwy mapy"
-                >
-                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
-                  </svg>
-                </button>
-                <AnimatePresence>
-                  {showLayerMenu && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.92, x: 8 }}
-                      animate={{ opacity: 1, scale: 1, x: 0 }}
-                      exit={{ opacity: 0, scale: 0.94, x: 8 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-                      className="absolute top-0 right-full mr-2 w-48 rounded-xl border border-card-border bg-card-bg/95 p-2 shadow-xl backdrop-blur-md"
-                    >
-                      {LAYER_CONFIG.map(({ key, label }) => (
-                        <button
-                          key={key}
-                          onClick={() => toggleLayer(key)}
-                          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition hover:bg-input-bg"
-                        >
-                          <span className={`flex h-5 w-5 items-center justify-center rounded border transition ${
-                            layerStates[key] ? 'border-accent bg-accent' : 'border-input-border bg-input-bg'
-                          }`}>
-                            {layerStates[key] && (
-                              <svg className="h-3 w-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
-                                <polyline points="20 6 9 17 4 12" />
-                              </svg>
-                            )}
-                          </span>
-                          <span className="text-foreground">{label}</span>
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Add report */}
-              <div className="relative">
-                <button
-                  onClick={() => { setShowAddReport(!showAddReport); setShowLayerMenu(false); }}
-                  className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition ${
-                    showAddReport ? 'bg-accent text-accent-fg' : 'text-muted hover:text-foreground'
-                  }`}
-                  style={!showAddReport ? { backgroundColor: 'rgba(24,24,27,0.9)', border: '1px solid #3f3f46', backdropFilter: 'blur(8px)' } : {}}
-                  title="Dodaj raport"
-                >
-                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <path d="M12 9v3m0 0v3m0-3h3m-3 0H9" />
-                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                  </svg>
-                </button>
-                <AnimatePresence>
-                  {showAddReport && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.92, x: 8 }}
-                      animate={{ opacity: 1, scale: 1, x: 0 }}
-                      exit={{ opacity: 0, scale: 0.94, x: 8 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-                      className="absolute top-0 right-full mr-2 w-72 rounded-2xl border border-card-border bg-card-bg/95 p-4 shadow-xl backdrop-blur-md"
-                    >
-                      <div className="mb-3 flex items-center justify-between">
-                        <h3 className="text-sm font-semibold text-foreground">Dodaj raport</h3>
-                        <button onClick={() => setShowAddReport(false)} className="rounded-lg p-1 text-muted hover:text-foreground">
-                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                            <path d="M18 6L6 18M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        {[
-                          { label: 'Policja', type: 'POLICE', emoji: 'đźš”' },
-                          { label: 'Tajniaki', type: 'UNMARKED_POLICE', emoji: 'đź•µď¸Ź' },
-                          { label: 'Kontrola prÄ™dkoĹ›ci', type: 'SPEED_TRAP', emoji: 'đź“Ź' },
-                          { label: 'Wypadek', type: 'ACCIDENT', emoji: 'đźš¨' },
-                          { label: 'ZagroĹĽenie', type: 'OBSTACLE', emoji: 'âš ď¸Ź' },
-                          { label: 'Fotoradar', type: 'SPEED_CAMERA', emoji: 'đź“·' },
-                        ].map((report) => (
+              <div className="flex items-center gap-2">
+                {/* Layer toggle */}
+                <div className="relative">
+                  <button
+                    onClick={() => { setShowLayerMenu(!showLayerMenu); setShowAddReport(false); }}
+                    className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition ${
+                      showLayerMenu ? 'bg-accent text-accent-fg' : 'bg-card-bg/90 text-muted border border-card-border backdrop-blur-md hover:text-foreground'
+                    }`}
+                  >
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                      <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+                    </svg>
+                  </button>
+                  <AnimatePresence>
+                    {showLayerMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.92, y: -4 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.94, y: -4 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                        className="absolute top-full right-0 mt-2 w-48 rounded-xl border border-card-border bg-card-bg/95 p-2 shadow-xl backdrop-blur-md"
+                      >
+                        {LAYER_CONFIG.map(({ key, label }) => (
                           <button
-                            key={report.type}
-                            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition hover:bg-input-bg"
-                            onClick={() => submitReport(report.type)}
+                            key={key}
+                            onClick={() => toggleLayer(key)}
+                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition hover:bg-input-bg"
                           >
-                            <span className="text-base">{report.emoji}</span>
-                            {report.label}
+                            <span className={`flex h-5 w-5 items-center justify-center rounded border transition ${
+                              layerStates[key] ? 'border-accent bg-accent' : 'border-input-border bg-input-bg'
+                            }`}>
+                              {layerStates[key] && (
+                                <svg className="h-3 w-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              )}
+                            </span>
+                            <span className="text-foreground">{label}</span>
                           </button>
                         ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Add report */}
+                <div className="relative">
+                  <button
+                    onClick={() => { setShowAddReport(!showAddReport); setShowLayerMenu(false); }}
+                    className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition ${
+                      showAddReport ? 'bg-accent text-accent-fg' : 'bg-card-bg/90 text-muted border border-card-border backdrop-blur-md hover:text-foreground'
+                    }`}
+                  >
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                      <path d="M12 9v3m0 0v3m0-3h3m-3 0H9" />
+                      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                    </svg>
+                  </button>
+                  <AnimatePresence>
+                    {showAddReport && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.92, y: -4 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.94, y: -4 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                        className="absolute top-full right-0 mt-2 w-72 rounded-2xl border border-card-border bg-card-bg/95 p-4 shadow-xl backdrop-blur-md"
+                      >
+                        <div className="mb-3 flex items-center justify-between">
+                          <h3 className="text-sm font-semibold text-foreground">Dodaj raport</h3>
+                          <button onClick={() => setShowAddReport(false)} className="rounded-lg p-1 text-muted hover:text-foreground">
+                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                              <path d="M18 6L6 18M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          {[
+                            { label: 'Policja', type: 'POLICE', emoji: '🚔' },
+                            { label: 'Tajniaki', type: 'UNMARKED_POLICE', emoji: '🕵️' },
+                            { label: 'Kontrola prędkości', type: 'SPEED_TRAP', emoji: '📏' },
+                            { label: 'Wypadek', type: 'ACCIDENT', emoji: '🚨' },
+                            { label: 'Zagrożenie', type: 'OBSTACLE', emoji: '⚠️' },
+                            { label: 'Fotoradar', type: 'SPEED_CAMERA', emoji: '📷' },
+                          ].map((report) => (
+                            <button
+                              key={report.type}
+                              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition hover:bg-input-bg"
+                              onClick={() => submitReport(report.type)}
+                            >
+                              <span className="text-base">{report.emoji}</span>
+                              {report.label}
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Create spot */}
+                <button
+                  onClick={() => { setShowCreateSpot(true); setShowAddReport(false); setShowLayerMenu(false); }}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-card-bg/90 text-muted border border-card-border backdrop-blur-md shadow-lg transition hover:text-foreground"
+                  title="Stwórz spot"
+                >
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                </button>
+
+                <Link
+                  href="/settings"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-card-bg/90 shadow-lg backdrop-blur-md border border-card-border text-muted transition hover:text-foreground"
+                >
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+                  </svg>
+                </Link>
               </div>
-
-              {/* Create spot */}
-              <button
-                onClick={() => { setShowCreateSpot(true); setShowAddReport(false); setShowLayerMenu(false); }}
-                className="flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition text-muted hover:text-foreground"
-                style={{ backgroundColor: 'rgba(24,24,27,0.9)', border: '1px solid #3f3f46', backdropFilter: 'blur(8px)' }}
-                title="StwĂłrz spot"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-              </button>
-
-              {/* Walkie-talkie */}
-              <MapWalkieTalkie />
             </div>
           </motion.div>
         )}
@@ -571,7 +561,7 @@ function DashboardContent() {
                             />
                           )}
                           <span className="relative">
-                            {t === 'settings' ? 'âš™ď¸Ź Ustawienia' : 'đź“Š Statystyki'}
+                            {t === 'settings' ? '⚙️ Ustawienia' : '📊 Statystyki'}
                           </span>
                         </button>
                       ))}
@@ -608,7 +598,7 @@ function DashboardContent() {
                             />
                           )}
                           <span className="relative">
-                            {t === 'convoy' ? 'đź‘Ą KonwĂłj' : 'đźš— GaraĹĽ'}
+                            {t === 'convoy' ? '👥 Konwój' : '🚗 Garaż'}
                           </span>
                         </button>
                       ))}
@@ -668,7 +658,7 @@ function DashboardContent() {
                             />
                           )}
                           <span className="relative">
-                            {t === 'routes' ? 'đź—şď¸Ź Trasy' : t === 'trips' ? 'đźŹ Historia' : 'đź“ Kolekcje'}
+                            {t === 'routes' ? '🗺️ Trasy' : t === 'trips' ? '🏁 Historia' : '📁 Kolekcje'}
                           </span>
                         </button>
                       ))}
@@ -714,7 +704,7 @@ function DashboardContent() {
                             />
                           )}
                           <span className="relative">
-                            {t === 'feed' ? 'đź“° AktywnoĹ›Ä‡' : 'đźŹ Eventy'}
+                            {t === 'feed' ? '📰 Aktywność' : '🏁 Eventy'}
                           </span>
                         </button>
                       ))}
@@ -753,7 +743,7 @@ function DashboardContent() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={async () => {
-                            const text = 'Hej! DoĹ‚Ä…cz do mnie na DriveApp â€” aplikacji dla kierowcĂłw đźš—';
+                            const text = 'Hej! Dołącz do mnie na DriveApp — aplikacji dla kierowców 🚗';
                             if (navigator.share) {
                               await navigator.share({ title: 'DriveApp', text }).catch(() => {});
                             } else {
@@ -761,16 +751,16 @@ function DashboardContent() {
                             }
                           }}
                           className="flex items-center gap-1.5 rounded-lg border border-card-border px-3 py-1.5 text-xs font-medium text-muted transition hover:text-foreground"
-                          title="ZaproĹ› znajomego"
+                          title="Zaproś znajomego"
                         >
                           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                             <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" />
                           </svg>
-                          ZaproĹ›
+                          Zaproś
                         </button>
                         <button
                           onClick={() => setShowAddFriend(true)}
-                          className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accent-fg transition hover:opacity-90"
+                          className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
                         >
                           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                             <path d="M12 5v14M5 12h14" />
@@ -845,7 +835,7 @@ function DashboardContent() {
           onShowEvents={() => { setActiveTab('feed'); setFeedSubTab('events'); setSearchOpen(false); }}
         />
 
-        {/* BOTTOM NAV â€” 5 tabĂłw */}
+        {/* BOTTOM NAV — 5 tabów */}
         {!isMapMode && !createRouteOpen && (
           <div className="absolute bottom-0 left-0 right-0 z-30">
             <div className="mx-3 mb-5 overflow-hidden rounded-2xl border border-card-border bg-card-bg/95 shadow-2xl backdrop-blur-xl">

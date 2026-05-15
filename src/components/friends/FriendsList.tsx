@@ -53,7 +53,7 @@ export default function FriendsList() {
     return (
       <div className="flex items-center justify-center py-12">
         <svg
-          className="h-6 w-6 animate-spin text-blue-500"
+          className="h-6 w-6 animate-spin text-accent"
           viewBox="0 0 24 24"
           fill="none"
         >

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -111,13 +111,13 @@ export default function EventPanel() {
       });
       if (!res.ok) {
         const json = await res.json();
-        throw new Error(json.error?.formErrors?.[0] ?? 'BĹ‚Ä…d tworzenia');
+        throw new Error(json.error?.formErrors?.[0] ?? 'Błąd tworzenia');
       }
       setForm(EMPTY_FORM);
       setShowCreate(false);
       await fetchEvents();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'BĹ‚Ä…d tworzenia');
+      setError(err instanceof Error ? err.message : 'Błąd tworzenia');
     }
     setSaving(false);
   }
@@ -132,17 +132,17 @@ export default function EventPanel() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-base font-bold text-foreground">Eventy motoryzacyjne</h3>
-          <p className="text-xs text-muted">ZnajdĹş meetupy w swoim regionie</p>
+          <p className="text-xs text-muted">Znajdź meetupy w swoim regionie</p>
         </div>
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => { setShowCreate(!showCreate); setError(null); }}
-          className="flex items-center gap-1.5 rounded-xl bg-accent px-3 py-2 text-xs font-semibold text-accent-fg shadow-lg transition hover:opacity-90"
+          className="flex items-center gap-1.5 rounded-xl bg-accent px-3 py-2 text-xs font-semibold text-white shadow-lg transition hover:opacity-90"
         >
           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
             <path d="M12 5v14M5 12h14" />
           </svg>
-          UtwĂłrz
+          Utwórz
         </motion.button>
       </div>
 
@@ -178,14 +178,14 @@ export default function EventPanel() {
                     rows={2}
                     value={form.description}
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
-                    placeholder="Opisz eventâ€¦"
+                    placeholder="Opisz event…"
                     className="w-full resize-none rounded-xl border border-input-border bg-input-bg px-3 py-2.5 text-sm text-foreground outline-none focus:border-accent"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block text-xs text-muted">Data rozpoczÄ™cia *</label>
+                    <label className="mb-1 block text-xs text-muted">Data rozpoczęcia *</label>
                     <input
                       required
                       type="datetime-local"
@@ -196,7 +196,7 @@ export default function EventPanel() {
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs text-muted">Data zakoĹ„czenia</label>
+                    <label className="mb-1 block text-xs text-muted">Data zakończenia</label>
                     <input
                       type="datetime-local"
                       min={form.startAt || nowLocal}
@@ -218,7 +218,7 @@ export default function EventPanel() {
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs text-muted">Maks. uczestnikĂłw</label>
+                    <label className="mb-1 block text-xs text-muted">Maks. uczestników</label>
                     <input
                       type="number"
                       min={1}
@@ -231,7 +231,7 @@ export default function EventPanel() {
                 </div>
 
                 <p className="text-[11px] text-muted">
-                  Lokalizacja eventu zostanie ustawiona na TwojÄ… aktualnÄ… pozycjÄ™ GPS.
+                  Lokalizacja eventu zostanie ustawiona na Twoją aktualną pozycję GPS.
                 </p>
               </div>
 
@@ -242,9 +242,9 @@ export default function EventPanel() {
                   whileTap={{ scale: 0.97 }}
                   type="submit"
                   disabled={saving}
-                  className="flex-1 rounded-xl bg-accent py-2.5 text-sm font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-50"
+                  className="flex-1 rounded-xl bg-accent py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
                 >
-                  {saving ? 'Tworzenieâ€¦' : 'UtwĂłrz event'}
+                  {saving ? 'Tworzenie…' : 'Utwórz event'}
                 </motion.button>
                 <button
                   type="button"
@@ -270,10 +270,10 @@ export default function EventPanel() {
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-card-border bg-card-bg/50 py-12 text-center"
         >
-          <span className="text-5xl">đźŹ</span>
+          <span className="text-5xl">🏁</span>
           <div>
-            <p className="text-sm font-semibold text-foreground">Brak eventĂłw w pobliĹĽu</p>
-            <p className="mt-1 text-xs text-muted">BÄ…dĹş pierwszy i stwĂłrz event dla lokalnej sceny!</p>
+            <p className="text-sm font-semibold text-foreground">Brak eventów w pobliżu</p>
+            <p className="mt-1 text-xs text-muted">Bądź pierwszy i stwórz event dla lokalnej sceny!</p>
           </div>
         </motion.div>
       ) : (
@@ -310,7 +310,7 @@ export default function EventPanel() {
                       'bg-card-border/50 text-muted'
                     }`}>
                       <div className="text-sm font-bold tabular-nums leading-tight">
-                        {days <= 0 ? 'DziĹ›' : days === 1 ? '1' : days}
+                        {days <= 0 ? 'Dziś' : days === 1 ? '1' : days}
                       </div>
                       {days > 1 && <div className="text-[10px] leading-tight">dni</div>}
                     </div>
@@ -319,17 +319,17 @@ export default function EventPanel() {
                   {/* Meta */}
                   <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
                     <span className="flex items-center gap-1">
-                      <span>đź“…</span>
+                      <span>📅</span>
                       {formatEventDate(event.startAt)}
                     </span>
                     {event.locationName && (
                       <span className="flex items-center gap-1">
-                        <span>đź“Ť</span>
+                        <span>📍</span>
                         {event.locationName}
                       </span>
                     )}
                     <span className="flex items-center gap-1">
-                      <span>đź‘Ą</span>
+                      <span>👥</span>
                       {event._count.attendees}
                       {event.maxAttendees ? ` / ${event.maxAttendees}` : ''}
                       {' '}idzie
@@ -348,7 +348,7 @@ export default function EventPanel() {
                           : 'bg-card-border/50 text-muted hover:text-foreground hover:bg-card-border'
                       } disabled:opacity-50`}
                     >
-                      {isGoing ? 'âś“ IdÄ™' : 'IdÄ™'}
+                      {isGoing ? '✓ Idę' : 'Idę'}
                     </motion.button>
                     <motion.button
                       whileTap={{ scale: 0.95 }}
@@ -360,7 +360,7 @@ export default function EventPanel() {
                           : 'bg-card-border/50 text-muted hover:text-foreground hover:bg-card-border'
                       } disabled:opacity-50`}
                     >
-                      {isMaybe ? '? MoĹĽe' : 'MoĹĽe'}
+                      {isMaybe ? '? Może' : 'Może'}
                     </motion.button>
                   </div>
                 </div>

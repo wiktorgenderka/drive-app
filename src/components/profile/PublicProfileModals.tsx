@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useCallback, useEffect, useState } from 'react';
 import ReportAbuseButton from '@/components/ui/ReportAbuseButton';
@@ -62,7 +62,7 @@ export function MiniProfileModal({ open, user, context, onClose, onOpenFull }: M
                 <span className="truncate">{user.carDisplay}</span>
               </p>
             ) : (
-              <p className="mt-0.5 text-[11px] italic text-muted">Brak informacji o pojeĹşdzie</p>
+              <p className="mt-0.5 text-[11px] italic text-muted">Brak informacji o pojeździe</p>
             )}
           </div>
         </div>
@@ -100,9 +100,9 @@ export function MiniProfileModal({ open, user, context, onClose, onOpenFull }: M
           </button>
           <button
             onClick={() => onOpenFull(user.id)}
-            className="flex-1 rounded-xl bg-accent py-2 text-xs font-semibold text-accent-fg transition hover:opacity-90"
+            className="flex-1 rounded-xl bg-orange-600 py-2 text-xs font-semibold text-white transition hover:bg-orange-700"
           >
-            PeĹ‚ny profil
+            Pełny profil
           </button>
         </div>
       </div>
@@ -294,7 +294,7 @@ export function UserProfileView({ userId, onBack }: ViewProps) {
       }
       reload();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'BĹ‚Ä…d akcji znajomych.');
+      setError(e instanceof Error ? e.message : 'Błąd akcji znajomych.');
     } finally {
       setFriendActionLoading(false);
     }
@@ -329,7 +329,7 @@ export function UserProfileView({ userId, onBack }: ViewProps) {
           <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>
           {onBack && (
             <button onClick={onBack} className="mt-3 text-xs text-muted hover:text-foreground">
-              â† WrĂłÄ‡
+              ← Wróć
             </button>
           )}
         </div>
@@ -357,7 +357,7 @@ export function UserProfileView({ userId, onBack }: ViewProps) {
                     <button
                       onClick={handleBlock}
                       disabled={blockLoading}
-                      title={isBlocked ? 'Odblokuj uĹĽytkownika' : 'Zablokuj uĹĽytkownika'}
+                      title={isBlocked ? 'Odblokuj użytkownika' : 'Zablokuj użytkownika'}
                       className={`flex h-9 w-9 items-center justify-center rounded-xl border transition ${
                         isBlocked
                           ? 'border-red-500/50 bg-red-500/10 text-red-400 hover:bg-red-500/20'
@@ -420,7 +420,7 @@ export function UserProfileView({ userId, onBack }: ViewProps) {
               {/* Achievements */}
               {data.achievements.length > 0 && (
                 <div className="mt-4">
-                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted">OsiÄ…gniÄ™cia</p>
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted">Osiągnięcia</p>
                   <div className="flex flex-wrap gap-1.5">
                     {data.achievements.map((a) => (
                       <span
@@ -459,7 +459,7 @@ export function UserProfileView({ userId, onBack }: ViewProps) {
                 {tab === 'records' && (
                   data.records.length === 0 ? (
                     <p className="rounded-xl bg-input-bg px-3 py-3 text-center text-xs text-muted">
-                      Brak rekordĂłw na publicznych trasach
+                      Brak rekordów na publicznych trasach
                     </p>
                   ) : (
                     <ol className="flex flex-col gap-1.5">
@@ -489,7 +489,7 @@ export function UserProfileView({ userId, onBack }: ViewProps) {
                     <ol className="flex flex-col gap-1.5">
                       {data.publishedRoutes.map((r) => (
                         <li key={r.id} className="flex items-center gap-2.5 rounded-xl bg-input-bg px-3 py-2">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/20 text-indigo-400">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-600/20 text-indigo-400">
                             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                               <circle cx="12" cy="12" r="10" />
                               <path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" />
@@ -498,7 +498,7 @@ export function UserProfileView({ userId, onBack }: ViewProps) {
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-xs font-semibold text-foreground">{r.name}</p>
                             <p className="text-[10px] text-muted">
-                              {r._count.times} przejazdĂłw â€˘ {r._count.imports} importĂłw
+                              {r._count.times} przejazdów • {r._count.imports} importów
                             </p>
                           </div>
                           {r.ratingCount > 0 ? (
@@ -509,7 +509,7 @@ export function UserProfileView({ userId, onBack }: ViewProps) {
                               {(r.avgRating ?? 0).toFixed(1)}
                             </span>
                           ) : (
-                            <span className="text-[10px] text-muted">â€”</span>
+                            <span className="text-[10px] text-muted">—</span>
                           )}
                         </li>
                       ))}
@@ -521,18 +521,18 @@ export function UserProfileView({ userId, onBack }: ViewProps) {
                   <div className="flex flex-col gap-3">
                     <div className="grid grid-cols-4 gap-2">
                       <Stat label="Rekordy" value={data.stats.totalRoutes} />
-                      <Stat label="PrĂłby" value={data.stats.totalAttempts} />
+                      <Stat label="Próby" value={data.stats.totalAttempts} />
                       <Stat label="Podia" value={data.stats.podiums} />
-                      <Stat label="ZĹ‚ota" value={data.stats.wins} accent />
+                      <Stat label="Złota" value={data.stats.wins} accent />
                     </div>
                     <div className="rounded-xl border border-card-border bg-input-bg p-3">
-                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted">Statystyki podrĂłĹĽy</p>
+                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted">Statystyki podróży</p>
                       <div className="grid grid-cols-2 gap-2 text-xs">
-                        <Row label="ĹÄ…czny dystans" value={formatKm(data.tripStats.totalKm)} />
+                        <Row label="Łączny dystans" value={formatKm(data.tripStats.totalKm)} />
                         <Row label="Czas w drodze" value={formatHours(data.tripStats.totalMinutes)} />
-                        <Row label="Max prÄ™dkoĹ›Ä‡" value={`${Math.round(data.tripStats.maxSpeedKmh)} km/h`} />
-                        <Row label="Ĺšrednia prÄ™dkoĹ›Ä‡" value={`${data.tripStats.avgSpeedKmh.toFixed(1)} km/h`} />
-                        <Row label="Liczba przejazdĂłw" value={String(data.tripStats.tripCount)} />
+                        <Row label="Max prędkość" value={`${Math.round(data.tripStats.maxSpeedKmh)} km/h`} />
+                        <Row label="Średnia prędkość" value={`${data.tripStats.avgSpeedKmh.toFixed(1)} km/h`} />
+                        <Row label="Liczba przejazdów" value={String(data.tripStats.tripCount)} />
                         <Row label="Trasy publiczne" value={String(data.stats.publishedRoutes)} />
                       </div>
                     </div>
@@ -557,7 +557,7 @@ function Row({ label, value }: { label: string; value: string }) {
 
 function Stat({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
   return (
-    <div className={`rounded-xl px-2 py-2 text-center ${accent ? 'bg-accent/15' : 'bg-input-bg'}`}>
+    <div className={`rounded-xl px-2 py-2 text-center ${accent ? 'bg-orange-600/15' : 'bg-input-bg'}`}>
       <p className={`text-base font-bold ${accent ? 'text-orange-400' : 'text-foreground'}`}>{value}</p>
       <p className="text-[10px] uppercase tracking-wider text-muted">{label}</p>
     </div>
@@ -579,7 +579,7 @@ function FriendButton({
       case 'friend':
         return { label: 'Znajomi', cls: 'bg-emerald-600/20 text-emerald-400 cursor-default', disabled: true };
       case 'pending_out':
-        return { label: 'WysĹ‚ano', cls: 'bg-input-bg text-muted cursor-default', disabled: true };
+        return { label: 'Wysłano', cls: 'bg-input-bg text-muted cursor-default', disabled: true };
       case 'pending_in':
         return { label: 'Akceptuj zaproszenie', cls: 'bg-accent text-accent-fg hover:opacity-90', disabled: false };
       default:
@@ -592,7 +592,7 @@ function FriendButton({
       disabled={loading || config.disabled}
       className={`mb-1 rounded-xl px-3 py-1.5 text-[11px] font-semibold transition disabled:opacity-70 ${config.cls}`}
     >
-      {loading ? 'â€¦' : config.label}
+      {loading ? '…' : config.label}
     </button>
   );
 }

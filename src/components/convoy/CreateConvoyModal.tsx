@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, type FormEvent } from 'react';
 
@@ -33,14 +33,14 @@ export default function CreateConvoyModal({
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error ?? 'Nie udaĹ‚o siÄ™ utworzyÄ‡ konwoju.');
+        setError(data.error ?? 'Nie udało się utworzyć konwoju.');
         return;
       }
 
       setName('');
       onCreated?.();
     } catch {
-      setError('WystÄ…piĹ‚ nieoczekiwany bĹ‚Ä…d.');
+      setError('Wystąpił nieoczekiwany błąd.');
     } finally {
       setLoading(false);
     }
@@ -57,7 +57,7 @@ export default function CreateConvoyModal({
     >
       <div className="w-full max-w-md rounded-2xl border border-card-border bg-card-bg p-6 shadow-2xl">
         <div className="mb-5 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-foreground">Nowy konwĂłj</h3>
+          <h3 className="text-lg font-semibold text-foreground">Nowy konwój</h3>
           <button
             onClick={onClose}
             className="rounded-lg p-1.5 text-muted transition hover:bg-input-bg hover:text-foreground"
@@ -104,7 +104,7 @@ export default function CreateConvoyModal({
             <button
               type="submit"
               disabled={loading}
-              className="flex flex-1 items-center justify-center rounded-xl bg-accent py-2.5 text-sm font-medium text-accent-fg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex flex-1 items-center justify-center rounded-xl bg-emerald-600 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? (
                 <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -112,7 +112,7 @@ export default function CreateConvoyModal({
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
               ) : (
-                'UtwĂłrz konwĂłj'
+                'Utwórz konwój'
               )}
             </button>
           </div>

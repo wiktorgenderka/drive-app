@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,7 +19,7 @@ const RARITY_CONFIG: Record<Achievement['rarity'], {
   label: string; gradient: string; border: string; badge: string;
 }> = {
   COMMON:    { label: 'Pospolite',   gradient: 'from-zinc-600 to-zinc-500',      border: 'border-zinc-500/30',   badge: 'bg-zinc-500/20 text-zinc-300' },
-  RARE:      { label: 'Rzadkie',     gradient: 'from-blue-600 to-blue-500',      border: 'border-accent/30',   badge: 'bg-blue-500/20 text-blue-300' },
+  RARE:      { label: 'Rzadkie',     gradient: 'from-blue-600 to-blue-500',      border: 'border-blue-500/30',   badge: 'bg-blue-500/20 text-blue-300' },
   EPIC:      { label: 'Epickie',     gradient: 'from-purple-600 to-fuchsia-500', border: 'border-purple-500/30', badge: 'bg-purple-500/20 text-purple-300' },
   LEGENDARY: { label: 'Legendarne', gradient: 'from-yellow-500 to-amber-400',   border: 'border-yellow-500/40', badge: 'bg-yellow-500/20 text-yellow-300' },
 };
@@ -34,7 +34,7 @@ export default function AchievementsPanel() {
   const [sharedKey, setSharedKey] = useState<string | null>(null);
 
   const shareAchievement = useCallback(async (ach: Achievement) => {
-    const text = `ZdobyĹ‚em odznakÄ™ ${ach.emoji} "${ach.name}" w DriveApp! ${ach.description} (+${ach.xpReward} XP)`;
+    const text = `Zdobyłem odznakę ${ach.emoji} "${ach.name}" w DriveApp! ${ach.description} (+${ach.xpReward} XP)`;
     setSharingKey(ach.key);
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
@@ -89,8 +89,8 @@ export default function AchievementsPanel() {
     { id: 'all', label: 'Wszystkie' },
     { id: 'unlocked', label: `Odblokowane (${unlockedCount})` },
     { id: 'locked', label: 'Zablokowane' },
-    { id: 'LEGENDARY', label: 'â­ Legendarne' },
-    { id: 'EPIC', label: 'đźźŁ Epickie' },
+    { id: 'LEGENDARY', label: '⭐ Legendarne' },
+    { id: 'EPIC', label: '🟣 Epickie' },
   ];
 
   return (
@@ -98,7 +98,7 @@ export default function AchievementsPanel() {
       {/* Progress summary */}
       <div className="rounded-2xl border border-card-border bg-card-bg p-4">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-sm font-semibold text-foreground">PostÄ™p odznak</p>
+          <p className="text-sm font-semibold text-foreground">Postęp odznak</p>
           <span className="text-sm font-bold text-accent">{unlockedCount}/{totalCount}</span>
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-input-bg">
@@ -191,7 +191,7 @@ export default function AchievementsPanel() {
                     onClick={() => shareAchievement(ach)}
                     disabled={sharingKey === ach.key}
                     className="ml-auto shrink-0 rounded-lg p-1 text-muted transition hover:text-foreground disabled:opacity-50"
-                    title="UdostÄ™pnij odznakÄ™"
+                    title="Udostępnij odznakę"
                   >
                     <AnimatePresence mode="wait">
                       {sharedKey === ach.key ? (
@@ -219,7 +219,7 @@ export default function AchievementsPanel() {
 
       {sorted.length === 0 && (
         <div className="flex flex-col items-center gap-3 py-12 text-center">
-          <span className="text-4xl">đź”’</span>
+          <span className="text-4xl">🔒</span>
           <p className="text-sm font-semibold text-foreground">Brak odznak w tej kategorii</p>
         </div>
       )}

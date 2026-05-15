@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
@@ -71,7 +71,7 @@ export default function ConvoyChat({ convoyId }: ConvoyChatProps) {
     <div className="flex flex-col" style={{ height: 300 }}>
       <div className="flex-1 overflow-y-auto space-y-2 p-3">
         {messages.length === 0 && (
-          <p className="text-center text-xs text-muted pt-8">Brak wiadomoĹ›ci. Rozpocznij czat!</p>
+          <p className="text-center text-xs text-muted pt-8">Brak wiadomości. Rozpocznij czat!</p>
         )}
         {messages.map((msg, i) => {
           const isMe = msg.userId === currentUserId;
@@ -102,14 +102,14 @@ export default function ConvoyChat({ convoyId }: ConvoyChatProps) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') sendMessage(); }}
-          placeholder="Wpisz wiadomoĹ›Ä‡..."
+          placeholder="Wpisz wiadomość..."
           maxLength={500}
           className="flex-1 rounded-xl border border-card-border bg-input-bg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-emerald-500"
         />
         <button
           onClick={sendMessage}
           disabled={!input.trim()}
-          className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-accent-fg transition hover:opacity-90 disabled:opacity-40"
+          className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-accent-fg transition hover:bg-emerald-700 disabled:opacity-40"
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
             <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" />

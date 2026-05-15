@@ -1,8 +1,8 @@
-﻿import type { Metadata } from 'next';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'DriveApp â€” Zaloguj siÄ™',
-  description: 'Zaloguj siÄ™ do DriveApp â€” aplikacji dla kierowcĂłw z mapÄ…, konwojami i zgĹ‚oszeniami drogowymi.',
+  title: 'DriveApp — Zaloguj się',
+  description: 'Zaloguj się do DriveApp — aplikacji dla kierowców z mapą, konwojami i zgłoszeniami drogowymi.',
 };
 
 export default function AuthLayout({

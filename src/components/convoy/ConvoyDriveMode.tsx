@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
@@ -147,7 +147,7 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
       });
     })
     .on('broadcast', { event: 'convoy-voice' }, () => {
-      // Audio data is in DB â€” reload messages to get the new voice message
+      // Audio data is in DB — reload messages to get the new voice message
       loadMessages();
     })
     .on('broadcast', { event: 'convoy-message-delete' }, ({ payload }: { payload: { messageId: string } }) => {
@@ -246,7 +246,7 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
 
     try {
       if (!navigator.mediaDevices?.getUserMedia) {
-        setMicError('Twoja przeglÄ…darka nie obsĹ‚uguje mikrofonu.');
+        setMicError('Twoja przeglądarka nie obsługuje mikrofonu.');
         isStartingRef.current = false;
         return;
       }
@@ -308,7 +308,7 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id, type: 'voice', audioData: base64, mimeType: actualMimeType, duration }),
           }).catch(() => {});
-          // Notify others (no audio data â€” they reload from DB)
+          // Notify others (no audio data — they reload from DB)
           chRef.current?.send({ type: 'broadcast', event: 'convoy-voice', payload: { id, userId: voiceMsg.userId, name: voiceMsg.name, duration, timestamp: voiceMsg.timestamp } });
         };
         reader.readAsDataURL(blob);
@@ -335,11 +335,11 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
       }
       const name = (err as { name?: string })?.name;
       if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
-        setMicError('Brak dostÄ™pu do mikrofonu. ZezwĂłl w ustawieniach przeglÄ…darki.');
+        setMicError('Brak dostępu do mikrofonu. Zezwól w ustawieniach przeglądarki.');
       } else if (name === 'NotFoundError') {
-        setMicError('Nie znaleziono mikrofonu w urzÄ…dzeniu.');
+        setMicError('Nie znaleziono mikrofonu w urządzeniu.');
       } else {
-        setMicError(`BĹ‚Ä…d mikrofonu: ${name ?? 'nieznany'}`);
+        setMicError(`Błąd mikrofonu: ${name ?? 'nieznany'}`);
       }
     }
   }, [convoy.id, session]);
@@ -388,7 +388,7 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
   const content = (
     <div className="fixed inset-0 z-[999] flex flex-col bg-background">
       <div className="flex items-center gap-3 border-b border-card-border bg-card-bg px-4 pb-3 pt-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/20 text-emerald-400">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600/20 text-emerald-400">
           <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
             <rect x="1" y="3" width="15" height="13" rx="2" />
             <path d="M16 8h4l3 3v5a1 1 0 01-1 1h-2" />
@@ -400,7 +400,7 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
           <p className="truncate font-bold text-foreground">{convoy.name}</p>
           <p className="text-xs text-muted">
             {convoy.members.length} {convoy.members.length === 1 ? 'osoba' : 'osoby'}
-            {convoy.destName && <> Â· <span className="text-blue-400">{convoy.destName}</span></>}
+            {convoy.destName && <> · <span className="text-blue-400">{convoy.destName}</span></>}
           </p>
         </div>
         <button
@@ -416,12 +416,12 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
         {messages.length === 0 && (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/15 text-emerald-400">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-600/15 text-emerald-400">
               <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                 <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
               </svg>
             </div>
-            <p className="text-sm text-muted">Brak wiadomoĹ›ci. Zacznij rozmowÄ™!</p>
+            <p className="text-sm text-muted">Brak wiadomości. Zacznij rozmowę!</p>
           </div>
         )}
 
@@ -458,7 +458,7 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
                       <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
                       <path d="M10 11v6M14 11v6" />
                     </svg>
-                    UsuĹ„
+                    Usuń
                   </button>
                 </div>
               )}
@@ -482,7 +482,7 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
 
                 {msg.deleted ? (
                   <p className={`text-sm italic ${isMe ? 'text-emerald-200' : 'text-muted'}`}>
-                    WiadomoĹ›Ä‡ usuniÄ™ta
+                    Wiadomość usunięta
                   </p>
                 ) : isEditing && msg.type === 'text' ? (
                   <div className="flex flex-col gap-2" onPointerDown={(e) => e.stopPropagation()}>
@@ -515,7 +515,7 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
                       onPointerDown={(e) => e.stopPropagation()}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition ${isMe ? 'bg-white/20 hover:bg-white/30' : 'bg-accent/20 hover:bg-accent/30'}`}>
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition ${isMe ? 'bg-white/20 hover:bg-white/30' : 'bg-emerald-600/20 hover:bg-emerald-600/30'}`}>
                           {isPlaying ? (
                             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>
                           ) : (
@@ -536,7 +536,7 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
 
                 <div className={`mt-1 flex items-center gap-1 text-xs ${isMe ? 'text-emerald-200 justify-end' : 'text-muted'}`}>
                   {msg.type === 'text' && !msg.deleted && (msg as TextMessage).edited && (
-                    <span className="italic">edytowano Â·</span>
+                    <span className="italic">edytowano ·</span>
                   )}
                   {new Date(msg.timestamp).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
                 </div>
@@ -568,7 +568,7 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') sendText(); }}
-              placeholder="Wpisz wiadomoĹ›Ä‡..."
+              placeholder="Wpisz wiadomość..."
               maxLength={500}
               autoFocus
               className="flex-1 rounded-2xl border border-card-border bg-input-bg px-4 py-3 text-base text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-emerald-500"
@@ -576,7 +576,7 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
             <button
               onClick={sendText}
               disabled={!input.trim()}
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent text-accent-fg transition hover:opacity-90 disabled:opacity-40"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent text-accent-fg transition hover:bg-emerald-700 disabled:opacity-40"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" />
@@ -613,7 +613,7 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
                 <path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
               </svg>
               <span className="text-sm font-semibold">
-                {recording ? 'Nagrywanie...' : 'Przytrzymaj i mĂłw'}
+                {recording ? 'Nagrywanie...' : 'Przytrzymaj i mów'}
               </span>
               {recording && (
                 <span className="flex gap-1">

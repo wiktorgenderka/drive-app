@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 
@@ -38,7 +38,7 @@ export default function InviteFriendModal({
       const data: Friend[] = await res.json();
       setFriends(data);
     } catch {
-      setError('Nie udaĹ‚o siÄ™ zaĹ‚adowaÄ‡ znajomych.');
+      setError('Nie udało się załadować znajomych.');
     } finally {
       setLoading(false);
     }
@@ -63,13 +63,13 @@ export default function InviteFriendModal({
       });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error === 'User is already a member' ? 'JuĹĽ jest czĹ‚onkiem' : 'Nie udaĹ‚o siÄ™ zaprosiÄ‡.');
+        setError(data.error === 'User is already a member' ? 'Już jest członkiem' : 'Nie udało się zaprosić.');
         return;
       }
       setInvited((prev) => new Set(prev).add(userId));
       onInvited();
     } catch {
-      setError('WystÄ…piĹ‚ bĹ‚Ä…d.');
+      setError('Wystąpił błąd.');
     } finally {
       setInvitingId(null);
     }
@@ -90,7 +90,7 @@ export default function InviteFriendModal({
       <div className="w-full max-w-md rounded-2xl border border-card-border bg-card-bg shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
-          <h3 className="text-lg font-semibold text-foreground">ZaproĹ› znajomego</h3>
+          <h3 className="text-lg font-semibold text-foreground">Zaproś znajomego</h3>
           <button
             onClick={onClose}
             className="rounded-lg p-1.5 text-muted transition hover:bg-input-bg hover:text-foreground"
@@ -124,7 +124,7 @@ export default function InviteFriendModal({
                 <circle cx="9" cy="7" r="4" />
                 <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
               </svg>
-              <p className="text-sm text-muted">Wszyscy znajomi sÄ… juĹĽ w konwoju</p>
+              <p className="text-sm text-muted">Wszyscy znajomi są już w konwoju</p>
             </div>
           ) : (
             <div className="flex flex-col gap-1.5">
@@ -137,7 +137,7 @@ export default function InviteFriendModal({
                   {friend.image ? (
                     <img src={friend.image} alt={friend.name} className="h-9 w-9 rounded-full object-cover" />
                   ) : (
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent/20 text-xs font-semibold text-emerald-400">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600/20 text-xs font-semibold text-emerald-400">
                       {friend.name.charAt(0).toUpperCase()}
                     </div>
                   )}
@@ -173,7 +173,7 @@ export default function InviteFriendModal({
                   <button
                     onClick={() => handleInvite(friend.id)}
                     disabled={invitingId === friend.id}
-                    className="rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-50"
+                    className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
                   >
                     {invitingId === friend.id ? (
                       <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -181,7 +181,7 @@ export default function InviteFriendModal({
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                       </svg>
                     ) : (
-                      'ZaproĹ›'
+                      'Zaproś'
                     )}
                   </button>
                 </div>

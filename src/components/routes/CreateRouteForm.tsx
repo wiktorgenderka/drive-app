@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, type FormEvent } from 'react';
 
@@ -155,7 +155,7 @@ export default function CreateRouteForm({
                   key={wp.id}
                   className="flex items-center gap-2 rounded-lg bg-zinc-800 px-3 py-2"
                 >
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-fg">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">
                     {index + 1}
                   </span>
                   <span className="flex-1 truncate text-xs text-zinc-300">
@@ -179,7 +179,7 @@ export default function CreateRouteForm({
           <button
             type="submit"
             disabled={loading}
-            className="flex flex-1 items-center justify-center rounded-lg bg-accent py-2.5 text-sm font-medium text-accent-fg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex flex-1 items-center justify-center rounded-lg bg-blue-600 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? (
               <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
