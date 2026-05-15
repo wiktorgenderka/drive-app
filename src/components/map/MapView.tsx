@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useCallback, useEffect, useState, useRef } from 'react';
 import Map, { Marker, Source, Layer } from 'react-map-gl/mapbox';
@@ -59,10 +59,10 @@ export default function MapView() {
   const weather = useWeather(userLocation?.latitude, userLocation?.longitude);
   // For 'auto' theme: use is_day from weather API (sunrise/sunset aware); fallback to time-of-day
   const isDay = weather ? weather.isDay : new Date().getHours() >= 6 && new Date().getHours() < 20;
-  // Style bez warstwy ruchu (mapbox-traffic-v1) — wymagałaby tokenu z odpowiednim
-  // scope, którego standardowy publiczny token nie ma. Wcześniejsze
-  // navigation-day-v1 / navigation-night-v1 spamowały konsolę 401/403 dla tych kafli.
-  // Preset 'nfs' korzysta z dark-v11 jako bazy — kolory są nadpisywane runtime'owo
+  // Style bez warstwy ruchu (mapbox-traffic-v1) â€” wymagaĹ‚aby tokenu z odpowiednim
+  // scope, ktĂłrego standardowy publiczny token nie ma. WczeĹ›niejsze
+  // navigation-day-v1 / navigation-night-v1 spamowaĹ‚y konsolÄ™ 401/403 dla tych kafli.
+  // Preset 'nfs' korzysta z dark-v11 jako bazy â€” kolory sÄ… nadpisywane runtime'owo
   // w applyNfsLook().
   const MAP_STYLE_URLS: Record<string, string> = {
     auto: isDay ? 'mapbox://styles/mapbox/streets-v12' : 'mapbox://styles/mapbox/dark-v11',
@@ -75,22 +75,22 @@ export default function MapView() {
   };
   const mapStyle = MAP_STYLE_URLS[mapTheme] ?? MAP_STYLE_URLS.auto;
 
-  // ── Map layers ──
-  // Preset "NFS" — uderzeniowe podbicie kolorów na bazie dark-v11.
-  // Drogi: gradient od ciemnego pomarańczu (uliczki) do neonowego żółtego (autostrady).
-  // Woda: granat z domieszką cyjanu. Tło: prawie czerń. Etykiety POI/POI-like ukryte.
+  // â”€â”€ Map layers â”€â”€
+  // Preset "NFS" â€” uderzeniowe podbicie kolorĂłw na bazie dark-v11.
+  // Drogi: gradient od ciemnego pomaraĹ„czu (uliczki) do neonowego ĹĽĂłĹ‚tego (autostrady).
+  // Woda: granat z domieszkÄ… cyjanu. TĹ‚o: prawie czerĹ„. Etykiety POI/POI-like ukryte.
   const applyNfsLook = useCallback((map: mapboxgl.Map) => {
     if (mapTheme !== 'nfs') return;
     if (!map.isStyleLoaded()) return;
 
-    // Helper: bezpieczne ustawienie property — tylko jeśli warstwa istnieje.
+    // Helper: bezpieczne ustawienie property â€” tylko jeĹ›li warstwa istnieje.
     const setPaint = (layerId: string, prop: string, value: unknown) => {
       try {
         if (map.getLayer(layerId)) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           map.setPaintProperty(layerId, prop as any, value as any);
         }
-      } catch { /* ignoruj jeśli niezgodne */ }
+      } catch { /* ignoruj jeĹ›li niezgodne */ }
     };
     const hide = (layerId: string) => {
       try {
@@ -98,7 +98,7 @@ export default function MapView() {
       } catch { /* ignoruj */ }
     };
 
-    // Tło / ląd
+    // TĹ‚o / lÄ…d
     setPaint('background', 'background-color', '#040712');
     setPaint('land', 'background-color', '#040712');
     setPaint('landuse', 'fill-color', '#0a0f1a');
@@ -106,11 +106,11 @@ export default function MapView() {
     setPaint('park', 'fill-color', '#0d1612');
     setPaint('pitch', 'fill-color', '#0d1612');
 
-    // Woda — granat z neonowym cyjanem na krawędziach
+    // Woda â€” granat z neonowym cyjanem na krawÄ™dziach
     setPaint('water', 'fill-color', '#0a1733');
     setPaint('waterway', 'line-color', '#1e3a8a');
 
-    // Drogi — od ciemnego po neonowy żółty zależnie od klasy
+    // Drogi â€” od ciemnego po neonowy ĹĽĂłĹ‚ty zaleĹĽnie od klasy
     const ROAD_LAYERS: { id: string; color: string; width?: number }[] = [
       { id: 'road-motorway', color: '#fde047' },
       { id: 'road-motorway-trunk', color: '#fde047' },
@@ -125,22 +125,22 @@ export default function MapView() {
     for (const r of ROAD_LAYERS) {
       setPaint(r.id, 'line-color', r.color);
     }
-    // Casing (obwódki dróg) — ciemne, żeby drogi się odcinały od tła
+    // Casing (obwĂłdki drĂłg) â€” ciemne, ĹĽeby drogi siÄ™ odcinaĹ‚y od tĹ‚a
     setPaint('road-motorway-case', 'line-color', '#7c2d12');
     setPaint('road-motorway-trunk-case', 'line-color', '#7c2d12');
     setPaint('road-trunk-case', 'line-color', '#7c2d12');
     setPaint('road-primary-case', 'line-color', '#451a03');
     setPaint('road-secondary-tertiary-case', 'line-color', '#1c1917');
 
-    // Budynki — ciemne z lekkim cyjanem
+    // Budynki â€” ciemne z lekkim cyjanem
     setPaint('building', 'fill-color', '#0f172a');
     setPaint('building', 'fill-opacity', 0.85);
 
-    // Granice administracyjne — subtelnie cyjanem
+    // Granice administracyjne â€” subtelnie cyjanem
     setPaint('admin-0-boundary', 'line-color', '#22d3ee');
     setPaint('admin-1-boundary', 'line-color', '#0e7490');
 
-    // Schowaj śmieci — nazwy POI / drobne etykiety, żeby był czystszy "racing" look
+    // Schowaj Ĺ›mieci â€” nazwy POI / drobne etykiety, ĹĽeby byĹ‚ czystszy "racing" look
     [
       'poi-label', 'transit-label', 'airport-label', 'natural-line-label',
       'natural-point-label', 'water-line-label', 'water-point-label',
@@ -213,8 +213,8 @@ export default function MapView() {
     });
   }, [add3DLayers, applyNfsLook]);
 
-  // Wymuś przeładowanie stylu gdy zmienia się temat — bo niektóre presety
-  // (np. dark ↔ nfs) używają tego samego URL i react-map-gl nie zauważy zmiany.
+  // WymuĹ› przeĹ‚adowanie stylu gdy zmienia siÄ™ temat â€” bo niektĂłre presety
+  // (np. dark â†” nfs) uĹĽywajÄ… tego samego URL i react-map-gl nie zauwaĹĽy zmiany.
   useEffect(() => {
     const map = mapRef.current?.getMap();
     if (!map) return;
@@ -224,7 +224,7 @@ export default function MapView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapTheme]);
 
-  // ── Navigation state ──
+  // â”€â”€ Navigation state â”€â”€
   const [navDestination, setNavDestination] = useState<{ lng: number; lat: number } | null>(null);
   const [navRoute, setNavRoute] = useState<GeoJSON.Feature | null>(null);
   const [isPickingDestination, setIsPickingDestination] = useState(false);
@@ -233,13 +233,13 @@ export default function MapView() {
   const [navSteps, setNavSteps] = useState<NavStep[]>([]);
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [isNavigating, setIsNavigating] = useState(false);
-  // Domyślnie mapa podąża za użytkownikiem; wyłącza się gdy ręcznie przeciągniesz mapę.
+  // DomyĹ›lnie mapa podÄ…ĹĽa za uĹĽytkownikiem; wyĹ‚Ä…cza siÄ™ gdy rÄ™cznie przeciÄ…gniesz mapÄ™.
   const [isFollowing, setIsFollowing] = useState(true);
   const [is3D, setIs3D] = useState(false);
   const [navDestName, setNavDestName] = useState('');
   const [hasArrived, setHasArrived] = useState(false);
 
-  // ── Trip state ──
+  // â”€â”€ Trip state â”€â”€
   const [isTripActive, setIsTripActive] = useState(false);
   const [tripStartTime, setTripStartTime] = useState<number | null>(null);
   const [tripElapsed, setTripElapsed] = useState(0);
@@ -259,12 +259,12 @@ export default function MapView() {
     distance: number; duration: number; maxSpeed: number; avgSpeed: number;
   } | null>(null);
 
-  // ── Speed limit state ──
+  // â”€â”€ Speed limit state â”€â”€
   const [speedLimit, setSpeedLimit] = useState<number | null>(null);
   const [showSpeedLimitModal, setShowSpeedLimitModal] = useState(false);
   const [speedLimitInput, setSpeedLimitInput] = useState('50');
 
-  // ── Search state ──
+  // â”€â”€ Search state â”€â”€
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<
@@ -473,7 +473,7 @@ export default function MapView() {
         }
       }
     }
-    // 5–10 km/h hysteresis band — no state change
+    // 5â€“10 km/h hysteresis band â€” no state change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLocation]);
 
@@ -501,9 +501,9 @@ export default function MapView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLocation, isFollowing, isNavigating]);
 
-  // Follow poza nawigacją — obrót mapy z kierunkiem jazdy, marker lekko poniżej środka.
-  // Pomijamy fixy o bardzo słabej dokładności (>200 m), żeby mapa nie skakała
-  // gdy lokalizacja idzie z WiFi i potrafi się "teleportować".
+  // Follow poza nawigacjÄ… â€” obrĂłt mapy z kierunkiem jazdy, marker lekko poniĹĽej Ĺ›rodka.
+  // Pomijamy fixy o bardzo sĹ‚abej dokĹ‚adnoĹ›ci (>200 m), ĹĽeby mapa nie skakaĹ‚a
+  // gdy lokalizacja idzie z WiFi i potrafi siÄ™ "teleportowaÄ‡".
   useEffect(() => {
     if (isNavigating || !isFollowing || !userLocation) return;
     if ((userLocation.accuracy ?? 0) > 200) return;
@@ -519,7 +519,7 @@ export default function MapView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLocation, isFollowing, isNavigating]);
 
-  // ── Computed ──
+  // â”€â”€ Computed â”€â”€
   const remainingDistance = isNavigating ? navSteps.slice(currentStepIdx).reduce((s, st) => s + st.distance, 0) : 0;
   const remainingDuration = isNavigating ? navSteps.slice(currentStepIdx).reduce((s, st) => s + st.duration, 0) : 0;
 
@@ -556,7 +556,7 @@ export default function MapView() {
   }
 
   function stopTrip() {
-    // Discard trips shorter than 300 m — likely a false-positive from brief movement
+    // Discard trips shorter than 300 m â€” likely a false-positive from brief movement
     if (tripDistance < 300) {
       setIsTripActive(false);
       setTripDistance(0);
@@ -664,9 +664,9 @@ export default function MapView() {
 
   function handleMapClick(evt: { lngLat: { lng: number; lat: number } }) {
     if (!isPickingDestination) return;
-    // W trybie wybierania celu klik na mapę = potwierdzenie aktualnej pozycji.
-    // (UX: użytkownik panuje mapą, klika gdziekolwiek — bierzemy aktualne centrum
-    // żeby nie martwił się gdzie dokładnie kliknął.)
+    // W trybie wybierania celu klik na mapÄ™ = potwierdzenie aktualnej pozycji.
+    // (UX: uĹĽytkownik panuje mapÄ…, klika gdziekolwiek â€” bierzemy aktualne centrum
+    // ĹĽeby nie martwiĹ‚ siÄ™ gdzie dokĹ‚adnie kliknÄ…Ĺ‚.)
     confirmCenterDestination();
     void evt;
   }
@@ -758,12 +758,12 @@ export default function MapView() {
 
       {isPickingDestination && (
         <>
-          {/* Tooltip u góry */}
-          <div className="pointer-events-none absolute top-16 left-1/2 -translate-x-1/2 z-30 rounded-xl bg-blue-600 px-4 py-2 shadow-lg">
-            <p className="text-sm font-medium text-white">Przesuń mapę i potwierdź lokalizację</p>
+          {/* Tooltip u gĂłry */}
+          <div className="pointer-events-none absolute top-16 left-1/2 -translate-x-1/2 z-30 rounded-xl bg-accent px-4 py-2 shadow-lg">
+            <p className="text-sm font-medium text-white">PrzesuĹ„ mapÄ™ i potwierdĹş lokalizacjÄ™</p>
           </div>
 
-          {/* Stały pin w środku mapy — pointer-events-none, więc nie blokuje przeciągania */}
+          {/* StaĹ‚y pin w Ĺ›rodku mapy â€” pointer-events-none, wiÄ™c nie blokuje przeciÄ…gania */}
           <div className="pointer-events-none absolute left-1/2 top-1/2 z-30 -translate-x-1/2 -translate-y-full">
             <svg width="42" height="48" viewBox="0 0 42 48" style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.55))' }}>
               <path
@@ -776,7 +776,7 @@ export default function MapView() {
             </svg>
           </div>
 
-          {/* Pasek z akcjami u dołu */}
+          {/* Pasek z akcjami u doĹ‚u */}
           <div className="absolute bottom-6 left-1/2 z-30 -translate-x-1/2 flex items-center gap-2 rounded-2xl border border-card-border bg-card-bg/95 p-2 shadow-xl backdrop-blur-md">
             <button
               onClick={cancelPickingDestination}
@@ -786,7 +786,7 @@ export default function MapView() {
             </button>
             <button
               onClick={confirmCenterDestination}
-              className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700"
+              className="flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-xs font-semibold text-accent-fg transition hover:opacity-90"
             >
               <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                 <path d="M5 13l4 4L19 7" />
@@ -833,7 +833,7 @@ export default function MapView() {
               isFollowing ? 'bg-accent text-accent-fg' : 'text-muted hover:text-foreground'
             }`}
             style={!isFollowing ? { backgroundColor: 'rgba(24,24,27,0.9)', border: '1px solid #3f3f46', backdropFilter: 'blur(8px)' } : {}}
-            title={isFollowing ? 'Mapa podąża za Tobą — kliknij by ponownie wycentrować' : 'Podążaj za moją lokalizacją'}
+            title={isFollowing ? 'Mapa podÄ…ĹĽa za TobÄ… â€” kliknij by ponownie wycentrowaÄ‡' : 'PodÄ…ĹĽaj za mojÄ… lokalizacjÄ…'}
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <circle cx="12" cy="12" r="4" />
@@ -878,7 +878,7 @@ export default function MapView() {
 
         {navRoute && (
           <Source id="nav-route" type="geojson" data={navRoute}>
-            {/* NFS Unbound style: bright neon yellow→orange route with multilayer glow */}
+            {/* NFS Unbound style: bright neon yellowâ†’orange route with multilayer glow */}
             <Layer
               id="nav-route-glow"
               type="line"

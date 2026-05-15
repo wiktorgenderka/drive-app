@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef, useCallback, type FormEvent } from 'react';
 
@@ -57,14 +57,14 @@ export default function AddFriendModal({ open, onClose, onAdded }: AddFriendModa
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error ?? 'Nie udało się wysłać zaproszenia.'); return; }
-      setSuccess('Zaproszenie wysłane!');
+      if (!res.ok) { setError(data.error ?? 'Nie udaĹ‚o siÄ™ wysĹ‚aÄ‡ zaproszenia.'); return; }
+      setSuccess('Zaproszenie wysĹ‚ane!');
       setQuery('');
       setResults([]);
       setEmail('');
       onAdded?.();
     } catch {
-      setError('Nieoczekiwany błąd.');
+      setError('Nieoczekiwany bĹ‚Ä…d.');
     } finally {
       setLoading(false);
     }
@@ -99,7 +99,7 @@ export default function AddFriendModal({ open, onClose, onAdded }: AddFriendModa
             Szukaj po nazwie
           </button>
           <button onClick={() => setTab('email')} className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition ${tab === 'email' ? 'bg-card-bg text-foreground shadow-sm' : 'text-muted hover:text-foreground'}`}>
-            Wyślij na e-mail
+            WyĹ›lij na e-mail
           </button>
         </div>
 
@@ -119,7 +119,7 @@ export default function AddFriendModal({ open, onClose, onAdded }: AddFriendModa
                   type="text"
                   value={query}
                   onChange={(e) => handleQueryChange(e.target.value)}
-                  placeholder="Szukaj kierowców..."
+                  placeholder="Szukaj kierowcĂłw..."
                   className="w-full rounded-xl border border-card-border bg-input-bg py-2.5 pl-10 pr-10 text-sm text-foreground placeholder-muted outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                 />
                 {searching && (
@@ -147,15 +147,15 @@ export default function AddFriendModal({ open, onClose, onAdded }: AddFriendModa
                       <button
                         onClick={() => sendRequest({ userId: user.id })}
                         disabled={loading}
-                        className="shrink-0 rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-orange-700 disabled:opacity-50"
+                        className="shrink-0 rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-50"
                       >
-                        Zaproś
+                        ZaproĹ›
                       </button>
                     </div>
                   ))}
                 </div>
               ) : query.length >= 2 && !searching ? (
-                <p className="py-4 text-center text-xs text-muted">Nie znaleziono użytkowników</p>
+                <p className="py-4 text-center text-xs text-muted">Nie znaleziono uĹĽytkownikĂłw</p>
               ) : query.length > 0 && query.length < 2 ? (
                 <p className="py-2 text-center text-xs text-muted">Wpisz co najmniej 2 znaki</p>
               ) : null}
@@ -174,8 +174,8 @@ export default function AddFriendModal({ open, onClose, onAdded }: AddFriendModa
                 <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-card-border bg-card-bg py-2.5 text-sm font-medium text-muted transition hover:bg-input-bg">
                   Anuluj
                 </button>
-                <button type="submit" disabled={loading} className="flex flex-1 items-center justify-center rounded-xl bg-orange-600 py-2.5 text-sm font-medium text-white transition hover:bg-orange-700 disabled:opacity-50">
-                  {loading ? <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg> : 'Wyślij zaproszenie'}
+                <button type="submit" disabled={loading} className="flex flex-1 items-center justify-center rounded-xl bg-accent py-2.5 text-sm font-medium text-accent-fg transition hover:opacity-90 disabled:opacity-50">
+                  {loading ? <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg> : 'WyĹ›lij zaproszenie'}
                 </button>
               </div>
             </form>

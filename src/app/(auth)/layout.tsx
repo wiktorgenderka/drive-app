@@ -1,8 +1,8 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'DriveApp — Zaloguj się',
-  description: 'Zaloguj się do DriveApp — aplikacji dla kierowców z mapą, konwojami i zgłoszeniami drogowymi.',
+  title: 'DriveApp â€” Zaloguj siÄ™',
+  description: 'Zaloguj siÄ™ do DriveApp â€” aplikacji dla kierowcĂłw z mapÄ…, konwojami i zgĹ‚oszeniami drogowymi.',
 };
 
 export default function AuthLayout({
@@ -16,7 +16,7 @@ export default function AuthLayout({
         {/* App Logo */}
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent">
           <svg
-            className="h-8 w-8 text-accent-fg"
+            className="h-8 w-8 text-white"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"

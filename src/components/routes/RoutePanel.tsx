@@ -75,12 +75,12 @@ const TYPE_CONFIG: Record<string, { label: string; color: string; icon: string }
   },
   coastal: {
     label: 'Nadmorska',
-    color: 'text-blue-400 bg-blue-600/15',
+    color: 'text-blue-400 bg-accent/15',
     icon: 'M2 12c2-2 4-3 6-3s4 1 6 3 4 3 6 3 4-1 6-3',
   },
   city: {
     label: 'Miejska',
-    color: 'text-violet-400 bg-violet-600/15',
+    color: 'text-violet-400 bg-accent/15',
     icon: 'M3 21h18M5 21V7l8-4v18M13 21V3l6 4v14',
   },
   countryside: {
@@ -634,7 +634,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
   return (
     <div className="flex flex-col gap-4">
       {toast && (
-        <div className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-xl bg-zinc-800 px-4 py-2 text-xs font-semibold text-accent-fg shadow-lg">
+        <div className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-xl bg-zinc-800 px-4 py-2 text-xs font-semibold text-white shadow-lg">
           {toast}
         </div>
       )}
@@ -658,7 +658,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
           </button>
           <button
             onClick={() => setShowCreate(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-medium text-accent-fg transition hover:bg-orange-700"
+            className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accent-fg transition hover:opacity-90"
           >
             <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
               <path d="M12 5v14M5 12h14" />
@@ -737,7 +737,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
             </div>
           ) : !userLocation ? (
             <div className="flex flex-col items-center gap-3 rounded-2xl border border-card-border bg-card-bg py-12 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-600/15 text-orange-500">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/15 text-orange-500">
                 <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
                   <circle cx="12" cy="10" r="3" />
@@ -750,7 +750,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
             </div>
           ) : suggested.length === 0 ? (
             <div className="flex flex-col items-center gap-3 rounded-2xl border border-card-border bg-card-bg py-12 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-600/15 text-orange-500">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/15 text-orange-500">
                 <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                   <circle cx="6" cy="19" r="3" />
                   <path d="M9 19h8.5a3.5 3.5 0 000-7h-11a3.5 3.5 0 010-7H15" />
@@ -831,7 +831,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                           {route.waypoints.map((wp, idx) => (
                             <li key={idx} className="flex items-start gap-2.5">
                               <span
-                                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-accent-fg ${
+                                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${
                                   idx === 0 ? 'bg-emerald-500' : idx === route.waypoints.length - 1 ? 'bg-red-500' : 'bg-orange-500'
                                 }`}
                               >
@@ -858,7 +858,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                               <button
                                 onClick={() => showRouteOnMap(route.id, route.name, route.waypoints)}
                                 disabled={loadingMapId === route.id}
-                                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-600 py-2.5 text-xs font-semibold text-accent-fg transition hover:bg-blue-700 disabled:opacity-50"
+                                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-accent py-2.5 text-xs font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-50"
                               >
                                 {loadingMapId === route.id ? (
                                   <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -879,7 +879,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                             <button
                               onClick={() => saveSuggestedRoute(route)}
                               disabled={savingId === route.id}
-                              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-orange-600 py-2.5 text-xs font-semibold text-accent-fg transition hover:bg-orange-700 disabled:opacity-50"
+                              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-accent py-2.5 text-xs font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-50"
                             >
                               {savingId === route.id ? (
                                 <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -1022,7 +1022,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
               : publicRoutes;
             return filteredPublic.length === 0 ? (
             <div className="flex flex-col items-center gap-3 rounded-2xl border border-card-border bg-card-bg py-12 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-600/15 text-orange-500">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/15 text-orange-500">
                 <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                   <circle cx="12" cy="12" r="10" />
                   <path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" />
@@ -1058,7 +1058,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                       }}
                       className="flex w-full items-start gap-3 px-4 py-3.5 text-left"
                     >
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600/15 text-indigo-400">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-indigo-400">
                         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                           <circle cx="12" cy="12" r="10" />
                           <path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" />
@@ -1120,7 +1120,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                           {wps.map((wp, idx) => (
                             <li key={idx} className="flex items-start gap-2.5">
                               <span
-                                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-accent-fg ${
+                                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${
                                   idx === 0 ? 'bg-emerald-500' : idx === wps.length - 1 ? 'bg-red-500' : 'bg-orange-500'
                                 }`}
                               >
@@ -1137,7 +1137,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                             <button
                               onClick={() => showRouteOnMap(route.id, route.name, wps)}
                               disabled={loadingMapId === route.id}
-                              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-600 py-2.5 text-xs font-semibold text-accent-fg transition hover:bg-blue-700 disabled:opacity-50"
+                              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-accent py-2.5 text-xs font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-50"
                             >
                               {loadingMapId === route.id ? (
                                 <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -1158,7 +1158,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                           <button
                             onClick={() => importPublicRoute(route.id)}
                             disabled={importingId === route.id}
-                            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-orange-600 py-2.5 text-xs font-semibold text-accent-fg transition hover:bg-orange-700 disabled:opacity-50"
+                            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-accent py-2.5 text-xs font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-50"
                           >
                             {importingId === route.id ? (
                               <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -1181,14 +1181,14 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                             <div className="flex overflow-hidden rounded-lg border border-rose-500/30 bg-black/20">
                               <button
                                 onClick={() => setNfsStartMode('countdown')}
-                                className={`flex flex-1 items-center justify-center gap-1 py-1.5 text-[10px] font-bold uppercase tracking-wide transition ${nfsStartMode === 'countdown' ? 'bg-rose-600 text-accent-fg' : 'text-accent-fg/50 hover:text-accent-fg/80'}`}
+                                className={`flex flex-1 items-center justify-center gap-1 py-1.5 text-[10px] font-bold uppercase tracking-wide transition ${nfsStartMode === 'countdown' ? 'bg-accent text-accent-fg' : 'text-white/50 hover:text-accent-fg/80'}`}
                               >
                                 <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                                 Odliczanie
                               </button>
                               <button
                                 onClick={() => setNfsStartMode('checkpoint')}
-                                className={`flex flex-1 items-center justify-center gap-1 py-1.5 text-[10px] font-bold uppercase tracking-wide transition ${nfsStartMode === 'checkpoint' ? 'bg-rose-600 text-accent-fg' : 'text-accent-fg/50 hover:text-accent-fg/80'}`}
+                                className={`flex flex-1 items-center justify-center gap-1 py-1.5 text-[10px] font-bold uppercase tracking-wide transition ${nfsStartMode === 'checkpoint' ? 'bg-accent text-accent-fg' : 'text-white/50 hover:text-accent-fg/80'}`}
                               >
                                 <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M2 12h4M18 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
                                 PKT 1
@@ -1198,7 +1198,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                               onClick={() => startMysteryRun(route.id, route.name, wps)}
                               disabled={!userLocation}
                               title={userLocation ? 'Tryb tajemniczy â€” checkpointy odsĹ‚aniajÄ… siÄ™ w trakcie jazdy' : 'Wymaga GPS'}
-                              className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-600 via-orange-600 to-amber-500 py-2.5 text-xs font-bold uppercase tracking-wider text-accent-fg shadow-lg transition hover:brightness-110 disabled:opacity-40"
+                              className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-600 via-orange-600 to-amber-500 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg transition hover:brightness-110 disabled:opacity-40"
                             >
                               <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M2 12l5-9 5 5 5-9 5 13H2z" />
@@ -1330,7 +1330,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
             </div>
           ) : routes.length === 0 ? (
             <div className="flex flex-col items-center gap-3 rounded-2xl border border-card-border bg-card-bg py-12 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-600/15 text-orange-500">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/15 text-orange-500">
                 <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                   <circle cx="6" cy="19" r="3" />
                   <path d="M9 19h8.5a3.5 3.5 0 000-7h-11a3.5 3.5 0 010-7H15" />
@@ -1367,7 +1367,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                       className="flex w-full items-start justify-between gap-2 px-4 py-3.5 text-left"
                     >
                       <div className="flex items-start gap-3 min-w-0 flex-1">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-600/15 text-orange-500">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-orange-500">
                           <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                             <circle cx="6" cy="19" r="3" />
                             <path d="M9 19h8.5a3.5 3.5 0 000-7h-11a3.5 3.5 0 010-7H15" />
@@ -1391,7 +1391,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                               {new Date(route.createdAt).toLocaleDateString('pl-PL')}
                             </span>
                             {route.isPublic && (
-                              <span className="flex items-center gap-1 rounded-md bg-orange-600/15 px-1.5 py-0.5 text-[10px] font-semibold text-orange-400">
+                              <span className="flex items-center gap-1 rounded-md bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold text-orange-400">
                                 <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                                   <circle cx="12" cy="12" r="10" />
                                   <path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" />
@@ -1445,7 +1445,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                           {waypoints.map((wp, idx) => (
                             <li key={idx} className="flex items-start gap-2.5">
                               <span
-                                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-accent-fg ${
+                                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${
                                   idx === 0
                                     ? 'bg-emerald-500'
                                     : idx === waypoints.length - 1
@@ -1480,14 +1480,14 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                               <div className="flex overflow-hidden rounded-lg border border-rose-500/30 bg-black/20">
                                 <button
                                   onClick={() => setNfsStartMode('countdown')}
-                                  className={`flex flex-1 items-center justify-center gap-1 py-1.5 text-[10px] font-bold uppercase tracking-wide transition ${nfsStartMode === 'countdown' ? 'bg-rose-600 text-accent-fg' : 'text-accent-fg/50 hover:text-accent-fg/80'}`}
+                                  className={`flex flex-1 items-center justify-center gap-1 py-1.5 text-[10px] font-bold uppercase tracking-wide transition ${nfsStartMode === 'countdown' ? 'bg-accent text-accent-fg' : 'text-white/50 hover:text-accent-fg/80'}`}
                                 >
                                   <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                                   Odliczanie
                                 </button>
                                 <button
                                   onClick={() => setNfsStartMode('checkpoint')}
-                                  className={`flex flex-1 items-center justify-center gap-1 py-1.5 text-[10px] font-bold uppercase tracking-wide transition ${nfsStartMode === 'checkpoint' ? 'bg-rose-600 text-accent-fg' : 'text-accent-fg/50 hover:text-accent-fg/80'}`}
+                                  className={`flex flex-1 items-center justify-center gap-1 py-1.5 text-[10px] font-bold uppercase tracking-wide transition ${nfsStartMode === 'checkpoint' ? 'bg-accent text-accent-fg' : 'text-white/50 hover:text-accent-fg/80'}`}
                                 >
                                   <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M2 12h4M18 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
                                   PKT 1
@@ -1497,7 +1497,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                                 onClick={() => startMysteryRun(route.id, route.name, getParsedWaypoints(route))}
                                 disabled={!userLocation}
                                 title={userLocation ? 'Tryb tajemniczy â€” checkpointy odsĹ‚aniajÄ… siÄ™ w trakcie jazdy' : 'Wymaga GPS'}
-                                className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-600 via-orange-600 to-amber-500 py-2.5 text-xs font-bold uppercase tracking-wider text-accent-fg shadow-lg transition hover:brightness-110 disabled:opacity-40"
+                                className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-600 via-orange-600 to-amber-500 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg transition hover:brightness-110 disabled:opacity-40"
                               >
                                 <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
                                   <path d="M2 12l5-9 5 5 5-9 5 13H2z" />
@@ -1511,7 +1511,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                               <button
                                 onClick={() => showOnMap(route)}
                                 disabled={loadingMapId === route.id}
-                                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-600 py-2.5 text-xs font-semibold text-accent-fg transition hover:bg-blue-700 disabled:opacity-50"
+                                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-accent py-2.5 text-xs font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-50"
                               >
                                 {loadingMapId === route.id ? (
                                   <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -1552,7 +1552,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                                   }
                                 } catch { showToast('BĹ‚Ä…d kopiowania linku'); }
                               }}
-                              className="flex items-center justify-center gap-1.5 rounded-xl border border-card-border px-3 py-2.5 text-xs font-semibold text-muted transition hover:bg-blue-500/10 hover:text-blue-400 hover:border-blue-500/30"
+                              className="flex items-center justify-center gap-1.5 rounded-xl border border-card-border px-3 py-2.5 text-xs font-semibold text-muted transition hover:bg-accent/10 hover:text-blue-400 hover:border-accent/30"
                               title="Kopiuj link do trasy"
                             >
                               <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -1591,7 +1591,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                               disabled={togglingPublicId === route.id}
                               aria-pressed={!!route.isPublic}
                               className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-50 ${
-                                route.isPublic ? 'bg-orange-600' : 'bg-input-bg border border-card-border'
+                                route.isPublic ? 'bg-accent' : 'bg-input-bg border border-card-border'
                               }`}
                             >
                               <span
@@ -1607,7 +1607,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                         <div className="mt-4 border-t border-card-border pt-3">
                           <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted">Wyzwanie czasowe</p>
                           {timerRouteId === route.id && countdown !== null ? (
-                            <div className="flex flex-col items-center gap-2 rounded-xl bg-orange-600/10 px-3 py-5">
+                            <div className="flex flex-col items-center gap-2 rounded-xl bg-accent/10 px-3 py-5">
                               <p className="text-[10px] font-semibold uppercase tracking-wider text-orange-400">GotĂłw? Start zaâ€¦</p>
                               <span className="font-mono text-5xl font-black text-orange-400 tabular-nums">
                                 {countdown}
@@ -1622,7 +1622,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                           ) : timerRouteId === route.id && timerStart !== null ? (
                             <div className="flex flex-col gap-2">
                               <div className="flex items-center gap-3">
-                                <div className="flex flex-1 items-center gap-2 rounded-xl bg-orange-600/10 px-3 py-2.5">
+                                <div className="flex flex-1 items-center gap-2 rounded-xl bg-accent/10 px-3 py-2.5">
                                   <svg className="h-4 w-4 animate-pulse text-orange-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                                     <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
                                   </svg>
@@ -1666,7 +1666,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                               <button
                                 onClick={() => startTimer(route.id)}
                                 disabled={timerRouteId !== null || !userLocation || wpCount < 2}
-                                className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-orange-500/40 bg-orange-600/10 py-2.5 text-xs font-semibold text-orange-400 transition hover:bg-orange-600/20 disabled:opacity-40"
+                                className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-orange-500/40 bg-accent/10 py-2.5 text-xs font-semibold text-orange-400 transition hover:bg-accent/20 disabled:opacity-40"
                               >
                                 <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
                                   <polygon points="5 3 19 12 5 21 5 3" />

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 interface SearchResult {
   id: string;
@@ -54,7 +54,7 @@ export default function SearchPanel({
             autoFocus
             value={searchQuery}
             onChange={(e) => onQueryChange(e.target.value)}
-            placeholder="Wpisz miasto, ulicę lub miejsce..."
+            placeholder="Wpisz miasto, ulicÄ™ lub miejsce..."
             className="flex-1 bg-transparent text-sm text-foreground placeholder-muted-light outline-none"
           />
           {searchQuery && (
@@ -86,7 +86,7 @@ export default function SearchPanel({
                 onClick={() => onNavigateTo(place)}
                 className="flex w-full items-start gap-3 rounded-xl px-4 py-3 text-left transition hover:bg-card-bg"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600/15 text-blue-500">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-blue-500">
                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 0C7.58 0 4 3.58 4 8c0 5.25 8 13 8 13s8-7.75 8-13c0-4.42-3.58-8-8-8zm0 11c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z" />
                   </svg>
@@ -105,7 +105,7 @@ export default function SearchPanel({
             <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
               <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
             </svg>
-            <p className="text-sm">Brak wyników</p>
+            <p className="text-sm">Brak wynikĂłw</p>
           </div>
         )}
 
@@ -119,7 +119,7 @@ export default function SearchPanel({
             </svg>
           </div>
           <div>
-            <p className="text-sm font-medium text-foreground">Wskaż na mapie</p>
+            <p className="text-sm font-medium text-foreground">WskaĹĽ na mapie</p>
             <p className="text-xs text-muted">Kliknij punkt na mapie</p>
           </div>
         </button>
@@ -129,7 +129,7 @@ export default function SearchPanel({
             <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
               <path d="M3 11l19-9-9 19-2-8-8-2z" />
             </svg>
-            <p className="text-sm">Wpisz cel podróży</p>
+            <p className="text-sm">Wpisz cel podrĂłĹĽy</p>
           </div>
         )}
       </div>

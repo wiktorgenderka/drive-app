@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -135,7 +135,7 @@ export default function GlobalSearch({ open, onClose, onShowProfile, onShowRoute
                 value={query}
                 onChange={(e) => handleChange(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Szukaj kierowców, tras, eventów…"
+                placeholder="Szukaj kierowcĂłw, tras, eventĂłwâ€¦"
                 className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted"
               />
               {loading && (
@@ -150,16 +150,16 @@ export default function GlobalSearch({ open, onClose, onShowProfile, onShowRoute
             <div ref={listRef} className="max-h-[60vh] overflow-y-auto">
               {query.length < 2 && (
                 <div className="flex flex-col items-center gap-2 py-10 text-center">
-                  <span className="text-3xl">🔍</span>
+                  <span className="text-3xl">đź”Ť</span>
                   <p className="text-sm text-muted">Wpisz min. 2 znaki</p>
-                  <p className="text-xs text-muted/60">Szukaj kierowców, tras lub eventów</p>
+                  <p className="text-xs text-muted/60">Szukaj kierowcĂłw, tras lub eventĂłw</p>
                 </div>
               )}
 
               {query.length >= 2 && !loading && results.length === 0 && (
                 <div className="flex flex-col items-center gap-2 py-10">
-                  <span className="text-3xl">😔</span>
-                  <p className="text-sm text-muted">Brak wyników dla „{query}"</p>
+                  <span className="text-3xl">đź”</span>
+                  <p className="text-sm text-muted">Brak wynikĂłw dla â€ž{query}"</p>
                 </div>
               )}
 
@@ -221,14 +221,14 @@ export default function GlobalSearch({ open, onClose, onShowProfile, onShowRoute
                             }`}
                           >
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-lg">
-                              🗺️
+                              đź—şď¸Ź
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-semibold text-foreground truncate">{r.data.name}</p>
                               <p className="text-xs text-muted">
                                 {r.data.user.name}
                                 {r.data.avgRating && (
-                                  <span className="ml-2">⭐ {r.data.avgRating.toFixed(1)}</span>
+                                  <span className="ml-2">â­ {r.data.avgRating.toFixed(1)}</span>
                                 )}
                               </p>
                             </div>
@@ -258,14 +258,14 @@ export default function GlobalSearch({ open, onClose, onShowProfile, onShowRoute
                               activeIdx === idx ? 'bg-input-bg' : 'hover:bg-input-bg'
                             }`}
                           >
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-pink-600/15 text-lg">
-                              🏁
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/15 text-lg">
+                              đźŹ
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-semibold text-foreground truncate">{r.data.title}</p>
                               <p className="text-xs text-muted truncate">
                                 {d.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}
-                                {r.data.locationName ? ` · ${r.data.locationName}` : ''}
+                                {r.data.locationName ? ` Â· ${r.data.locationName}` : ''}
                               </p>
                             </div>
                             <svg className="ml-auto h-4 w-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -282,8 +282,8 @@ export default function GlobalSearch({ open, onClose, onShowProfile, onShowRoute
 
             {/* Footer hint */}
             <div className="border-t border-card-border px-4 py-2 flex items-center gap-4 text-[11px] text-muted/60">
-              <span><kbd className="rounded border border-card-border px-1">↑↓</kbd> nawiguj</span>
-              <span><kbd className="rounded border border-card-border px-1">↵</kbd> wybierz</span>
+              <span><kbd className="rounded border border-card-border px-1">â†‘â†“</kbd> nawiguj</span>
+              <span><kbd className="rounded border border-card-border px-1">â†µ</kbd> wybierz</span>
               <span><kbd className="rounded border border-card-border px-1">Esc</kbd> zamknij</span>
               <span className="ml-auto">Ctrl+K</span>
             </div>

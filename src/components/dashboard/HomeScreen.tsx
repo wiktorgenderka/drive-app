@@ -131,7 +131,7 @@ function ShortcutTile({ onClick, label, sub, gradient, icon, badge }: {
     <motion.button
       whileTap={{ scale: 0.96 }}
       onClick={() => { navigator.vibrate?.(8); onClick(); }}
-      className={`relative flex h-28 flex-col justify-between rounded-2xl bg-gradient-to-br ${gradient} p-3 text-left text-accent-fg shadow-lg transition hover:brightness-110`}
+      className={`relative flex h-28 flex-col justify-between rounded-2xl bg-gradient-to-br ${gradient} p-3 text-left text-white shadow-lg transition hover:brightness-110`}
     >
       <div className="flex items-start justify-between">
         <span className="rounded-lg bg-white/20 p-1.5">{icon}</span>
@@ -141,7 +141,7 @@ function ShortcutTile({ onClick, label, sub, gradient, icon, badge }: {
       </div>
       <div className="leading-tight">
         <p className="text-sm font-bold">{label}</p>
-        <p className="text-[10px] font-medium text-accent-fg/80">{sub}</p>
+        <p className="text-[10px] font-medium text-white/80">{sub}</p>
       </div>
     </motion.button>
   );
@@ -640,10 +640,10 @@ export default function HomeScreen({
               />
               <div className="absolute inset-0 flex items-center justify-center bg-black/35">
                 <div className="flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 shadow-lg">
-                  <svg className="h-4 w-4 text-accent-fg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                     <path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z" /><path d="M8 2v16M16 6v16" />
                   </svg>
-                  <span className="text-sm font-semibold text-accent-fg">OtwĂłrz mapÄ™</span>
+                  <span className="text-sm font-semibold text-white">OtwĂłrz mapÄ™</span>
                 </div>
               </div>
             </button>
@@ -786,7 +786,7 @@ export default function HomeScreen({
                 onClick={onNavigateToFriends}
                 className="flex w-full items-center gap-3 rounded-2xl border border-pink-500/30 bg-pink-500/10 px-4 py-3 text-left transition hover:bg-pink-500/15"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-pink-600 text-accent-fg shrink-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-accent-fg shrink-0">
                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                     <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="8.5" cy="7" r="4" /><path d="M20 8v6M23 11h-6" />
                   </svg>
@@ -879,7 +879,7 @@ export default function HomeScreen({
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">
                   Raporty w okolicy
-                  <span className="ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-orange-600 px-1 text-[9px] font-bold text-accent-fg">
+                  <span className="ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[9px] font-bold text-accent-fg">
                     {reports.length}
                   </span>
                 </h2>

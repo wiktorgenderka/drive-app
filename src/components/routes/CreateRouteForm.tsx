@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, type FormEvent } from 'react';
 
@@ -96,7 +96,7 @@ export default function CreateRouteForm({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Mountain Pass Drive"
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
           />
         </div>
 
@@ -113,7 +113,7 @@ export default function CreateRouteForm({
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Optional description..."
             rows={3}
-            className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
           />
         </div>
 
@@ -155,7 +155,7 @@ export default function CreateRouteForm({
                   key={wp.id}
                   className="flex items-center gap-2 rounded-lg bg-zinc-800 px-3 py-2"
                 >
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-fg">
                     {index + 1}
                   </span>
                   <span className="flex-1 truncate text-xs text-zinc-300">
@@ -179,7 +179,7 @@ export default function CreateRouteForm({
           <button
             type="submit"
             disabled={loading}
-            className="flex flex-1 items-center justify-center rounded-lg bg-blue-600 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex flex-1 items-center justify-center rounded-lg bg-accent py-2.5 text-sm font-medium text-accent-fg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? (
               <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">

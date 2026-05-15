@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -84,7 +84,7 @@ export default function MapWaypointPicker({
   }, []);
 
   function handleMapClick(evt: { lngLat: { lng: number; lat: number } }) {
-    // Klik w tło mapy gdy zaznaczony jest istniejący punkt → tylko odznacz.
+    // Klik w tĹ‚o mapy gdy zaznaczony jest istniejÄ…cy punkt â†’ tylko odznacz.
     if (selectedIdx !== null) {
       setSelectedIdx(null);
       return;
@@ -131,21 +131,21 @@ export default function MapWaypointPicker({
           <svg className="h-5 w-5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
-          <span className="text-sm font-semibold text-foreground">Powrót</span>
+          <span className="text-sm font-semibold text-foreground">PowrĂłt</span>
         </button>
 
         {existingWaypoints.length > 0 && (
           <div className="rounded-xl bg-card-bg/90 px-3 py-2 shadow-lg backdrop-blur-md border border-card-border">
             <span className="text-xs font-semibold text-muted">
-              {existingWaypoints.length} {existingWaypoints.length === 1 ? 'punkt' : 'punktów'}
+              {existingWaypoints.length} {existingWaypoints.length === 1 ? 'punkt' : 'punktĂłw'}
             </span>
           </div>
         )}
       </div>
 
       {/* Hint banner */}
-      <div className="absolute top-16 left-1/2 -translate-x-1/2 z-10 rounded-xl bg-orange-600 px-4 py-2 shadow-lg">
-        <p className="text-sm font-medium text-white">Kliknij na mapę, aby dodać punkt trasy</p>
+      <div className="absolute top-16 left-1/2 -translate-x-1/2 z-10 rounded-xl bg-accent px-4 py-2 shadow-lg">
+        <p className="text-sm font-medium text-white">Kliknij na mapÄ™, aby dodaÄ‡ punkt trasy</p>
       </div>
 
       {/* Map */}
@@ -170,12 +170,12 @@ export default function MapWaypointPicker({
           </Marker>
         )}
 
-        {/* Existing waypoints — klikalne, otwierają panel akcji */}
+        {/* Existing waypoints â€” klikalne, otwierajÄ… panel akcji */}
         {existingWaypoints.map((wp, idx) => {
           const isFirst = idx === 0;
           const isLast = idx === existingWaypoints.length - 1;
           const selected = selectedIdx === idx;
-          const color = isFirst ? 'bg-emerald-600' : isLast ? 'bg-red-500' : 'bg-orange-600';
+          const color = isFirst ? 'bg-emerald-600' : isLast ? 'bg-red-500' : 'bg-accent';
           return (
             <Marker key={`existing-${idx}`} longitude={wp.longitude} latitude={wp.latitude} anchor="center">
               <button
@@ -186,7 +186,7 @@ export default function MapWaypointPicker({
                   setReverseLabel(null);
                   setSelectedIdx(idx);
                 }}
-                title={`Punkt ${idx + 1} — kliknij, aby otworzyć opcje`}
+                title={`Punkt ${idx + 1} â€” kliknij, aby otworzyÄ‡ opcje`}
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-lg transition ${color} ${
                   selected ? 'ring-4 ring-white scale-110' : 'border-2 border-white hover:scale-110'
                 }`}
@@ -207,7 +207,7 @@ export default function MapWaypointPicker({
         )}
       </Map>
 
-      {/* Bottom panel — selected existing waypoint actions */}
+      {/* Bottom panel â€” selected existing waypoint actions */}
       {!pendingPoint && selectedIdx !== null && existingWaypoints[selectedIdx] && (() => {
         const wp = existingWaypoints[selectedIdx];
         const isFirst = selectedIdx === 0;
@@ -221,7 +221,7 @@ export default function MapWaypointPicker({
           <div className="absolute bottom-0 left-0 right-0 z-10 rounded-t-2xl border-t border-card-border bg-card-bg/95 px-5 py-4 shadow-xl backdrop-blur-md">
             <div className="mb-3 flex items-start gap-3">
               <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[13px] font-bold text-white ${
-                isFirst ? 'bg-emerald-600' : selectedIdx === lastIdx ? 'bg-red-500' : 'bg-orange-600'
+                isFirst ? 'bg-emerald-600' : selectedIdx === lastIdx ? 'bg-red-500' : 'bg-accent'
               }`}>
                 {selectedIdx + 1}
               </div>
@@ -229,8 +229,8 @@ export default function MapWaypointPicker({
                 <p className="text-sm font-medium text-foreground truncate">{wp.label}</p>
                 <p className="mt-0.5 text-xs text-muted">
                   Punkt {selectedIdx + 1} z {existingWaypoints.length}
-                  {isFirst && ' • start'}
-                  {selectedIdx === lastIdx && !isFirst && ' • meta'}
+                  {isFirst && ' â€˘ start'}
+                  {selectedIdx === lastIdx && !isFirst && ' â€˘ meta'}
                 </p>
               </div>
             </div>
@@ -246,9 +246,9 @@ export default function MapWaypointPicker({
                 <button
                   onClick={() => { onCloseLoop?.(); setSelectedIdx(null); }}
                   className="flex-1 rounded-xl border border-emerald-500/30 bg-emerald-500/10 py-2.5 text-xs font-semibold text-emerald-400 transition hover:bg-emerald-500/20"
-                  title="Dodaj kopię tego punktu jako ostatni — start będzie też metą"
+                  title="Dodaj kopiÄ™ tego punktu jako ostatni â€” start bÄ™dzie teĹĽ metÄ…"
                 >
-                  Oznacz również jako koniec
+                  Oznacz rĂłwnieĹĽ jako koniec
                 </button>
               )}
               <button
@@ -256,18 +256,18 @@ export default function MapWaypointPicker({
                 disabled={!onPointDeleted}
                 className="flex-1 rounded-xl bg-red-600 py-2.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
               >
-                Usuń punkt
+                UsuĹ„ punkt
               </button>
             </div>
           </div>
         );
       })()}
 
-      {/* Bottom panel — pending point confirmation */}
+      {/* Bottom panel â€” pending point confirmation */}
       {pendingPoint && (
         <div className="absolute bottom-0 left-0 right-0 z-10 rounded-t-2xl border-t border-card-border bg-card-bg/95 px-5 py-4 shadow-xl backdrop-blur-md">
           <div className="mb-3 flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-600/15 text-orange-500">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-orange-500">
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
                 <circle cx="12" cy="10" r="3" />
@@ -307,16 +307,16 @@ export default function MapWaypointPicker({
             <button
               onClick={handleAddAndContinue}
               disabled={loadingLabel}
-              className="flex-1 rounded-xl border border-orange-500/30 bg-orange-500/10 py-2.5 text-xs font-semibold text-orange-400 transition hover:bg-orange-500/20 disabled:opacity-50"
+              className="flex-1 rounded-xl border border-orange-500/30 bg-orange-500/10 py-2.5 text-xs font-semibold text-orange-400 transition hover:opacity-90/20 disabled:opacity-50"
             >
               Dodaj i kontynuuj
             </button>
             <button
               onClick={handleAddAndClose}
               disabled={loadingLabel}
-              className="flex-1 rounded-xl bg-orange-600 py-2.5 text-xs font-semibold text-white transition hover:bg-orange-700 disabled:opacity-50"
+              className="flex-1 rounded-xl bg-accent py-2.5 text-xs font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-50"
             >
-              Dodaj i wróć
+              Dodaj i wrĂłÄ‡
             </button>
           </div>
         </div>

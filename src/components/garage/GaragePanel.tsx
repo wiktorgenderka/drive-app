@@ -344,7 +344,7 @@ export default function GaragePanel() {
                     </div>
                   )}
                   <div className="text-5xl mb-3">đźš—</div>
-                  <h3 className="text-xl font-bold text-accent-fg">{selected.make} {selected.model}</h3>
+                  <h3 className="text-xl font-bold text-white">{selected.make} {selected.model}</h3>
                   <p className="text-sm text-zinc-400">{selected.year}{selected.color ? ` Â· ${selected.color}` : ''}</p>
                   {selected.engine && (
                     <p className="mt-1 text-xs text-zinc-500">{selected.engine}</p>

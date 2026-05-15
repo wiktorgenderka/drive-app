@@ -495,11 +495,11 @@ export default function ConvoyDriveMode({ convoy, onClose }: Props) {
                         if (e.key === 'Escape') setEditingId(null);
                       }}
                       maxLength={500}
-                      className="rounded-lg bg-white/10 px-2 py-1 text-sm text-accent-fg outline-none placeholder:text-emerald-200 focus:ring-1 focus:ring-white/40"
+                      className="rounded-lg bg-white/10 px-2 py-1 text-sm text-white outline-none placeholder:text-emerald-200 focus:ring-1 focus:ring-white/40"
                     />
                     <div className="flex gap-2">
-                      <button onClick={() => confirmEdit(msg.id)} className="rounded-lg bg-white/20 px-2 py-1 text-xs font-semibold text-accent-fg hover:bg-white/30">Zapisz</button>
-                      <button onClick={() => setEditingId(null)} className="rounded-lg px-2 py-1 text-xs text-emerald-200 hover:text-accent-fg">Anuluj</button>
+                      <button onClick={() => confirmEdit(msg.id)} className="rounded-lg bg-white/20 px-2 py-1 text-xs font-semibold text-white hover:bg-white/30">Zapisz</button>
+                      <button onClick={() => setEditingId(null)} className="rounded-lg px-2 py-1 text-xs text-emerald-200 hover:text-white">Anuluj</button>
                     </div>
                   </div>
                 ) : msg.type === 'text' ? (

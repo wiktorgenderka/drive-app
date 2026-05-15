@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import {
   useState, useEffect, useRef,
@@ -12,7 +12,7 @@ import { useStatsStore } from '@/stores/useStatsStore';
 import { useMapStore } from '@/stores/useMapStore';
 import type { MapTheme } from '@/stores/useThemeStore';
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const ACCENT_COLORS = [
   '#ffffff', '#e4e4e7', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899',
@@ -31,10 +31,10 @@ const THEME_PRESETS: {
   mode: 'dark' | 'light'; accent: string; map: MapTheme;
   from: string; to: string;
 }[] = [
-  { id: 'white',    name: 'Biały',     mode: 'dark',  accent: '#ffffff', map: 'dark',       from: '#18181b', to: '#3f3f46' },
+  { id: 'white',    name: 'BiaĹ‚y',     mode: 'dark',  accent: '#ffffff', map: 'dark',       from: '#18181b', to: '#3f3f46' },
   { id: 'midnight', name: 'Midnight',  mode: 'dark',  accent: '#3b82f6', map: 'dark',       from: '#0f172a', to: '#1e3a5f' },
   { id: 'galaxy',   name: 'Galaktyka', mode: 'dark',  accent: '#8b5cf6', map: 'navigation', from: '#1e1b4b', to: '#4c1d95' },
-  { id: 'sunset',   name: 'Zachód',    mode: 'dark',  accent: '#f97316', map: 'dark',       from: '#431407', to: '#7c2d12' },
+  { id: 'sunset',   name: 'ZachĂłd',    mode: 'dark',  accent: '#f97316', map: 'dark',       from: '#431407', to: '#7c2d12' },
   { id: 'forest',   name: 'Las',       mode: 'dark',  accent: '#22c55e', map: 'outdoors',   from: '#052e16', to: '#14532d' },
   { id: 'ocean',    name: 'Ocean',     mode: 'dark',  accent: '#06b6d4', map: 'satellite',  from: '#083344', to: '#164e63' },
   { id: 'day',      name: 'Dzienny',   mode: 'light', accent: '#3b82f6', map: 'light',      from: '#bfdbfe', to: '#eff6ff' },
@@ -50,7 +50,7 @@ const MAP_THEMES: { value: MapTheme; label: string; bg: string; road: string; wa
   { value: 'nfs',        label: 'NFS',      bg: '#040712', road: '#fde047', water: '#0a1733' },
 ];
 
-// ─── Tiny helpers ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Tiny helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function resizeImageToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -153,14 +153,14 @@ function Field({
       <input
         id={id} type={type} value={value} placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-xl border border-input-border bg-input-bg px-4 py-2.5 text-sm text-foreground placeholder-muted-light outline-none transition focus:ring-1 focus:ring-blue-500"
+        className="w-full rounded-xl border border-input-border bg-input-bg px-4 py-2.5 text-sm text-foreground placeholder-muted-light outline-none transition focus:ring-1 focus:ring-accent"
         style={{ borderColor: value ? undefined : undefined }}
       />
     </div>
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface Stats {
   totalRoutes: number;
@@ -179,7 +179,7 @@ export default function SettingsPanel() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ── Profile ──
+  // â”€â”€ Profile â”€â”€
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -190,13 +190,13 @@ export default function SettingsPanel() {
   const [profileMsg, setProfileMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [createdAt, setCreatedAt] = useState<string | null>(null);
 
-  // ── Stats ──
+  // â”€â”€ Stats â”€â”€
   const [stats, setStats] = useState<Stats | null>(null);
   const [lifetimeStats, setLifetimeStats] = useState<{
     totalKm: number; totalMinutes: number; totalTrips: number; maxSpeedKmh: number;
   } | null>(null);
 
-  // ── Password ──
+  // â”€â”€ Password â”€â”€
   const [currentPwd, setCurrentPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
   const [confirmPwd, setConfirmPwd] = useState('');
@@ -204,12 +204,12 @@ export default function SettingsPanel() {
   const [pwdMsg, setPwdMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [showPwds, setShowPwds] = useState(false);
 
-  // ── Delete ──
+  // â”€â”€ Delete â”€â”€
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [showDeleteZone, setShowDeleteZone] = useState(false);
 
-  // ── Vehicle modal ──
+  // â”€â”€ Vehicle modal â”€â”€
   const [vehicleModal, setVehicleModal] = useState<'add' | 'edit' | null>(null);
   const [editingVehicleId, setEditingVehicleId] = useState<string | null>(null);
   const [vMake, setVMake] = useState('');
@@ -249,7 +249,7 @@ export default function SettingsPanel() {
     setVehicleModal(null);
   }
 
-  // ── Custom color input ──
+  // â”€â”€ Custom color input â”€â”€
   const [customColor, setCustomColor] = useState(accentColor);
 
   useEffect(() => {
@@ -306,19 +306,19 @@ export default function SettingsPanel() {
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) { setProfileMsg({ type: 'err', text: data.error ?? 'Błąd zapisu.' }); return; }
+      if (!res.ok) { setProfileMsg({ type: 'err', text: data.error ?? 'BĹ‚Ä…d zapisu.' }); return; }
       setPendingAvatar(null);
       await updateSession({ name: data.name, email: data.email, image: data.image });
       setProfileMsg({ type: 'ok', text: 'Profil zaktualizowany!' });
-    } catch { setProfileMsg({ type: 'err', text: 'Nieoczekiwany błąd.' }); }
+    } catch { setProfileMsg({ type: 'err', text: 'Nieoczekiwany bĹ‚Ä…d.' }); }
     finally { setProfileSaving(false); }
   }
 
   async function handlePasswordChange(e: FormEvent) {
     e.preventDefault();
     setPwdMsg(null);
-    if (newPwd !== confirmPwd) { setPwdMsg({ type: 'err', text: 'Hasła nie są identyczne.' }); return; }
-    if (newPwd.length < 8) { setPwdMsg({ type: 'err', text: 'Min. 8 znaków.' }); return; }
+    if (newPwd !== confirmPwd) { setPwdMsg({ type: 'err', text: 'HasĹ‚a nie sÄ… identyczne.' }); return; }
+    if (newPwd.length < 8) { setPwdMsg({ type: 'err', text: 'Min. 8 znakĂłw.' }); return; }
     setPwdSaving(true);
     try {
       const res = await fetch('/api/users/me/password', {
@@ -327,15 +327,15 @@ export default function SettingsPanel() {
         body: JSON.stringify({ currentPassword: currentPwd, newPassword: newPwd }),
       });
       const data = await res.json();
-      if (!res.ok) { setPwdMsg({ type: 'err', text: data.error ?? 'Błąd.' }); return; }
+      if (!res.ok) { setPwdMsg({ type: 'err', text: data.error ?? 'BĹ‚Ä…d.' }); return; }
       setCurrentPwd(''); setNewPwd(''); setConfirmPwd('');
-      setPwdMsg({ type: 'ok', text: 'Hasło zmienione!' });
-    } catch { setPwdMsg({ type: 'err', text: 'Nieoczekiwany błąd.' }); }
+      setPwdMsg({ type: 'ok', text: 'HasĹ‚o zmienione!' });
+    } catch { setPwdMsg({ type: 'err', text: 'Nieoczekiwany bĹ‚Ä…d.' }); }
     finally { setPwdSaving(false); }
   }
 
   async function handleDeleteAccount() {
-    if (deleteConfirm !== 'USUŃ') return;
+    if (deleteConfirm !== 'USUĹ') return;
     setDeleting(true);
     try {
       const res = await fetch('/api/users/me', { method: 'DELETE' });
@@ -348,7 +348,7 @@ export default function SettingsPanel() {
     : newPwd.length >= 10 && (/[A-Z]/.test(newPwd) || /[0-9]/.test(newPwd)) ? 3
     : newPwd.length >= 8 ? 2 : 1;
 
-  const strengthLabel = ['', 'Bardzo słabe', 'Słabe', 'Dobre', 'Mocne'][pwdStrength];
+  const strengthLabel = ['', 'Bardzo sĹ‚abe', 'SĹ‚abe', 'Dobre', 'Mocne'][pwdStrength];
   const strengthColor = ['', '#ef4444', '#f97316', '#eab308', '#22c55e'][pwdStrength];
 
   const initials = (name || session?.user?.email || '?')
@@ -357,7 +357,7 @@ export default function SettingsPanel() {
   return (
     <div className="flex flex-col gap-4 pb-6">
 
-      {/* ── Header: avatar + info ── */}
+      {/* â”€â”€ Header: avatar + info â”€â”€ */}
       <Card>
         <div className="flex items-center gap-4">
           <div className="relative shrink-0">
@@ -391,7 +391,7 @@ export default function SettingsPanel() {
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-bold text-foreground">{name || 'Brak nazwy'}</p>
             <p className="truncate text-xs text-muted">{email || session?.user?.email}</p>
-            {createdAt && <p className="mt-0.5 text-xs text-muted">Dołączył: {createdAt}</p>}
+            {createdAt && <p className="mt-0.5 text-xs text-muted">DoĹ‚Ä…czyĹ‚: {createdAt}</p>}
           </div>
         </div>
 
@@ -400,7 +400,7 @@ export default function SettingsPanel() {
           <div className="mt-3 flex items-center gap-2 rounded-xl border border-card-border bg-input-bg px-3 py-2">
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-semibold text-foreground">{stats.activeConvoy.name}</p>
-              <p className="text-[10px] text-muted">{stats.activeConvoy.memberCount} uczestników</p>
+              <p className="text-[10px] text-muted">{stats.activeConvoy.memberCount} uczestnikĂłw</p>
             </div>
             <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-accent-fg bg-accent">
               Aktywny
@@ -409,7 +409,7 @@ export default function SettingsPanel() {
         )}
       </Card>
 
-      {/* ── Motywy / Presets ── */}
+      {/* â”€â”€ Motywy / Presets â”€â”€ */}
       <Card>
         <SectionTitle>Motywy</SectionTitle>
         <div className="grid grid-cols-3 gap-2">
@@ -446,14 +446,14 @@ export default function SettingsPanel() {
         </div>
       </Card>
 
-      {/* ── Wygląd ── */}
+      {/* â”€â”€ WyglÄ…d â”€â”€ */}
       <Card>
-        <SectionTitle>Wygląd</SectionTitle>
+        <SectionTitle>WyglÄ…d</SectionTitle>
 
         {/* Dark / Light */}
         <ToggleRow
           label="Tryb ciemny"
-          desc="Przełącz między jasnym a ciemnym"
+          desc="PrzeĹ‚Ä…cz miÄ™dzy jasnym a ciemnym"
           value={mode === 'dark'}
           onChange={(v) => setMode(v ? 'dark' : 'light')}
           accent={accentColor}
@@ -480,7 +480,7 @@ export default function SettingsPanel() {
               </button>
             ))}
             {/* Custom color picker */}
-            <label className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-white/30 transition hover:border-white/60 overflow-hidden" title="Własny kolor">
+            <label className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-white/30 transition hover:border-white/60 overflow-hidden" title="WĹ‚asny kolor">
               <span className="text-xs text-muted">+</span>
               <input
                 type="color"
@@ -524,14 +524,14 @@ export default function SettingsPanel() {
         </div>
       </Card>
 
-      {/* ── Profil ── */}
+      {/* â”€â”€ Profil â”€â”€ */}
       <Card>
         <SectionTitle>Profil</SectionTitle>
         <Toast msg={profileMsg} />
         <form onSubmit={handleProfileSave} className="flex flex-col gap-4">
-          <Field id="s-name" label="Imię i nazwisko" value={name} onChange={setName} placeholder="Jan Kowalski" />
+          <Field id="s-name" label="ImiÄ™ i nazwisko" value={name} onChange={setName} placeholder="Jan Kowalski" />
           <Field id="s-email" label="Adres e-mail" type="email" value={email} onChange={setEmail} placeholder="jan@example.com" />
-          <Field id="s-car" label="Wyświetlany pojazd" value={carDisplay} onChange={setCarDisplay} placeholder="np. BMW E46 320d" />
+          <Field id="s-car" label="WyĹ›wietlany pojazd" value={carDisplay} onChange={setCarDisplay} placeholder="np. BMW E46 320d" />
           <div>
             <label htmlFor="s-bio" className="mb-1.5 block text-sm font-medium text-muted">Bio</label>
             <textarea
@@ -540,7 +540,7 @@ export default function SettingsPanel() {
               onChange={(e) => setBio(e.target.value)}
               maxLength={280}
               rows={3}
-              placeholder="Krótko o sobie — widoczne na publicznym profilu (max 280 znaków)"
+              placeholder="KrĂłtko o sobie â€” widoczne na publicznym profilu (max 280 znakĂłw)"
               className="w-full resize-none rounded-xl border border-card-border bg-input-bg px-4 py-2.5 text-sm text-foreground placeholder-muted outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
             />
           </div>
@@ -555,13 +555,13 @@ export default function SettingsPanel() {
         </form>
       </Card>
 
-      {/* ── Statystyki ── */}
+      {/* â”€â”€ Statystyki â”€â”€ */}
       <Card>
-        <SectionTitle>Statystyki ogólne</SectionTitle>
+        <SectionTitle>Statystyki ogĂłlne</SectionTitle>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { label: 'Łączny dystans', value: lifetimeStats ? `${lifetimeStats.totalKm.toFixed(1)} km` : `${overall.totalKm.toFixed(1)} km` },
-            { label: 'Max prędkość', value: lifetimeStats ? `${lifetimeStats.maxSpeedKmh} km/h` : `${Math.round(overall.maxSpeedKmh)} km/h` },
+            { label: 'ĹÄ…czny dystans', value: lifetimeStats ? `${lifetimeStats.totalKm.toFixed(1)} km` : `${overall.totalKm.toFixed(1)} km` },
+            { label: 'Max prÄ™dkoĹ›Ä‡', value: lifetimeStats ? `${lifetimeStats.maxSpeedKmh} km/h` : `${Math.round(overall.maxSpeedKmh)} km/h` },
             { label: 'Przejazdy', value: lifetimeStats ? String(lifetimeStats.totalTrips) : String(overall.totalTrips) },
             { label: 'Czas jazdy', value: (() => {
               const min = lifetimeStats?.totalMinutes ?? overall.totalMinutes;
@@ -603,7 +603,7 @@ export default function SettingsPanel() {
                     {[
                       { label: 'km', value: (st?.totalKm ?? 0).toFixed(1) },
                       { label: 'max km/h', value: String(Math.round(st?.maxSpeedKmh ?? 0)) },
-                      { label: 'przejazdów', value: String(st?.totalTrips ?? 0) },
+                      { label: 'przejazdĂłw', value: String(st?.totalTrips ?? 0) },
                       { label: 'min', value: String(st?.totalMinutes ?? 0) },
                     ].map((c) => (
                       <div key={c.label} className="flex flex-col items-center py-2">
@@ -619,7 +619,7 @@ export default function SettingsPanel() {
         )}
       </Card>
 
-      {/* ── Pojazdy ── */}
+      {/* â”€â”€ Pojazdy â”€â”€ */}
       <Card>
         <SectionTitle>Pojazdy</SectionTitle>
 
@@ -697,7 +697,7 @@ export default function SettingsPanel() {
         </button>
       </Card>
 
-      {/* ── Vehicle modal ── */}
+      {/* â”€â”€ Vehicle modal â”€â”€ */}
       {vehicleModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={() => setVehicleModal(null)}>
           <div
@@ -729,12 +729,12 @@ export default function SettingsPanel() {
                     <circle cx="8.5" cy="8.5" r="1.5" />
                     <polyline points="21 15 16 10 5 21" />
                   </svg>
-                  <span className="text-xs">Dodaj zdjęcie</span>
+                  <span className="text-xs">Dodaj zdjÄ™cie</span>
                 </div>
               )}
               {vImage && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition hover:opacity-100">
-                  <span className="text-xs font-semibold text-white">Zmień zdjęcie</span>
+                  <span className="text-xs font-semibold text-white">ZmieĹ„ zdjÄ™cie</span>
                 </div>
               )}
             </button>
@@ -744,7 +744,7 @@ export default function SettingsPanel() {
               <Field id="vm-make" label="Marka" value={vMake} onChange={setVMake} placeholder="np. Toyota" />
               <Field id="vm-model" label="Model" value={vModel} onChange={setVModel} placeholder="np. Corolla" />
               <Field id="vm-year" label="Rok" value={vYear} onChange={setVYear} placeholder="2020" />
-              <Field id="vm-color" label="Kolor nadwozia" value={vColor} onChange={setVColor} placeholder="np. Biały perłowy" />
+              <Field id="vm-color" label="Kolor nadwozia" value={vColor} onChange={setVColor} placeholder="np. BiaĹ‚y perĹ‚owy" />
             </div>
 
             <button
@@ -759,15 +759,15 @@ export default function SettingsPanel() {
         </div>
       )}
 
-      {/* ── Bezpieczeństwo ── */}
+      {/* â”€â”€ BezpieczeĹ„stwo â”€â”€ */}
       <Card>
-        <SectionTitle>Bezpieczeństwo</SectionTitle>
+        <SectionTitle>BezpieczeĹ„stwo</SectionTitle>
         <Toast msg={pwdMsg} />
         <form onSubmit={handlePasswordChange} className="flex flex-col gap-3">
           {[
-            { id: 's-cpwd', label: 'Aktualne hasło', value: currentPwd, set: setCurrentPwd, ph: '••••••••' },
-            { id: 's-npwd', label: 'Nowe hasło', value: newPwd, set: setNewPwd, ph: 'Min. 8 znaków' },
-            { id: 's-cpwd2', label: 'Potwierdź nowe', value: confirmPwd, set: setConfirmPwd, ph: 'Powtórz hasło' },
+            { id: 's-cpwd', label: 'Aktualne hasĹ‚o', value: currentPwd, set: setCurrentPwd, ph: 'â€˘â€˘â€˘â€˘â€˘â€˘â€˘â€˘' },
+            { id: 's-npwd', label: 'Nowe hasĹ‚o', value: newPwd, set: setNewPwd, ph: 'Min. 8 znakĂłw' },
+            { id: 's-cpwd2', label: 'PotwierdĹş nowe', value: confirmPwd, set: setConfirmPwd, ph: 'PowtĂłrz hasĹ‚o' },
           ].map(({ id, label, value, set, ph }) => (
             <div key={id}>
               <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-foreground">{label}</label>
@@ -775,7 +775,7 @@ export default function SettingsPanel() {
                 id={id} value={value} placeholder={ph}
                 type={showPwds ? 'text' : 'password'}
                 onChange={(e) => set(e.target.value)} required
-                className="w-full rounded-xl border border-input-border bg-input-bg px-4 py-2.5 text-sm text-foreground placeholder-muted-light outline-none transition focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-xl border border-input-border bg-input-bg px-4 py-2.5 text-sm text-foreground placeholder-muted-light outline-none transition focus:ring-1 focus:ring-accent"
               />
             </div>
           ))}
@@ -791,7 +791,7 @@ export default function SettingsPanel() {
                 : <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>
               }
             </svg>
-            {showPwds ? 'Ukryj' : 'Pokaż hasła'}
+            {showPwds ? 'Ukryj' : 'PokaĹĽ hasĹ‚a'}
           </button>
 
           {newPwd.length > 0 && (
@@ -813,30 +813,30 @@ export default function SettingsPanel() {
           >
             {pwdSaving
               ? <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-              : 'Zmień hasło'}
+              : 'ZmieĹ„ hasĹ‚o'}
           </button>
         </form>
       </Card>
 
-      {/* ── Prywatność ── */}
+      {/* â”€â”€ PrywatnoĹ›Ä‡ â”€â”€ */}
       <Card>
-        <SectionTitle>Prywatność</SectionTitle>
+        <SectionTitle>PrywatnoĹ›Ä‡</SectionTitle>
         <div className="flex flex-col gap-4">
-          <ToggleRow label="Udostępniaj lokalizację" desc="Inni widzą Cię na mapie" value={privacy.shareLocation} onChange={(v) => setPrivacy({ shareLocation: v })} accent={accentColor} />
-          <ToggleRow label="Widoczny w konwoju" desc="Pojawiasz się na liście konwojów" value={privacy.showInConvoy} onChange={(v) => setPrivacy({ showInConvoy: v })} accent={accentColor} />
-          <ToggleRow label="Publiczny profil" desc="Inni mogą wyszukać Twój profil" value={privacy.publicProfile} onChange={(v) => setPrivacy({ publicProfile: v })} accent={accentColor} />
-          <ToggleRow label="Pokaż prędkość" desc="Wyświetlaj prędkość w konwoju" value={privacy.showSpeed} onChange={(v) => setPrivacy({ showSpeed: v })} accent={accentColor} />
-          <ToggleRow label="Auto-spoty" desc="Automatycznie twórz spot, gdy stoisz blisko znajomego" value={privacy.autoSpot !== false} onChange={(v) => setPrivacy({ autoSpot: v })} accent={accentColor} />
+          <ToggleRow label="UdostÄ™pniaj lokalizacjÄ™" desc="Inni widzÄ… CiÄ™ na mapie" value={privacy.shareLocation} onChange={(v) => setPrivacy({ shareLocation: v })} accent={accentColor} />
+          <ToggleRow label="Widoczny w konwoju" desc="Pojawiasz siÄ™ na liĹ›cie konwojĂłw" value={privacy.showInConvoy} onChange={(v) => setPrivacy({ showInConvoy: v })} accent={accentColor} />
+          <ToggleRow label="Publiczny profil" desc="Inni mogÄ… wyszukaÄ‡ TwĂłj profil" value={privacy.publicProfile} onChange={(v) => setPrivacy({ publicProfile: v })} accent={accentColor} />
+          <ToggleRow label="PokaĹĽ prÄ™dkoĹ›Ä‡" desc="WyĹ›wietlaj prÄ™dkoĹ›Ä‡ w konwoju" value={privacy.showSpeed} onChange={(v) => setPrivacy({ showSpeed: v })} accent={accentColor} />
+          <ToggleRow label="Auto-spoty" desc="Automatycznie twĂłrz spot, gdy stoisz blisko znajomego" value={privacy.autoSpot !== false} onChange={(v) => setPrivacy({ autoSpot: v })} accent={accentColor} />
         </div>
       </Card>
 
-      {/* ── Tryb ECO ── */}
+      {/* â”€â”€ Tryb ECO â”€â”€ */}
       <Card>
-        <SectionTitle>Oszczędzanie baterii</SectionTitle>
+        <SectionTitle>OszczÄ™dzanie baterii</SectionTitle>
         <div className="flex flex-col gap-4">
           <ToggleRow
             label="Tryb ECO"
-            desc="GPS co 30 s zamiast co 5 s — mniejsze zużycie baterii i danych"
+            desc="GPS co 30 s zamiast co 5 s â€” mniejsze zuĹĽycie baterii i danych"
             value={ecoMode}
             onChange={() => toggleEcoMode()}
             accent={accentColor}
@@ -844,19 +844,19 @@ export default function SettingsPanel() {
         </div>
       </Card>
 
-      {/* ── Powiadomienia ── */}
+      {/* â”€â”€ Powiadomienia â”€â”€ */}
       <Card>
         <SectionTitle>Powiadomienia</SectionTitle>
         <div className="flex flex-col gap-4">
-          <ToggleRow label="Pobliskie zgłoszenia" desc="Alerty o zdarzeniach w pobliżu" value={notifications.nearbyReports} onChange={(v) => setNotifications({ nearbyReports: v })} accent={accentColor} />
+          <ToggleRow label="Pobliskie zgĹ‚oszenia" desc="Alerty o zdarzeniach w pobliĹĽu" value={notifications.nearbyReports} onChange={(v) => setNotifications({ nearbyReports: v })} accent={accentColor} />
           <ToggleRow label="Zaproszenia do znajomych" value={notifications.friendRequests} onChange={(v) => setNotifications({ friendRequests: v })} accent={accentColor} />
           <ToggleRow label="Zaproszenia do konwoju" value={notifications.convoyInvites} onChange={(v) => setNotifications({ convoyInvites: v })} accent={accentColor} />
-          <ToggleRow label="Alerty prędkości" desc="Ostrzeżenia o przekroczeniu limitu" value={notifications.speedAlerts} onChange={(v) => setNotifications({ speedAlerts: v })} accent={accentColor} />
+          <ToggleRow label="Alerty prÄ™dkoĹ›ci" desc="OstrzeĹĽenia o przekroczeniu limitu" value={notifications.speedAlerts} onChange={(v) => setNotifications({ speedAlerts: v })} accent={accentColor} />
           <ToggleRow label="Alerty o policji" desc="Szybkie powiadomienia o patrolu" value={notifications.policeAlerts} onChange={(v) => setNotifications({ policeAlerts: v })} accent={accentColor} />
         </div>
       </Card>
 
-      {/* ── Konto ── */}
+      {/* â”€â”€ Konto â”€â”€ */}
       <Card>
         <SectionTitle>Konto</SectionTitle>
 
@@ -869,7 +869,7 @@ export default function SettingsPanel() {
               <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
             </svg>
           </div>
-          Wyloguj się
+          Wyloguj siÄ™
         </button>
 
         {/* GDPR export */}
@@ -897,7 +897,7 @@ export default function SettingsPanel() {
                 <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6" />
               </svg>
             </div>
-            Usuń konto
+            UsuĹ„ konto
             <svg className={`ml-auto h-4 w-4 transition-transform text-muted ${showDeleteZone ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <polyline points="6 9 12 15 18 9" />
             </svg>
@@ -906,24 +906,24 @@ export default function SettingsPanel() {
           {showDeleteZone && (
             <div className="mt-3 rounded-xl border border-red-900/40 bg-red-950/20 p-4">
               <p className="mb-3 text-xs leading-relaxed text-red-400/80">
-                Tej operacji <strong className="text-red-400">nie można cofnąć</strong>. Wszystkie trasy, zgłoszenia i dane zostaną trwale usunięte. Wpisz{' '}
-                <code className="rounded bg-red-900/40 px-1 py-0.5 font-mono text-red-300">USUŃ</code> aby potwierdzić.
+                Tej operacji <strong className="text-red-400">nie moĹĽna cofnÄ…Ä‡</strong>. Wszystkie trasy, zgĹ‚oszenia i dane zostanÄ… trwale usuniÄ™te. Wpisz{' '}
+                <code className="rounded bg-red-900/40 px-1 py-0.5 font-mono text-red-300">USUĹ</code> aby potwierdziÄ‡.
               </p>
               <input
                 type="text"
                 value={deleteConfirm}
                 onChange={(e) => setDeleteConfirm(e.target.value)}
-                placeholder="Wpisz USUŃ"
+                placeholder="Wpisz USUĹ"
                 className="mb-3 w-full rounded-xl border border-red-800/50 bg-red-950/40 px-4 py-2.5 text-sm text-red-300 placeholder-red-900/80 outline-none focus:border-red-600"
               />
               <button
                 onClick={handleDeleteAccount}
-                disabled={deleteConfirm !== 'USUŃ' || deleting}
+                disabled={deleteConfirm !== 'USUĹ' || deleting}
                 className="flex h-10 w-full items-center justify-center rounded-xl bg-red-600 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {deleting
                   ? <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                  : 'Usuń konto na zawsze'}
+                  : 'UsuĹ„ konto na zawsze'}
               </button>
             </div>
           )}

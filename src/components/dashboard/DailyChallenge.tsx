@@ -127,7 +127,7 @@ export default function DailyChallenge({ stats }: DailyChallengeProps) {
                     animate={{ scale: 1 }}
                     className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500"
                   >
-                    <svg className="h-2.5 w-2.5 text-accent-fg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                    <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   </motion.span>

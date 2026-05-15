@@ -19,7 +19,7 @@ const RARITY_CONFIG: Record<Achievement['rarity'], {
   label: string; gradient: string; border: string; badge: string;
 }> = {
   COMMON:    { label: 'Pospolite',   gradient: 'from-zinc-600 to-zinc-500',      border: 'border-zinc-500/30',   badge: 'bg-zinc-500/20 text-zinc-300' },
-  RARE:      { label: 'Rzadkie',     gradient: 'from-blue-600 to-blue-500',      border: 'border-blue-500/30',   badge: 'bg-blue-500/20 text-blue-300' },
+  RARE:      { label: 'Rzadkie',     gradient: 'from-blue-600 to-blue-500',      border: 'border-accent/30',   badge: 'bg-blue-500/20 text-blue-300' },
   EPIC:      { label: 'Epickie',     gradient: 'from-purple-600 to-fuchsia-500', border: 'border-purple-500/30', badge: 'bg-purple-500/20 text-purple-300' },
   LEGENDARY: { label: 'Legendarne', gradient: 'from-yellow-500 to-amber-400',   border: 'border-yellow-500/40', badge: 'bg-yellow-500/20 text-yellow-300' },
 };

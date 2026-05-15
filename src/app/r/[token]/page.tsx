@@ -85,7 +85,7 @@ export default function SharedRoutePage() {
         <p className="text-2xl">🔗</p>
         <h1 className="text-xl font-bold text-foreground">Trasa nie istnieje</h1>
         <p className="text-sm text-muted">{error || 'Link może być nieprawidłowy lub trasa została usunięta.'}</p>
-        <a href="/dashboard" className="mt-2 rounded-xl bg-accent px-6 py-2 text-sm font-semibold text-white transition hover:bg-accent/80">
+        <a href="/dashboard" className="mt-2 rounded-xl bg-accent px-6 py-2 text-sm font-semibold text-accent-fg transition hover:bg-accent/80">
           Wróć do aplikacji
         </a>
       </div>
@@ -186,7 +186,7 @@ export default function SharedRoutePage() {
             <div className="mt-6">
               <a
                 href="/dashboard"
-                className="block w-full rounded-xl bg-orange-600 py-3 text-center text-sm font-bold text-white transition hover:bg-orange-500"
+                className="block w-full rounded-xl bg-accent py-3 text-center text-sm font-bold text-accent-fg transition hover:bg-accent/90"
               >
                 Otwórz w DriveApp
               </a>
