@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useMapStore } from '@/stores/useMapStore';
 import { haversineMeters } from '@/lib/geo';
 import CreateRouteModal from './CreateRouteModal';
+import RouteCollectionsPanel from './RouteCollectionsPanel';
 import { MiniProfileModal, type MiniProfileUser, type MiniProfileContext } from '@/components/profile/PublicProfileModals';
 import type { RouteTime } from '@/types';
 
@@ -122,7 +123,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
   const [suggestedLoading, setSuggestedLoading] = useState(true);
   const [error, setError] = useState('');
   const [showCreate, setShowCreate] = useState(false);
-  const [activeSection, setActiveSection] = useState<'suggested' | 'community' | 'saved'>('suggested');
+  const [activeSection, setActiveSection] = useState<'suggested' | 'community' | 'saved' | 'collections'>('suggested');
 
   useEffect(() => {
     onCreateRouteOpenChange?.(showCreate);
@@ -710,6 +711,16 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
           }`}
         >
           Zapisane ({routes.length})
+        </button>
+        <button
+          onClick={() => setActiveSection('collections')}
+          className={`flex-1 rounded-lg py-2 text-xs font-semibold transition ${
+            activeSection === 'collections'
+              ? 'bg-card-bg text-foreground shadow-sm'
+              : 'text-muted hover:text-foreground'
+          }`}
+        >
+          Kolekcje
         </button>
       </div>
 
@@ -1687,6 +1698,13 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
             </div>
           )}
         </>
+      )}
+
+      {/* Collections tab */}
+      {activeSection === 'collections' && (
+        <div className="px-1">
+          <RouteCollectionsPanel />
+        </div>
       )}
 
       {/* Profile modal — pełny profil otwiera się jako pełna strona w dashboardzie */}
