@@ -5,6 +5,7 @@ const { createServer } = require('http');
 const next = require('next');
 const { Server: SocketIOServer } = require('socket.io');
 const pino = require('pino');
+const compression = require('compression');
 
 const log = pino({
   level: process.env.LOG_LEVEL ?? (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
@@ -27,8 +28,9 @@ const app = next({ dev });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
+  const compress = compression();
   const httpServer = createServer((req, res) => {
-    handle(req, res);
+    compress(req, res, () => handle(req, res));
   });
 
   const io = new SocketIOServer(httpServer, {

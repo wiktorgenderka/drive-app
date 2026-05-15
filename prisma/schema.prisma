@@ -119,6 +119,7 @@ model User {
   createdEvents       Event[]
   eventAttendees      EventAttendee[]
   vehicles            Vehicle[]
+  routeCollections    RouteCollection[]
   pushSubscriptions   PushSubscription[]
 
   @@map("users")
@@ -297,17 +298,34 @@ model Route {
   ratingCount   Int       @default(0)
   shareToken    String?   @unique
 
-  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  convoy         Convoy?       @relation(fields: [convoyId], references: [id], onDelete: SetNull)
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  convoy         Convoy?            @relation(fields: [convoyId], references: [id], onDelete: SetNull)
   times          RouteTime[]
   ratings        RouteRating[]
-  importedFrom   Route?        @relation("RouteImports", fields: [importedFromId], references: [id], onDelete: SetNull)
-  imports        Route[]       @relation("RouteImports")
+  importedFrom   Route?             @relation("RouteImports", fields: [importedFromId], references: [id], onDelete: SetNull)
+  imports        Route[]            @relation("RouteImports")
+  collections    RouteCollection[]  @relation("CollectionRoutes")
 
   @@index([userId, createdAt])
   @@index([isPublic, publishedAt])
   @@index([isPublic, avgRating, ratingCount])
   @@map("routes")
+}
+
+model RouteCollection {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  userId      String
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routes Route[] @relation("CollectionRoutes")
+
+  @@index([userId, createdAt])
+  @@map("route_collections")
 }
 
 model RouteRating {

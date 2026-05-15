@@ -28,12 +28,14 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useLocationPing } from '@/hooks/useLocationPing';
 import { usePendingRequests } from '@/hooks/usePendingRequests';
 import { useAutoSpotDetection } from '@/hooks/useAutoSpotDetection';
+import { useBatteryEco } from '@/hooks/useBatteryEco';
 import { useProfileStore } from '@/stores/useProfileStore';
 import { UserProfileView } from '@/components/profile/PublicProfileModals';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import Link from 'next/link';
 import MapErrorBoundary from '@/components/map/MapErrorBoundary';
+import RouteCollectionsPanel from '@/components/routes/RouteCollectionsPanel';
 
 const MapView = dynamic(() => import('@/components/map/MapView'), {
   ssr: false,
@@ -131,6 +133,7 @@ function DashboardContent() {
   useNotifications({ userId: session?.user?.id, convoyId: activeConvoy?.id });
   const autoSpotEnabled = useProfileStore((s) => s.privacy.autoSpot !== false);
   useLocationPing(true);
+  useBatteryEco();
   useAutoSpotDetection(autoSpotEnabled);
 
   const geo = useGeolocation({ enableHighAccuracy: true, autoStart: true });
@@ -147,7 +150,7 @@ function DashboardContent() {
   const [feedSubTab, setFeedSubTab] = useState<'feed' | 'events'>('feed');
   const { show: showOnboarding, dismiss: dismissOnboarding } = useShowOnboarding();
   const [searchOpen, setSearchOpen] = useState(false);
-  const [routesSubTab, setRoutesSubTab] = useState<'routes' | 'trips'>('routes');
+  const [routesSubTab, setRoutesSubTab] = useState<'routes' | 'trips' | 'collections'>('routes');
   const [profileSubTab, setProfileSubTab] = useState<'settings' | 'stats'>('settings');
 
   // Ctrl+K global shortcut
@@ -639,9 +642,9 @@ function DashboardContent() {
 
                 {activeTab === 'routes' && (
                   <div className="flex flex-col gap-4">
-                    {/* Sub-tabs: Trasy / Historia */}
+                    {/* Sub-tabs: Trasy / Historia / Kolekcje */}
                     <div className="flex rounded-xl bg-input-bg p-1">
-                      {(['routes', 'trips'] as const).map((t) => (
+                      {(['routes', 'trips', 'collections'] as const).map((t) => (
                         <button
                           key={t}
                           onClick={() => setRoutesSubTab(t)}
@@ -655,7 +658,7 @@ function DashboardContent() {
                             />
                           )}
                           <span className="relative">
-                            {t === 'routes' ? '🗺️ Trasy' : '🏁 Historia jazdy'}
+                            {t === 'routes' ? '🗺️ Trasy' : t === 'trips' ? '🏁 Historia' : '📁 Kolekcje'}
                           </span>
                         </button>
                       ))}
@@ -670,9 +673,13 @@ function DashboardContent() {
                             onCreateRouteOpenChange={setCreateRouteOpen}
                           />
                         </motion.div>
-                      ) : (
+                      ) : routesSubTab === 'trips' ? (
                         <motion.div key="trips" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
                           <TripHistoryPanel />
+                        </motion.div>
+                      ) : (
+                        <motion.div key="collections" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                          <RouteCollectionsPanel />
                         </motion.div>
                       )}
                     </AnimatePresence>
