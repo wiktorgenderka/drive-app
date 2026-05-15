@@ -6,6 +6,9 @@ import { rateLimit } from "@/lib/rateLimit";
 import { RegisterSchema } from "@/lib/schemas";
 
 export async function POST(request: NextRequest) {
+  const ct = request.headers.get('content-type') ?? '';
+  if (!ct.includes('application/json')) return NextResponse.json({ error: 'Unsupported Media Type' }, { status: 415 });
+
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ?? '127.0.0.1';
   if (!rateLimit(`register:${ip}`, 5, 60_000)) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 });

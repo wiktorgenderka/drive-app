@@ -5,6 +5,9 @@ import prisma from "@/lib/prisma";
 import bcryptjs from "bcryptjs";
 
 export async function PATCH(request: NextRequest) {
+  const ct = request.headers.get('content-type') ?? '';
+  if (!ct.includes('application/json')) return NextResponse.json({ error: 'Unsupported Media Type' }, { status: 415 });
+
   try {
     const session = await auth();
     if (!session?.user?.id) {
