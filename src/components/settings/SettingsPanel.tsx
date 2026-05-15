@@ -9,6 +9,7 @@ import { useThemeStore } from '@/stores/useThemeStore';
 import { useProfileStore } from '@/stores/useProfileStore';
 import type { Vehicle } from '@/stores/useProfileStore';
 import { useStatsStore } from '@/stores/useStatsStore';
+import { useMapStore } from '@/stores/useMapStore';
 import type { MapTheme } from '@/stores/useThemeStore';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -165,6 +166,8 @@ export default function SettingsPanel() {
   const { mode, accentColor, mapTheme, toggleMode, setMode, setAccentColor, setMapTheme } = useThemeStore();
   const { vehicles, privacy, notifications, addVehicle, updateVehicle, removeVehicle, setActiveVehicle, setPrivacy, setNotifications } = useProfileStore();
   const { overall, byVehicle } = useStatsStore();
+  const ecoMode = useMapStore((s) => s.ecoMode);
+  const toggleEcoMode = useMapStore((s) => s.toggleEcoMode);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -823,6 +826,20 @@ export default function SettingsPanel() {
           <ToggleRow label="Publiczny profil" desc="Inni mogą wyszukać Twój profil" value={privacy.publicProfile} onChange={(v) => setPrivacy({ publicProfile: v })} accent={accentColor} />
           <ToggleRow label="Pokaż prędkość" desc="Wyświetlaj prędkość w konwoju" value={privacy.showSpeed} onChange={(v) => setPrivacy({ showSpeed: v })} accent={accentColor} />
           <ToggleRow label="Auto-spoty" desc="Automatycznie twórz spot, gdy stoisz blisko znajomego" value={privacy.autoSpot !== false} onChange={(v) => setPrivacy({ autoSpot: v })} accent={accentColor} />
+        </div>
+      </Card>
+
+      {/* ── Tryb ECO ── */}
+      <Card>
+        <SectionTitle>Oszczędzanie baterii</SectionTitle>
+        <div className="flex flex-col gap-4">
+          <ToggleRow
+            label="Tryb ECO"
+            desc="GPS co 30 s zamiast co 5 s — mniejsze zużycie baterii i danych"
+            value={ecoMode}
+            onChange={() => toggleEcoMode()}
+            accent={accentColor}
+          />
         </div>
       </Card>
 

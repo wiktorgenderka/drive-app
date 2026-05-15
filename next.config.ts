@@ -4,6 +4,9 @@ import path from "path";
 const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: true },
   serverExternalPackages: ['nodemailer'],
+  experimental: {
+    serverActions: { bodySizeLimit: '2mb' },
+  },
   turbopack: {
     root: path.resolve(__dirname),
   },
