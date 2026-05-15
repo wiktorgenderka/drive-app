@@ -181,6 +181,24 @@ export default function HomeScreen({
 
   const weather = useWeather(userLocation?.latitude, userLocation?.longitude);
 
+  // Cache static map URL — only regenerate when coarse location changes (~1 km grid)
+  const coarseLat = userLocation ? Math.round(userLocation.latitude * 100) : null;
+  const coarseLng = userLocation ? Math.round(userLocation.longitude * 100) : null;
+  const staticMapUrl = useMemo(() => {
+    const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+    if (!TOKEN) return null;
+    const lat = coarseLat !== null ? coarseLat / 100 : 50.06;
+    const lng = coarseLng !== null ? coarseLng / 100 : 19.94;
+    const cacheKey = `mapbox_static_${lat}_${lng}`;
+    if (typeof sessionStorage !== 'undefined') {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) return cached;
+    }
+    const url = `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/${lng},${lat},13,0/600x320@2x?access_token=${TOKEN}`;
+    if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(cacheKey, url);
+    return url;
+  }, [coarseLat, coarseLng]);
+
   const [friends, setFriends]           = useState<OnlineFriend[]>([]);
   const [stats, setStats]               = useState<DashboardStats | null>(null);
   const [xpData, setXpData]             = useState<XPData | null>(null);
@@ -566,11 +584,7 @@ export default function HomeScreen({
               style={{ height: 160 }}
             >
               <img
-                src={`https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/${
-                  userLocation
-                    ? `${userLocation.longitude},${userLocation.latitude},13`
-                    : '19.9449,50.0647,10'
-                },0/600x320@2x?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`}
+                src={staticMapUrl ?? undefined}
                 alt="Podgląd mapy"
                 className="h-full w-full object-cover"
               />
