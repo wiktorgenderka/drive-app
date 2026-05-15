@@ -7,6 +7,7 @@ import { useProfileStore } from '@/stores/useProfileStore';
 import { haversineMeters } from '@/lib/geo';
 
 const PING_INTERVAL_MS = 10_000;
+const PING_INTERVAL_ECO_MS = 30_000;
 const MIN_DISTANCE_M = 5;
 
 /**
@@ -16,12 +17,14 @@ const MIN_DISTANCE_M = 5;
 export function useLocationPing(enabled: boolean = true) {
   const { data: session } = useSession();
   const userLocation = useMapStore((s) => s.userLocation);
+  const ecoMode = useMapStore((s) => s.ecoMode);
   const shareLocation = useProfileStore((s) => s.privacy.shareLocation);
   const lastSentRef = useRef<{ lat: number; lng: number; t: number } | null>(null);
 
   useEffect(() => {
     if (!enabled || !session?.user?.id) return;
 
+    const intervalMs = ecoMode ? PING_INTERVAL_ECO_MS : PING_INTERVAL_MS;
     let cancelled = false;
 
     const ping = async () => {
@@ -31,7 +34,7 @@ export function useLocationPing(enabled: boolean = true) {
       const now = Date.now();
       if (
         last &&
-        now - last.t < PING_INTERVAL_MS &&
+        now - last.t < intervalMs &&
         haversineMeters(last.lat, last.lng, loc.latitude, loc.longitude) < MIN_DISTANCE_M
       ) {
         return;
@@ -62,12 +65,12 @@ export function useLocationPing(enabled: boolean = true) {
     // First ping as soon as we have a location.
     if (userLocation) ping();
 
-    const interval = setInterval(ping, PING_INTERVAL_MS);
+    const interval = setInterval(ping, intervalMs);
     return () => {
       cancelled = true;
       clearInterval(interval);
     };
     // userLocation intentionally not a dep — reading via getState() each tick.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, session?.user?.id, shareLocation]);
+  }, [enabled, session?.user?.id, shareLocation, ecoMode]);
 }

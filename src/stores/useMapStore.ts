@@ -135,6 +135,7 @@ interface MapState {
   mapFlyTarget: { longitude: number; latitude: number; zoom: number } | null;
   navigationRoute: NavigationRoute | null;
   mysteryDrive: MysteryDrive | null;
+  ecoMode: boolean;
 }
 
 interface MapActions {
@@ -170,6 +171,7 @@ interface MapActions {
   cancelMysteryDrive: () => void;
   clearMysteryDrive: () => void;
   clearAll: () => void;
+  toggleEcoMode: () => void;
 }
 
 type MapStore = MapState & MapActions;
@@ -200,6 +202,13 @@ export const useMapStore = create<MapStore>()((set) => ({
   mapFlyTarget: null,
   navigationRoute: null,
   mysteryDrive: null,
+  ecoMode: typeof window !== 'undefined' && localStorage.getItem('driveapp_eco') === '1',
+
+  toggleEcoMode: () => set((s) => {
+    const next = !s.ecoMode;
+    if (typeof window !== 'undefined') localStorage.setItem('driveapp_eco', next ? '1' : '0');
+    return { ecoMode: next };
+  }),
 
   setViewState: (viewState) =>
     set((state) => ({

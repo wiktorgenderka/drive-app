@@ -3,11 +3,14 @@
 import { useSession } from 'next-auth/react';
 import Avatar from '@/components/ui/Avatar';
 import { useThemeStore } from '@/stores/useThemeStore';
+import { useMapStore } from '@/stores/useMapStore';
 import PushNotificationBanner from '@/components/pwa/PushNotificationBanner';
 
 export default function Header() {
   const { data: session } = useSession();
   const { mode, setMode } = useThemeStore();
+  const ecoMode = useMapStore((s) => s.ecoMode);
+  const toggleEcoMode = useMapStore((s) => s.toggleEcoMode);
 
   return (
     <div>
@@ -16,6 +19,17 @@ export default function Header() {
       <h1 className="text-lg font-bold text-gray-100 hidden md:block">DriveApp</h1>
 
       <div className="flex items-center gap-3">
+        {/* ECO mode toggle */}
+        <button
+          onClick={toggleEcoMode}
+          className={`p-2 rounded-lg transition-colors ${ecoMode ? 'text-green-400 bg-green-900/30' : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'}`}
+          title={ecoMode ? 'Tryb ECO włączony (GPS co 30s)' : 'Włącz tryb ECO (oszczędność baterii)'}
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 10.5h.375c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125H21M4.5 10.5H18V15H4.5v-4.5zM3.75 18h15A2.25 2.25 0 0021 15.75v-6a2.25 2.25 0 00-2.25-2.25h-15A2.25 2.25 0 001.5 9.75v6A2.25 2.25 0 003.75 18z" />
+          </svg>
+        </button>
+
         {/* Theme toggle */}
         <button
           onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}
