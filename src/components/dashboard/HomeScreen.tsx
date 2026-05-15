@@ -179,6 +179,26 @@ export default function HomeScreen({
     return best;
   }, [userLocation, fuelStations]);
 
+  // Cheapest station for Pb95 and Diesel within 5 km
+  const cheapestStations = useMemo((): Record<string, (FuelStation & { distKm: number; price: number }) | null> => {
+    if (!userLocation || fuelStations.length === 0) return { PETROL_95: null, DIESEL: null };
+    const { latitude: lat, longitude: lng } = userLocation;
+    const result: Record<string, (FuelStation & { distKm: number; price: number }) | null> = { PETROL_95: null, DIESEL: null };
+    for (const s of fuelStations) {
+      const dLat = (s.latitude - lat) * 111320;
+      const dLng = (s.longitude - lng) * 111320 * Math.cos(lat * (Math.PI / 180));
+      const distKm = Math.sqrt(dLat * dLat + dLng * dLng) / 1000;
+      if (distKm > 5) continue;
+      for (const fuelType of ['PETROL_95', 'DIESEL'] as const) {
+        const p = s.prices.find((pr) => pr.fuelType === fuelType);
+        if (!p) continue;
+        const current = result[fuelType];
+        if (!current || p.price < current.price) result[fuelType] = { ...s, distKm, price: p.price };
+      }
+    }
+    return result;
+  }, [userLocation, fuelStations]);
+
   const weather = useWeather(userLocation?.latitude, userLocation?.longitude);
 
   // Cache static map URL — only regenerate when coarse location changes (~1 km grid)
@@ -563,6 +583,36 @@ export default function HomeScreen({
                       <div key={type} className="flex flex-col items-center">
                         <span className="text-sm font-extrabold text-foreground tabular-nums">{p.price.toFixed(2)}</span>
                         <span className="text-[9px] text-muted">{type === 'PETROL_95' ? 'Pb95' : 'ON'}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Cheapest fuel within 5 km */}
+          {(cheapestStations.PETROL_95 || cheapestStations.DIESEL) && (
+            <motion.div variants={fadeUp}>
+              <div className="rounded-2xl border border-card-border bg-card-bg px-4 py-3">
+                <p className="mb-2 text-xs font-semibold text-muted">Najtańsze w okolicy (5 km)</p>
+                <div className="flex gap-3">
+                  {(['PETROL_95', 'DIESEL'] as const).map((type) => {
+                    const s = cheapestStations[type];
+                    if (!s) return null;
+                    const label = type === 'PETROL_95' ? 'Pb95' : 'ON';
+                    return (
+                      <div key={type} className="flex flex-1 items-center gap-2.5 rounded-xl bg-input-bg px-3 py-2">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-600/15 text-sm">
+                          {type === 'PETROL_95' ? '🟢' : '🔵'}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-emerald-400 tabular-nums">{s.price.toFixed(2)} zł</p>
+                          <p className="truncate text-[10px] text-muted">{s.brand ?? s.name}</p>
+                          <p className="text-[10px] text-muted/60">
+                            {s.distKm < 1 ? `${Math.round(s.distKm * 1000)} m` : `${s.distKm.toFixed(1)} km`} · {label}
+                          </p>
+                        </div>
                       </div>
                     );
                   })}
