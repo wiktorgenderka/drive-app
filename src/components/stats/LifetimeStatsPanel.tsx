@@ -49,12 +49,16 @@ function StatCard({ emoji, value, label, accent = false }: {
 export default function LifetimeStatsPanel() {
   const [stats, setStats] = useState<LifetimeStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     fetch('/api/stats/lifetime')
-      .then((r) => r.ok ? r.json() : null)
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then((data) => { setStats(data); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch(() => { setError(true); setLoading(false); });
   }, []);
 
   if (loading) {
@@ -65,7 +69,21 @@ export default function LifetimeStatsPanel() {
     );
   }
 
-  if (!stats) return null;
+  if (error || !stats) {
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-2xl border border-card-border bg-card-bg px-6 py-10 text-center">
+        <span className="text-3xl">📊</span>
+        <p className="text-sm font-semibold text-foreground">Nie można załadować statystyk</p>
+        <p className="text-xs text-muted">Sprawdź połączenie i spróbuj ponownie</p>
+        <button
+          onClick={() => { setError(false); setLoading(true); fetch('/api/stats/lifetime').then((r) => r.ok ? r.json() : Promise.reject()).then((data) => { setStats(data); setLoading(false); }).catch(() => { setError(true); setLoading(false); }); }}
+          className="mt-1 rounded-xl bg-accent px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90"
+        >
+          Odśwież
+        </button>
+      </div>
+    );
+  }
 
   const memberSinceStr = stats.memberSince
     ? new Date(stats.memberSince).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })

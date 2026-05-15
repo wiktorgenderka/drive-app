@@ -17,8 +17,8 @@ export default function WeeklyChart() {
 
   useEffect(() => {
     fetch('/api/stats/weekly')
-      .then((r) => r.ok ? r.json() : [])
-      .then((data) => { setDays(data); setLoading(false); })
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((data: DayData[]) => { setDays(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
