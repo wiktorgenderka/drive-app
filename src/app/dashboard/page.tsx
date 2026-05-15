@@ -391,8 +391,8 @@ function DashboardContent() {
               </Link>
             </div>
 
-            {/* Right-side floating action buttons */}
-            <div className="absolute right-4 top-20 z-20 flex flex-col gap-2">
+            {/* Right-side floating action buttons — stacked from bottom */}
+            <div className="absolute right-4 bottom-44 z-20 flex flex-col gap-2">
               {/* Layer toggle */}
               <div className="relative">
                 <button

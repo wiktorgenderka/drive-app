@@ -250,6 +250,10 @@ export default function MapView() {
   const tripLastLocRef = useRef<{ lat: number; lng: number } | null>(null);
   const tripWaypointsRef = useRef<[number, number][]>([]);
   const tripWptLastRef = useRef<{ lat: number; lng: number } | null>(null);
+
+  // Auto-trip detection timestamps
+  const movingStartRef = useRef<number | null>(null);
+  const idleStartRef   = useRef<number | null>(null);
   const [showTripSummary, setShowTripSummary] = useState(false);
   const [finishedTrip, setFinishedTrip] = useState<{
     distance: number; duration: number; maxSpeed: number; avgSpeed: number;
@@ -441,6 +445,38 @@ export default function MapView() {
     return () => clearInterval(id);
   }, [isTripActive, tripStartTime]);
 
+  // Auto-trip: start when driving >10 km/h for 8s, end when idle <5 km/h for 50s.
+  // Uses timestamps in refs so we don't need setTimeouts (avoids stale closures).
+  useEffect(() => {
+    if (!userLocation || isNavigating) return;
+    const kmh = Math.max(0, (userLocation.speed ?? 0) * 3.6);
+    const now  = Date.now();
+
+    if (kmh >= 10) {
+      idleStartRef.current = null;
+      if (!isTripActive) {
+        if (movingStartRef.current === null) {
+          movingStartRef.current = now;
+        } else if (now - movingStartRef.current >= 8_000) {
+          movingStartRef.current = null;
+          startTrip();
+        }
+      }
+    } else if (kmh < 5) {
+      movingStartRef.current = null;
+      if (isTripActive) {
+        if (idleStartRef.current === null) {
+          idleStartRef.current = now;
+        } else if (now - idleStartRef.current >= 50_000) {
+          idleStartRef.current = null;
+          stopTrip();
+        }
+      }
+    }
+    // 5–10 km/h hysteresis band — no state change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userLocation]);
+
   useEffect(() => {
     if (!isNavigating || !userLocation || navSteps.length === 0) return;
     const step = navSteps[currentStepIdx];
@@ -520,6 +556,19 @@ export default function MapView() {
   }
 
   function stopTrip() {
+    // Discard trips shorter than 300 m — likely a false-positive from brief movement
+    if (tripDistance < 300) {
+      setIsTripActive(false);
+      setTripDistance(0);
+      setTripElapsed(0);
+      setTripMaxSpeed(0);
+      setTripSpeedSum(0);
+      setTripSpeedCount(0);
+      tripLastLocRef.current   = null;
+      tripWaypointsRef.current = [];
+      tripWptLastRef.current   = null;
+      return;
+    }
     const avg = tripSpeedCount > 0 ? tripSpeedSum / tripSpeedCount : 0;
     const endedAt = new Date();
     const startedAt = tripStartTime ? new Date(tripStartTime) : new Date(Date.now() - tripElapsed * 1000);
@@ -675,8 +724,6 @@ export default function MapView() {
         speedKmh={speedKmh}
         speedColor={speedColor}
         speedLimit={speedLimit}
-        onStartTrip={startTrip}
-        onStopTrip={stopTrip}
         onOpenSpeedLimit={() => setShowSpeedLimitModal(true)}
       />
 
