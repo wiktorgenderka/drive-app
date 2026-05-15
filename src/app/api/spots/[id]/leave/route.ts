@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { broadcastToChannel } from "@/lib/supabase-broadcast";
@@ -84,7 +85,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ left: true, closed, id });
   } catch (error) {
-    console.error("Leave spot error:", error);
+    logger.error({ err: error }, "Leave spot error:");
     const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }

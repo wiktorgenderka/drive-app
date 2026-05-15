@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { CreatePostSchema } from "@/lib/schemas";
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data, total, page, limit, sort, filter });
   } catch (error) {
-    console.error("List posts error:", error);
+    logger.error({ err: error }, "List posts error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ...post, myLiked: false, comments: [] }, { status: 201 });
   } catch (error) {
-    console.error("Create post error:", error);
+    logger.error({ err: error }, "Create post error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

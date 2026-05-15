@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
@@ -138,7 +139,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(merged);
   } catch (error) {
-    console.error("Get fuel stations error:", error);
+    logger.error({ err: error }, "Get fuel stations error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -204,7 +205,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(station, { status: 201 });
   } catch (error) {
-    console.error("Create fuel station error:", error);
+    logger.error({ err: error }, "Create fuel station error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

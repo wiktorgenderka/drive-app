@@ -4,12 +4,20 @@
 const { createServer } = require('http');
 const next = require('next');
 const { Server: SocketIOServer } = require('socket.io');
+const pino = require('pino');
+
+const log = pino({
+  level: process.env.LOG_LEVEL ?? (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
+  ...(process.env.NODE_ENV !== 'production' && {
+    transport: { target: 'pino-pretty', options: { colorize: true, translateTime: 'SYS:HH:MM:ss', ignore: 'pid,hostname' } },
+  }),
+});
 
 // Validate required env vars on server start
 const REQUIRED_ENV = ['DATABASE_URL', 'NEXTAUTH_SECRET', 'NEXT_PUBLIC_MAPBOX_TOKEN'];
 const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
 if (missing.length > 0) {
-  console.error(`[server] Missing required environment variables: ${missing.join(', ')}`);
+  log.error({ missing }, 'Missing required environment variables');
   if (process.env.NODE_ENV === 'production') process.exit(1);
 }
 
@@ -36,13 +44,13 @@ app.prepare().then(() => {
   global.__socketIo = io;
 
   io.on('connection', (socket) => {
-    console.log('Client connected:', socket.id);
+    log.debug({ socketId: socket.id }, 'Client connected');
 
     // Join personal room for targeted notifications
     socket.on('user-connect', ({ userId }) => {
       if (userId) {
         socket.join(`user:${userId}`);
-        console.log(`[server] socket ${socket.id} joined room user:${userId}`);
+        log.debug({ socketId: socket.id, userId }, 'Socket joined user room');
       }
     });
 
@@ -163,11 +171,11 @@ app.prepare().then(() => {
     });
 
     socket.on('disconnect', () => {
-      console.log('Client disconnected:', socket.id);
+      log.debug({ socketId: socket.id }, 'Client disconnected');
     });
   });
 
   httpServer.listen(port, () => {
-    console.log(`> Server listening at http://localhost:${port} as ${dev ? 'development' : process.env.NODE_ENV}`);
+    log.info({ port, env: dev ? 'development' : process.env.NODE_ENV }, `Server listening at http://localhost:${port}`);
   });
 });

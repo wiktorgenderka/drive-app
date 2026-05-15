@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import logger from '@/lib/logger';
 import { auth } from '@/lib/auth';
 import { getSpotifyAuthUrl, getValidAccessToken, fetchNowPlaying } from '@/lib/spotify';
 
@@ -18,7 +19,7 @@ export async function GET() {
     const nowPlaying = await fetchNowPlaying(token);
     return NextResponse.json({ connected: true, nowPlaying });
   } catch (error) {
-    console.error('Spotify now playing error:', error);
+    logger.error({ err: error }, 'Spotify now playing error:');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -34,7 +35,7 @@ export async function POST() {
     const url = getSpotifyAuthUrl(session.user.id);
     return NextResponse.json({ url });
   } catch (error) {
-    console.error('Spotify connect error:', error);
+    logger.error({ err: error }, 'Spotify connect error:');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -52,7 +53,7 @@ export async function DELETE() {
 
     return NextResponse.json({ disconnected: true });
   } catch (error) {
-    console.error('Spotify disconnect error:', error);
+    logger.error({ err: error }, 'Spotify disconnect error:');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

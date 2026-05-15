@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimit";
@@ -95,7 +96,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Get spots error:", error);
+    logger.error({ err: error }, "Get spots error:");
     const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -158,12 +159,12 @@ export async function POST(request: NextRequest) {
       const spotCount = await prisma.spot.count({ where: { createdById: userId } });
       await checkAndUnlockAchievements(userId, { spotCount, streak });
     } catch (e) {
-      console.error('Spot XP error:', e);
+      logger.error({ err: e }, 'Spot XP error:');
     }
 
     return NextResponse.json({ ...spot, isOwner: true, isParticipant: false }, { status: 201 });
   } catch (error) {
-    console.error("Create spot error:", error);
+    logger.error({ err: error }, "Create spot error:");
     const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }

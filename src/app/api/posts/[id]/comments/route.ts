@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { CreateCommentSchema } from "@/lib/schemas";
@@ -21,7 +22,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ data: comments });
   } catch (error) {
-    console.error("List comments error:", error);
+    logger.error({ err: error }, "List comments error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ comment, commentCount }, { status: 201 });
   } catch (error) {
-    console.error("Add comment error:", error);
+    logger.error({ err: error }, "Add comment error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

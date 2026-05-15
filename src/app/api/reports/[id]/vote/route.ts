@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { awardXP } from "@/lib/xp";
+import { checkAndUnlockAchievements } from "@/lib/achievements";
+import { sendPushToUser } from "@/lib/webpush";
+import { REPORT_TYPE_LABELS } from "@/types";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -78,17 +83,35 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ reportId, upvotes, downvotes, userVote, deleted: true });
     }
 
-    // 5 upvotes → mark as confirmed (resets the "ask again" cycle)
-    if (upvotes >= 5) {
+    // 5 upvotes → mark as confirmed + reward report author
+    if (upvotes >= 5 && !report.confirmedAt) {
       await prisma.report.update({
         where: { id: reportId },
         data: { confirmedAt: new Date() },
       });
+
+      // XP + achievement for the report author
+      try {
+        await awardXP(report.userId, 'REPORT_CONFIRMED');
+        const confirmedCount = await prisma.report.count({
+          where: { userId: report.userId, confirmedAt: { not: null } },
+        });
+        await checkAndUnlockAchievements(report.userId, { reportCount: confirmedCount, reportConfirmed: true });
+        const typeLabel = REPORT_TYPE_LABELS[report.type as keyof typeof REPORT_TYPE_LABELS] ?? report.type;
+        sendPushToUser(report.userId, {
+          title: 'Twój raport potwierdzony!',
+          body: `Raport „${typeLabel}" został potwierdzony przez społeczność. +XP`,
+          tag: 'report-confirmed',
+          url: '/dashboard',
+        }).catch(() => {});
+      } catch (e) {
+        logger.error({ err: e }, 'Report confirm XP error');
+      }
     }
 
     return NextResponse.json({ reportId, upvotes, downvotes, userVote });
   } catch (error) {
-    console.error("Vote on report error:", error);
+    logger.error({ err: error }, "Vote on report error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

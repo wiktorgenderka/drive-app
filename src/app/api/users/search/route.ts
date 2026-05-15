@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: users });
   } catch (error) {
-    console.error("User search error:", error);
+    logger.error({ err: error }, "User search error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
@@ -37,7 +38,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ message: "Friend removed successfully" });
   } catch (error) {
-    console.error("Delete friendship error:", error);
+    logger.error({ err: error }, "Delete friendship error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

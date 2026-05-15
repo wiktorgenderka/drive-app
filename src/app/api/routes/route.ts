@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { CreateRouteSchema } from "@/lib/schemas";
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: routes, total, page, limit });
   } catch (error) {
-    console.error("Get routes error:", error);
+    logger.error({ err: error }, "Get routes error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -70,12 +71,12 @@ export async function POST(request: NextRequest) {
       const routeCount = await prisma.route.count({ where: { userId } });
       await checkAndUnlockAchievements(userId, { routeCount, streak, level });
     } catch (e) {
-      console.error('Route XP error:', e);
+      logger.error({ err: e }, 'Route XP error:');
     }
 
     return NextResponse.json(route, { status: 201 });
   } catch (error) {
-    console.error("Create route error:", error);
+    logger.error({ err: error }, "Create route error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -125,7 +126,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ message: "Route deleted successfully" });
   } catch (error) {
-    console.error("Delete route error:", error);
+    logger.error({ err: error }, "Delete route error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

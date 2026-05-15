@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import logger from '@/lib/logger';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { FuelType } from '@prisma/client';
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ history, days });
   } catch (error) {
-    console.error('Fuel price history error:', error);
+    logger.error({ err: error }, 'Fuel price history error:');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

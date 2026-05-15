@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import logger from '@/lib/logger';
 import crypto from 'crypto';
 import prisma from '@/lib/prisma';
 import { sendPasswordResetEmail } from '@/lib/email';
@@ -41,13 +42,13 @@ export async function POST(request: NextRequest) {
     try {
       await sendPasswordResetEmail(user.email, resetUrl);
     } catch (mailError) {
-      console.error('[forgot-password] Wysyłanie emaila nie powiodło się:', mailError);
+      logger.error({ err: mailError }, '[forgot-password] Wysyłanie emaila nie powiodło się:');
       // Nie ujawniamy błędu SMTP użytkownikowi — token jest zapisany, można spróbować ponownie
     }
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('Forgot password error:', error);
+    logger.error({ err: error }, 'Forgot password error:');
     return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
   }
 }

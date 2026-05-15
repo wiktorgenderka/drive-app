@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import prisma from "@/lib/prisma";
 
 /**
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Cron cleanup error:", error);
+    logger.error({ err: error }, "Cron cleanup error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

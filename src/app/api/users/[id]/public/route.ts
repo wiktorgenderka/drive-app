@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
@@ -196,7 +197,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       friendshipId,
     });
   } catch (error) {
-    console.error("Public profile error:", error);
+    logger.error({ err: error }, "Public profile error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { broadcastToChannel } from "@/lib/supabase-broadcast";
@@ -52,7 +53,7 @@ export async function PATCH(_request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ closed: true, id });
   } catch (error) {
-    console.error("Close spot error:", error);
+    logger.error({ err: error }, "Close spot error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

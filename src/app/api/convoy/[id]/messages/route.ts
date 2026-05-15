@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import logger from '@/lib/logger';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     });
     return NextResponse.json(messages);
   } catch (err) {
-    console.error('[convoy/messages GET]', err);
+    logger.error({ err: err }, '[convoy/messages GET]');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

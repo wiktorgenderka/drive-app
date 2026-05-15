@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
@@ -23,7 +24,7 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
     await prisma.post.delete({ where: { id } });
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Delete post error:", error);
+    logger.error({ err: error }, "Delete post error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

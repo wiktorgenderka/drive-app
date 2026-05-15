@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { awardXP, touchStreak } from "@/lib/xp";
@@ -59,12 +60,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
       const convoyCount = await prisma.convoyMember.count({ where: { userId } });
       await checkAndUnlockAchievements(userId, { convoyCount, streak });
     } catch (e) {
-      console.error('Convoy XP error:', e);
+      logger.error({ err: e }, 'Convoy XP error:');
     }
 
     return NextResponse.json(member, { status: 201 });
   } catch (error) {
-    console.error("Join convoy error:", error);
+    logger.error({ err: error }, "Join convoy error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

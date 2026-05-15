@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 
 interface SuggestedRoute {
@@ -185,7 +186,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(suggested);
   } catch (error) {
-    console.error("Suggested routes error:", error);
+    logger.error({ err: error }, "Suggested routes error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

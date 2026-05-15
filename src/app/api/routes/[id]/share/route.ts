@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       route: updated,
     });
   } catch (error) {
-    console.error("Share route error:", error);
+    logger.error({ err: error }, "Share route error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

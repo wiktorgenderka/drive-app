@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { FuelType } from "@prisma/client";
@@ -58,7 +59,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       prices,
     });
   } catch (error) {
-    console.error("Get fuel prices error:", error);
+    logger.error({ err: error }, "Get fuel prices error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -139,7 +140,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json(newPrice, { status: 201 });
   } catch (error) {
-    console.error("Add fuel price error:", error);
+    logger.error({ err: error }, "Add fuel price error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json(convoy);
   } catch (error) {
-    console.error("Get convoy error:", error);
+    logger.error({ err: error }, "Get convoy error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -112,7 +113,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json(member, { status: 201 });
   } catch (error) {
-    console.error("Join convoy error:", error);
+    logger.error({ err: error }, "Join convoy error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -163,7 +164,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     await prisma.convoyMember.deleteMany({ where: { convoyId: id, userId: session.user.id } });
     return NextResponse.json({ message: "Left convoy successfully" });
   } catch (error) {
-    console.error("Leave/delete convoy error:", error);
+    logger.error({ err: error }, "Leave/delete convoy error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -222,7 +223,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json(updated);
   } catch (error) {
-    console.error("Update convoy error:", error);
+    logger.error({ err: error }, "Update convoy error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

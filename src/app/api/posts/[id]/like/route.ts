@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { awardXP } from "@/lib/xp";
@@ -43,13 +44,13 @@ export async function POST(_req: NextRequest, context: RouteContext) {
           await checkAndUnlockAchievements(post.userId, { postLikes: likeCount });
         }
       } catch (e) {
-        console.error('Like XP error:', e);
+        logger.error({ err: e }, 'Like XP error:');
       }
     }
 
     return NextResponse.json({ liked, likeCount });
   } catch (error) {
-    console.error("Toggle like error:", error);
+    logger.error({ err: error }, "Toggle like error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

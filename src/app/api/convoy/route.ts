@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { CreateConvoySchema } from "@/lib/schemas";
@@ -32,7 +33,7 @@ export async function GET() {
 
     return NextResponse.json(convoys);
   } catch (error) {
-    console.error("Get convoys error:", error);
+    logger.error({ err: error }, "Get convoys error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(convoy, { status: 201 });
   } catch (error) {
-    console.error("Create convoy error:", error);
+    logger.error({ err: error }, "Create convoy error:");
     if (
       error != null &&
       typeof error === "object" &&
@@ -178,7 +179,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(updatedConvoy);
   } catch (error) {
-    console.error("Update convoy error:", error);
+    logger.error({ err: error }, "Update convoy error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -242,7 +243,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ message: "Left convoy successfully" });
   } catch (error) {
-    console.error("Delete/leave convoy error:", error);
+    logger.error({ err: error }, "Delete/leave convoy error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

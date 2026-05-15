@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import logger from '@/lib/logger';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { randomBytes } from 'crypto';
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const baseUrl = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL ?? '';
     return NextResponse.json({ token: updated.shareToken, url: `${baseUrl}/r/${updated.shareToken}` });
   } catch (error) {
-    console.error('Share link error:', error);
+    logger.error({ err: error }, 'Share link error:');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -60,7 +61,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     await prisma.route.update({ where: { id }, data: { shareToken: null } });
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('Revoke share link error:', error);
+    logger.error({ err: error }, 'Revoke share link error:');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

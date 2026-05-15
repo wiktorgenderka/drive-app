@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
     });
     return NextResponse.json({ ...updated, myStars: stars });
   } catch (error) {
-    console.error("Rate route error:", error);
+    logger.error({ err: error }, "Rate route error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -83,7 +84,7 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
     });
     return NextResponse.json({ ...updated, myStars: null });
   } catch (error) {
-    console.error("Unrate route error:", error);
+    logger.error({ err: error }, "Unrate route error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

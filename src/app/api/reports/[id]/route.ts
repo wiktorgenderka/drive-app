@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
@@ -38,7 +39,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ deleted: true });
   } catch (error) {
-    console.error("Delete report error:", error);
+    logger.error({ err: error }, "Delete report error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

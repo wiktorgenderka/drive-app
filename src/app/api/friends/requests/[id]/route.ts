@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
@@ -66,7 +67,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json(updated);
   } catch (error) {
-    console.error("Update friend request error:", error);
+    logger.error({ err: error }, "Update friend request error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

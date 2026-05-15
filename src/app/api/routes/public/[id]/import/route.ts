@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
@@ -36,7 +37,7 @@ export async function POST(_req: NextRequest, context: RouteContext) {
 
     return NextResponse.json(copy, { status: 201 });
   } catch (error) {
-    console.error("Import public route error:", error);
+    logger.error({ err: error }, "Import public route error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

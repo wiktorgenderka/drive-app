@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { ReportType } from "@prisma/client";
@@ -85,7 +86,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(reportsWithCounts);
   } catch (error) {
-    console.error("Get reports error:", error);
+    logger.error({ err: error }, "Get reports error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -144,12 +145,12 @@ export async function POST(request: NextRequest) {
       const reportCount = await prisma.report.count({ where: { userId } });
       await checkAndUnlockAchievements(userId, { reportCount, streak, reportConfirmed: true });
     } catch (e) {
-      console.error('Report XP error:', e);
+      logger.error({ err: e }, 'Report XP error:');
     }
 
     return NextResponse.json(report, { status: 201 });
   } catch (error) {
-    console.error("Create report error:", error);
+    logger.error({ err: error }, "Create report error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

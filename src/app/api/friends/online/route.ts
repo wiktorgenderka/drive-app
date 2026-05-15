@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { getValidAccessToken, fetchNowPlaying } from "@/lib/spotify";
@@ -100,7 +101,7 @@ export async function GET() {
 
     return NextResponse.json(friends);
   } catch (error) {
-    console.error("Get online friends error:", error);
+    logger.error({ err: error }, "Get online friends error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { CreateTripSchema } from "@/lib/schemas";
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: trips, total, page, limit });
   } catch (error) {
-    console.error("Get trips error:", error);
+    logger.error({ err: error }, "Get trips error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -83,12 +84,12 @@ export async function POST(request: NextRequest) {
         totalDistanceKm,
       });
     } catch (e) {
-      console.error('Trip XP error:', e);
+      logger.error({ err: e }, 'Trip XP error:');
     }
 
     return NextResponse.json(trip, { status: 201 });
   } catch (error) {
-    console.error("Create trip error:", error);
+    logger.error({ err: error }, "Create trip error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

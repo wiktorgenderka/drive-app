@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimit";
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(user, { status: 201 });
   } catch (error) {
-    console.error("Registration error:", error);
+    logger.error({ err: error }, "Registration error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

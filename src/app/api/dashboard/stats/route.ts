@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
@@ -79,7 +80,7 @@ export async function GET() {
       weekKm: weekTrips._sum.distanceKm ?? 0,
     });
   } catch (error) {
-    console.error("Dashboard stats error:", error);
+    logger.error({ err: error }, "Dashboard stats error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

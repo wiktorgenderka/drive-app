@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimit";
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Location ping error:", error);
+    logger.error({ err: error }, "Location ping error:");
     const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }

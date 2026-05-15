@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
@@ -33,7 +34,7 @@ export async function GET() {
 
     return NextResponse.json(user);
   } catch (error) {
-    console.error("Get user error:", error);
+    logger.error({ err: error }, "Get user error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -71,7 +72,7 @@ export async function DELETE(request: NextRequest) {
     await prisma.user.delete({ where: { id: session.user.id } });
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Delete user error:", error);
+    logger.error({ err: error }, "Delete user error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -115,7 +116,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json(user);
   } catch (error) {
-    console.error("Update user error:", error);
+    logger.error({ err: error }, "Update user error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

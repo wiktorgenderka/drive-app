@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import logger from '@/lib/logger';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
@@ -74,7 +75,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       },
     });
   } catch (error) {
-    console.error('GPX export error:', error);
+    logger.error({ err: error }, 'GPX export error:');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

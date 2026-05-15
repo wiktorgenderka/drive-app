@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, type FormEvent } from 'react';
+import { useState, useRef, useCallback, useEffect, type FormEvent } from 'react';
 import dynamic from 'next/dynamic';
 import { useMapStore } from '@/stores/useMapStore';
 
@@ -141,6 +141,35 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
     waypoints.length >= 2 &&
     waypoints[0].latitude === waypoints[waypoints.length - 1].latitude &&
     waypoints[0].longitude === waypoints[waypoints.length - 1].longitude;
+
+  // Route preview — distance & duration from Mapbox Directions API
+  const [routePreview, setRoutePreview] = useState<{ distanceKm: number; durationMin: number } | null>(null);
+  const previewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (waypoints.length < 2 || !MAPBOX_TOKEN) {
+      setRoutePreview(null);
+      return;
+    }
+    if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
+    previewTimeoutRef.current = setTimeout(async () => {
+      try {
+        const coords = waypoints.map((wp) => `${wp.longitude},${wp.latitude}`).join(';');
+        const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coords}?access_token=${MAPBOX_TOKEN}&overview=false`;
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const data = await res.json();
+        const route = data.routes?.[0];
+        if (route) {
+          setRoutePreview({
+            distanceKm: Math.round((route.distance / 1000) * 10) / 10,
+            durationMin: Math.round(route.duration / 60),
+          });
+        }
+      } catch { /* ignore */ }
+    }, 600);
+    return () => { if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current); };
+  }, [waypoints]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -434,6 +463,30 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
               </p>
             </div>
           </label>
+
+          {/* Route preview */}
+          {routePreview && waypoints.length >= 2 && (
+            <div className="flex items-center gap-4 rounded-xl border border-orange-500/20 bg-orange-500/5 px-4 py-2.5">
+              <div className="flex items-center gap-1.5 text-orange-400">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4" />
+                </svg>
+                <span className="text-sm font-semibold">{routePreview.distanceKm} km</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-muted">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <circle cx="12" cy="12" r="10" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" />
+                </svg>
+                <span className="text-sm">
+                  {routePreview.durationMin < 60
+                    ? `${routePreview.durationMin} min`
+                    : `${Math.floor(routePreview.durationMin / 60)} h ${routePreview.durationMin % 60} min`}
+                </span>
+              </div>
+              <span className="ml-auto text-[10px] text-muted opacity-60">szacowany czas jazdy</span>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex gap-3">

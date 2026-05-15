@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { awardXP, touchStreak } from "@/lib/xp";
@@ -47,7 +48,7 @@ export async function GET(
 
     return NextResponse.json(leaderboard);
   } catch (error) {
-    console.error("Get route times error:", error);
+    logger.error({ err: error }, "Get route times error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -84,12 +85,12 @@ export async function POST(
       await touchStreak(session.user.id);
       await awardXP(session.user.id, 'ROUTE_DRIVEN');
     } catch (e) {
-      console.error('Route driven XP error:', e);
+      logger.error({ err: e }, 'Route driven XP error:');
     }
 
     return NextResponse.json(record, { status: 201 });
   } catch (error) {
-    console.error("Save route time error:", error);
+    logger.error({ err: error }, "Save route time error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

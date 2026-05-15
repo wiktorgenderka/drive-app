@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import logger from '@/lib/logger';
 
 export async function GET() {
   try {
@@ -8,7 +9,7 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Socket health check error:", error);
+    logger.error({ err: error }, "Socket health check error:");
     return NextResponse.json(
       { status: "error", message: "Socket endpoint unavailable" },
       { status: 503 }

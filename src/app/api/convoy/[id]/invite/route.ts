@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { broadcastToChannel } from "@/lib/supabase-broadcast";
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json(member, { status: 201 });
   } catch (error) {
-    console.error("Invite to convoy error:", error);
+    logger.error({ err: error }, "Invite to convoy error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

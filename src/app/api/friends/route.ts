@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimit";
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: friends, total, page, limit });
   } catch (error) {
-    console.error("Get friends error:", error);
+    logger.error({ err: error }, "Get friends error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -126,7 +127,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(friendship, { status: 201 });
   } catch (error) {
-    console.error("Send friend request error:", error);
+    logger.error({ err: error }, "Send friend request error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -203,12 +204,12 @@ export async function PUT(request: NextRequest) {
         checkAndUnlockAchievements(updated.requesterId, { friendCount: requesterCount }),
       ]);
     } catch (e) {
-      console.error('Friend XP error:', e);
+      logger.error({ err: e }, 'Friend XP error:');
     }
 
     return NextResponse.json(updated);
   } catch (error) {
-    console.error("Update friendship error:", error);
+    logger.error({ err: error }, "Update friendship error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -239,7 +240,7 @@ export async function DELETE(request: NextRequest) {
     await prisma.friendship.delete({ where: { id: friendshipId } });
     return NextResponse.json({ message: "Friend removed successfully" });
   } catch (error) {
-    console.error("Delete friendship error:", error);
+    logger.error({ err: error }, "Delete friendship error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

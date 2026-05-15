@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import logger from '@/lib/logger';
 import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { rateLimit } from '@/lib/rateLimit';
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('Reset password error:', error);
+    logger.error({ err: error }, 'Reset password error:');
     return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
   }
 }

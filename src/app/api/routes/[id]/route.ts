@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { UpdateRouteSchema } from "@/lib/schemas";
@@ -46,7 +47,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const updated = await prisma.route.update({ where: { id }, data });
     return NextResponse.json(updated);
   } catch (error) {
-    console.error("Update route error:", error);
+    logger.error({ err: error }, "Update route error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -82,7 +83,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ message: "Route deleted successfully" });
   } catch (error) {
-    console.error("Delete route error:", error);
+    logger.error({ err: error }, "Delete route error:");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

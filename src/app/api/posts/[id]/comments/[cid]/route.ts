@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
@@ -26,7 +27,7 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ commentCount });
   } catch (error) {
-    console.error("Delete comment error:", error);
+    logger.error({ err: error }, "Delete comment error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

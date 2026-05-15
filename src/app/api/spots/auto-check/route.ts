@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimit";
@@ -169,7 +170,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Auto-spot check error:", error);
+    logger.error({ err: error }, "Auto-spot check error:");
     const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }

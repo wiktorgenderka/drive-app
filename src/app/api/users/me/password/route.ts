@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import logger from '@/lib/logger';
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import bcryptjs from "bcryptjs";
@@ -52,7 +53,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Password change error:", error);
+    logger.error({ err: error }, "Password change error:");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
