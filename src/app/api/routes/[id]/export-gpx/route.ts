@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { waypointsToGPX } from '@/lib/gpx';
@@ -19,12 +19,8 @@ export async function GET(_req: NextRequest, context: RouteContext) {
   }
 
   const waypoints = (route.waypoints as Prisma.JsonArray).map((w) => {
-    const wp = w as { latitude?: number; lat?: number; longitude?: number; lng?: number; name?: string };
-    return {
-      latitude: wp.latitude ?? wp.lat ?? 0,
-      longitude: wp.longitude ?? wp.lng ?? 0,
-      name: wp.name,
-    };
+    const wp = w as { latitude: number; longitude: number; name?: string };
+    return { latitude: wp.latitude, longitude: wp.longitude, name: wp.name };
   });
 
   const gpx = waypointsToGPX(route.name, waypoints);
@@ -32,7 +28,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
   return new NextResponse(gpx, {
     headers: {
       'Content-Type': 'application/gpx+xml',
-      'Content-Disposition': `attachment; filename="${route.name.replace(/"/g, '')}.gpx"`,
+      'Content-Disposition': `attachment; filename="${encodeURIComponent(route.name)}.gpx"`,
     },
   });
 }

@@ -853,6 +853,41 @@ export default function MapView() {
           </Source>
         )}
 
+        {showReports && reports.length > 0 && (
+          <Source
+            id="reports-heat"
+            type="geojson"
+            data={{
+              type: 'FeatureCollection',
+              features: reports.map((r) => ({
+                type: 'Feature',
+                geometry: { type: 'Point', coordinates: [r.longitude, r.latitude] },
+                properties: { id: r.id },
+              })),
+            }}
+          >
+            <Layer
+              id="reports-heatmap"
+              type="heatmap"
+              maxzoom={14}
+              paint={{
+                'heatmap-weight': 1,
+                'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, 13, 3],
+                'heatmap-color': [
+                  'interpolate', ['linear'], ['heatmap-density'],
+                  0, 'rgba(0,0,0,0)',
+                  0.2, 'rgba(251,146,60,0.3)',
+                  0.5, 'rgba(239,68,68,0.6)',
+                  0.8, 'rgba(185,28,28,0.85)',
+                  1, 'rgba(127,29,29,1)',
+                ],
+                'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 16, 13, 40],
+                'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 12, 0.9, 14, 0],
+              }}
+            />
+          </Source>
+        )}
+
         {showFriends && Object.values(friendLocations).map((f) => (
           <FriendMarker key={f.userId} friend={f} />
         ))}
