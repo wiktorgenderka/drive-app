@@ -35,6 +35,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
     }
     const { id: postId } = await context.params;
 
+    const ct = req.headers.get('content-type') ?? '';
+    if (!ct.includes('application/json')) return NextResponse.json({ error: 'Unsupported Media Type' }, { status: 415 });
+
     const parsed = CreateCommentSchema.safeParse(await req.json());
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });

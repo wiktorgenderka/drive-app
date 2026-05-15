@@ -32,6 +32,8 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
   const [description, setDescription] = useState('');
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
   const [isPublic, setIsPublic] = useState(false);
+  const [avoidTolls, setAvoidTolls] = useState(false);
+  const [avoidHighways, setAvoidHighways] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showMapPicker, setShowMapPicker] = useState(false);
@@ -155,7 +157,11 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
     previewTimeoutRef.current = setTimeout(async () => {
       try {
         const coords = waypoints.map((wp) => `${wp.longitude},${wp.latitude}`).join(';');
-        const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coords}?access_token=${MAPBOX_TOKEN}&overview=false`;
+        const excludeParts: string[] = [];
+        if (avoidTolls) excludeParts.push('toll');
+        if (avoidHighways) excludeParts.push('motorway');
+        const excludeParam = excludeParts.length > 0 ? `&exclude=${excludeParts.join(',')}` : '';
+        const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coords}?access_token=${MAPBOX_TOKEN}&overview=false${excludeParam}`;
         const res = await fetch(url);
         if (!res.ok) return;
         const data = await res.json();
@@ -169,7 +175,7 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
       } catch { /* ignore */ }
     }, 600);
     return () => { if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current); };
-  }, [waypoints]);
+  }, [waypoints, avoidTolls, avoidHighways]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -448,6 +454,34 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
             )}
           </div>
 
+          {/* Avoid options */}
+          <div className="flex gap-2">
+            <label className="flex flex-1 items-center gap-2.5 rounded-xl border border-card-border bg-input-bg px-3 py-2.5 cursor-pointer transition hover:border-orange-500/60">
+              <input
+                type="checkbox"
+                checked={avoidTolls}
+                onChange={(e) => setAvoidTolls(e.target.checked)}
+                className="h-4 w-4 shrink-0 accent-orange-500"
+              />
+              <div>
+                <p className="text-xs font-semibold text-foreground">Unikaj płatnych dróg</p>
+                <p className="text-[10px] text-muted mt-0.5">Bez autostrad płatnych</p>
+              </div>
+            </label>
+            <label className="flex flex-1 items-center gap-2.5 rounded-xl border border-card-border bg-input-bg px-3 py-2.5 cursor-pointer transition hover:border-orange-500/60">
+              <input
+                type="checkbox"
+                checked={avoidHighways}
+                onChange={(e) => setAvoidHighways(e.target.checked)}
+                className="h-4 w-4 shrink-0 accent-orange-500"
+              />
+              <div>
+                <p className="text-xs font-semibold text-foreground">Unikaj autostrad</p>
+                <p className="text-[10px] text-muted mt-0.5">Trasy lokalne i krajowe</p>
+              </div>
+            </label>
+          </div>
+
           {/* Public visibility */}
           <label className="flex items-start gap-3 rounded-xl border border-card-border bg-input-bg px-3 py-2.5 cursor-pointer transition hover:border-orange-500/60">
             <input
@@ -484,7 +518,11 @@ export default function CreateRouteModal({ open, onClose, onCreated }: CreateRou
                     : `${Math.floor(routePreview.durationMin / 60)} h ${routePreview.durationMin % 60} min`}
                 </span>
               </div>
-              <span className="ml-auto text-[10px] text-muted opacity-60">szacowany czas jazdy</span>
+              <span className="ml-auto text-[10px] text-muted opacity-60">
+                {avoidTolls || avoidHighways
+                  ? [avoidTolls && 'bez płatnych', avoidHighways && 'bez autostrad'].filter(Boolean).join(', ')
+                  : 'szacowany czas jazdy'}
+              </span>
             </div>
           )}
 

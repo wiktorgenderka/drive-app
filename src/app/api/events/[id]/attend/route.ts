@@ -7,6 +7,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id } = await params;
+  const ct = req.headers.get('content-type') ?? '';
+  if (!ct.includes('application/json')) return NextResponse.json({ error: 'Unsupported Media Type' }, { status: 415 });
+
   const { status = 'GOING' } = await req.json();
 
   if (!['GOING', 'MAYBE', 'NOT_GOING'].includes(status)) {

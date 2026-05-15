@@ -15,8 +15,6 @@ export async function GET(_req: NextRequest, context: RouteContext) {
         name: true,
         description: true,
         waypoints: true,
-        distance: true,
-        duration: true,
         avgRating: true,
         ratingCount: true,
         createdAt: true,

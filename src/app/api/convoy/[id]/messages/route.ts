@@ -45,6 +45,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
+  const ct = req.headers.get('content-type') ?? '';
+  if (!ct.includes('application/json')) return NextResponse.json({ error: 'Unsupported Media Type' }, { status: 415 });
+
   const body = await req.json();
   const { id, type, message, audioData, mimeType, duration } = body;
 
@@ -89,6 +92,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id: convoyId } = await params;
+  const ct = req.headers.get('content-type') ?? '';
+  if (!ct.includes('application/json')) return NextResponse.json({ error: 'Unsupported Media Type' }, { status: 415 });
+
   const { messageId, action, newText } = await req.json();
 
   const msg = await prisma.convoyMessage.findUnique({ where: { id: messageId } });

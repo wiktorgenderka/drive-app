@@ -26,6 +26,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
+  const ct = req.headers.get('content-type') ?? '';
+  if (!ct.includes('application/json')) return NextResponse.json({ error: 'Unsupported Media Type' }, { status: 415 });
+
   const body = await req.json();
   const parsed = PatchSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });

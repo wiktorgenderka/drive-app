@@ -14,6 +14,9 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   const col = await prisma.routeCollection.findUnique({ where: { id: collectionId } });
   if (!col || col.userId !== session.user.id) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
+  const ct = req.headers.get('content-type') ?? '';
+  if (!ct.includes('application/json')) return NextResponse.json({ error: 'Unsupported Media Type' }, { status: 415 });
+
   try {
     const { routeId } = await req.json();
     if (!routeId) return NextResponse.json({ error: 'routeId required' }, { status: 400 });

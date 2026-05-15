@@ -30,6 +30,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
     }
 
     const { id: routeId } = await context.params;
+    const ct = req.headers.get('content-type') ?? '';
+    if (!ct.includes('application/json')) return NextResponse.json({ error: 'Unsupported Media Type' }, { status: 415 });
+
     const body = await req.json().catch(() => ({}));
     const stars = Number(body?.stars);
     if (!Number.isInteger(stars) || stars < 1 || stars > 5) {

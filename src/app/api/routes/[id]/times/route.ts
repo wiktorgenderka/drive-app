@@ -64,6 +64,9 @@ export async function POST(
     }
 
     const { id: routeId } = await params;
+    const ct = req.headers.get('content-type') ?? '';
+    if (!ct.includes('application/json')) return NextResponse.json({ error: 'Unsupported Media Type' }, { status: 415 });
+
     const body = await req.json();
     const seconds = Number(body?.seconds);
 

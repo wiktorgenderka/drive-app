@@ -20,9 +20,7 @@ interface Achievement {
 export async function GET(_req: NextRequest, context: RouteContext) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const viewerId = session?.user?.id ?? null;
 
     const { id: userId } = await context.params;
 
@@ -136,14 +134,16 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     // Status znajomości z aktualnym viewerem.
     let friendship: FriendshipState = 'none';
     let friendshipId: string | null = null;
-    if (userId === session.user.id) {
+    if (!viewerId) {
+      friendship = 'none';
+    } else if (userId === viewerId) {
       friendship = 'self';
     } else {
       const f = await prisma.friendship.findFirst({
         where: {
           OR: [
-            { requesterId: session.user.id, addresseeId: userId },
-            { requesterId: userId, addresseeId: session.user.id },
+            { requesterId: viewerId, addresseeId: userId },
+            { requesterId: userId, addresseeId: viewerId },
           ],
         },
       });
@@ -151,7 +151,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
         friendshipId = f.id;
         if (f.status === 'ACCEPTED') friendship = 'friend';
         else if (f.status === 'REJECTED') friendship = 'rejected';
-        else if (f.requesterId === session.user.id) friendship = 'pending_out';
+        else if (f.requesterId === viewerId) friendship = 'pending_out';
         else friendship = 'pending_in';
       }
     }
