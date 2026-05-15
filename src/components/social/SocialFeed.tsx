@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } f
 import { useSession } from 'next-auth/react';
 import { useMapStore } from '@/stores/useMapStore';
 import { resizeImageForPost } from '@/lib/imageResize';
+import ReportAbuseButton from '@/components/ui/ReportAbuseButton';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -781,13 +782,15 @@ export default function SocialFeed({ onShowProfile }: SocialFeedProps) {
                         <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" />
                       </svg>
                     </button>
-                    {isOwner && (
+                    {isOwner ? (
                       <button onClick={() => deletePost(post.id)} disabled={deletingId === post.id} title="Usuń"
                         className="rounded-lg p-1.5 text-muted transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50">
                         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                           <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
                         </svg>
                       </button>
+                    ) : (
+                      <ReportAbuseButton targetType="post" targetId={post.id} />
                     )}
                   </div>
                 </header>

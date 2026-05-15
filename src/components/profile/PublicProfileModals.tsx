@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import ReportAbuseButton from '@/components/ui/ReportAbuseButton';
 
 function formatTime(seconds: number): string {
   const total = Math.max(0, seconds);
@@ -375,6 +376,7 @@ export function UserProfileView({ userId, onBack }: ViewProps) {
                         </svg>
                       )}
                     </button>
+                    <ReportAbuseButton targetType="profile" targetId={data.user.id} />
                   </div>
                 )}
               </div>

@@ -123,8 +123,26 @@ model User {
   pushSubscriptions   PushSubscription[]
   blocksGiven         Block[]             @relation("BlocksGiven")
   blocksReceived      Block[]             @relation("BlocksReceived")
+  abuseReports        AbuseReport[]
 
   @@map("users")
+}
+
+model AbuseReport {
+  id         String   @id @default(cuid())
+  reporterId String
+  targetType String   // "post" | "profile" | "report"
+  targetId   String
+  reason     String
+  status     String   @default("pending") // "pending" | "reviewed" | "resolved"
+  createdAt  DateTime @default(now())
+
+  reporter User @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([targetType, targetId])
+  @@index([reporterId])
+  @@index([status, createdAt])
+  @@map("abuse_reports")
 }
 
 model Block {
