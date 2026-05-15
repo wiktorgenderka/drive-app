@@ -15,15 +15,23 @@ import type { MapTheme } from '@/stores/useThemeStore';
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const ACCENT_COLORS = [
-  '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', '#ef4444',
-  '#f97316', '#eab308', '#22c55e', '#14b8a6', '#06b6d4',
+  '#ffffff', '#e4e4e7', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899',
+  '#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6', '#06b6d4',
 ];
+
+function accentFg(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  return 0.299 * r + 0.587 * g + 0.114 * b > 0.5 ? '#09090b' : '#ffffff';
+}
 
 const THEME_PRESETS: {
   id: string; name: string;
   mode: 'dark' | 'light'; accent: string; map: MapTheme;
   from: string; to: string;
 }[] = [
+  { id: 'white',    name: 'Biały',     mode: 'dark',  accent: '#ffffff', map: 'dark',       from: '#18181b', to: '#3f3f46' },
   { id: 'midnight', name: 'Midnight',  mode: 'dark',  accent: '#3b82f6', map: 'dark',       from: '#0f172a', to: '#1e3a5f' },
   { id: 'galaxy',   name: 'Galaktyka', mode: 'dark',  accent: '#8b5cf6', map: 'navigation', from: '#1e1b4b', to: '#4c1d95' },
   { id: 'sunset',   name: 'Zachód',    mode: 'dark',  accent: '#f97316', map: 'dark',       from: '#431407', to: '#7c2d12' },
@@ -360,7 +368,7 @@ export default function SettingsPanel() {
             >
               {avatarPreview
                 ? <img src={avatarPreview} alt="avatar" className="h-full w-full object-cover" />
-                : <span className="text-xl font-bold text-foreground" style={{ color: accentColor }}>{initials}</span>
+                : <span className="text-xl font-bold text-accent">{initials}</span>
               }
               <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition group-hover:opacity-100">
                 <svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -372,8 +380,7 @@ export default function SettingsPanel() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-card-bg text-white"
-              style={{ backgroundColor: accentColor }}
+              className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-card-bg bg-accent text-accent-fg"
             >
               <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
                 <path d="M12 5v14M5 12l7-7 7 7" />
@@ -395,7 +402,7 @@ export default function SettingsPanel() {
               <p className="truncate text-xs font-semibold text-foreground">{stats.activeConvoy.name}</p>
               <p className="text-[10px] text-muted">{stats.activeConvoy.memberCount} uczestników</p>
             </div>
-            <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-white" style={{ backgroundColor: accentColor }}>
+            <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-accent-fg bg-accent">
               Aktywny
             </span>
           </div>
@@ -461,12 +468,12 @@ export default function SettingsPanel() {
                 key={c}
                 onClick={() => { setAccentColor(c); setCustomColor(c); }}
                 className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition-transform ${
-                  accentColor === c ? 'scale-110 border-white' : 'border-transparent hover:scale-105'
+                  accentColor === c ? 'scale-110' : 'border-transparent hover:scale-105'
                 }`}
-                style={{ backgroundColor: c }}
+                style={{ backgroundColor: c, borderColor: accentColor === c ? accentFg(c) : 'transparent' }}
               >
                 {accentColor === c && (
-                  <svg className="h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                  <svg className="h-3.5 w-3.5" style={{ color: accentFg(c) }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                 )}
@@ -539,8 +546,7 @@ export default function SettingsPanel() {
           </div>
           <button
             type="submit" disabled={profileSaving}
-            className="flex h-11 w-full items-center justify-center rounded-xl text-sm font-semibold text-white transition disabled:opacity-50"
-            style={{ backgroundColor: accentColor }}
+            className="flex h-11 w-full items-center justify-center rounded-xl bg-accent text-sm font-semibold text-accent-fg transition disabled:opacity-50 hover:opacity-90"
           >
             {profileSaving
               ? <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
@@ -588,7 +594,7 @@ export default function SettingsPanel() {
                       {v.year && <p className="text-[10px] text-muted">{v.year}</p>}
                     </div>
                     {v.isActive && (
-                      <span className="ml-auto shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold text-white" style={{ backgroundColor: accentColor }}>
+                      <span className="ml-auto shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold bg-accent text-accent-fg">
                         Aktywny
                       </span>
                     )}
@@ -631,10 +637,7 @@ export default function SettingsPanel() {
                 }}
               >
                 {v.isActive && (
-                  <span
-                    className="absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold text-white"
-                    style={{ backgroundColor: accentColor }}
-                  >
+                  <span className="absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold bg-accent text-accent-fg">
                     Aktywny
                   </span>
                 )}
@@ -748,8 +751,7 @@ export default function SettingsPanel() {
               type="button"
               onClick={handleVehicleSave}
               disabled={!vMake.trim() || !vModel.trim()}
-              className="mt-4 flex h-11 w-full items-center justify-center rounded-xl text-sm font-semibold text-white transition disabled:opacity-40"
-              style={{ backgroundColor: accentColor }}
+              className="mt-4 flex h-11 w-full items-center justify-center rounded-xl bg-accent text-sm font-semibold text-accent-fg transition disabled:opacity-40 hover:opacity-90"
             >
               {vehicleModal === 'add' ? 'Dodaj pojazd' : 'Zapisz zmiany'}
             </button>
@@ -807,8 +809,7 @@ export default function SettingsPanel() {
 
           <button
             type="submit" disabled={pwdSaving}
-            className="flex h-11 w-full items-center justify-center rounded-xl text-sm font-semibold text-white transition disabled:opacity-50"
-            style={{ backgroundColor: accentColor }}
+            className="flex h-11 w-full items-center justify-center rounded-xl bg-accent text-sm font-semibold text-accent-fg transition disabled:opacity-50 hover:opacity-90"
           >
             {pwdSaving
               ? <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>

@@ -70,7 +70,7 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="w-full rounded-lg border border-input-border bg-input-bg px-4 py-2.5 text-sm text-foreground placeholder-muted-light outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-input-border bg-input-bg px-4 py-2.5 text-sm text-foreground placeholder-muted-light outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
           />
         </div>
 
@@ -79,7 +79,7 @@ function LoginForm() {
             <label htmlFor="password" className="text-sm font-medium text-foreground">
               Password
             </label>
-            <Link href="/forgot-password" className="text-xs text-blue-500 hover:text-blue-400">
+            <Link href="/forgot-password" className="text-xs text-accent hover:opacity-80">
               Nie pamiętasz hasła?
             </Link>
           </div>
@@ -91,7 +91,7 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
-              className="w-full rounded-lg border border-input-border bg-input-bg px-4 py-2.5 pr-10 text-sm text-foreground placeholder-muted-light outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-input-border bg-input-bg px-4 py-2.5 pr-10 text-sm text-foreground placeholder-muted-light outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
             />
             <button
               type="button"
@@ -118,7 +118,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="mt-2 flex h-11 items-center justify-center rounded-lg bg-blue-600 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-2 flex h-11 items-center justify-center rounded-lg bg-accent text-sm font-medium text-accent-fg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? (
             <svg
@@ -150,7 +150,7 @@ function LoginForm() {
         Don&apos;t have an account?{' '}
         <Link
           href="/register"
-          className="font-medium text-blue-500 transition hover:text-blue-400"
+          className="font-medium text-accent transition hover:opacity-80"
         >
           Create one
         </Link>

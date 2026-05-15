@@ -104,7 +104,7 @@ export default function RegisterPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="John Doe"
-            className="w-full rounded-lg border border-input-border bg-input-bg px-4 py-2.5 text-sm text-foreground placeholder-muted-light outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-input-border bg-input-bg px-4 py-2.5 text-sm text-foreground placeholder-muted-light outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
           />
         </div>
 
@@ -122,7 +122,7 @@ export default function RegisterPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="w-full rounded-lg border border-input-border bg-input-bg px-4 py-2.5 text-sm text-foreground placeholder-muted-light outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-input-border bg-input-bg px-4 py-2.5 text-sm text-foreground placeholder-muted-light outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
           />
         </div>
 
@@ -141,7 +141,7 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Min. 8 characters"
-              className="w-full rounded-lg border border-input-border bg-input-bg px-4 py-2.5 pr-10 text-sm text-foreground placeholder-muted-light outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-input-border bg-input-bg px-4 py-2.5 pr-10 text-sm text-foreground placeholder-muted-light outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
             />
             <button
               type="button"
@@ -180,7 +180,7 @@ export default function RegisterPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Re-enter your password"
-              className="w-full rounded-lg border border-input-border bg-input-bg px-4 py-2.5 pr-10 text-sm text-foreground placeholder-muted-light outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-input-border bg-input-bg px-4 py-2.5 pr-10 text-sm text-foreground placeholder-muted-light outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
             />
             <button
               type="button"
@@ -207,7 +207,7 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={loading}
-          className="mt-2 flex h-11 items-center justify-center rounded-lg bg-blue-600 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-2 flex h-11 items-center justify-center rounded-lg bg-accent text-sm font-medium text-accent-fg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? (
             <svg
@@ -239,7 +239,7 @@ export default function RegisterPage() {
         Already have an account?{' '}
         <Link
           href="/login"
-          className="font-medium text-blue-500 transition hover:text-blue-400"
+          className="font-medium text-accent transition hover:opacity-80"
         >
           Sign in
         </Link>

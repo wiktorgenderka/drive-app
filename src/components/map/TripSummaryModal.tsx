@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -27,10 +27,10 @@ export default function TripSummaryModal({ show, trip, onClose, userName = 'Kier
 
   const stats = trip
     ? [
-        { label: 'Czas',          value: fmtTripTime(trip.duration),             emoji: '⏱️' },
-        { label: 'Dystans',       value: fmtDist(trip.distance),                  emoji: '🛣️' },
-        { label: 'Max prędkość',  value: `${Math.round(trip.maxSpeed)} km/h`,     emoji: '🚀' },
-        { label: 'Śr. prędkość',  value: `${Math.round(trip.avgSpeed)} km/h`,     emoji: '📊' },
+        { label: 'Czas',          value: fmtTripTime(trip.duration),             emoji: 'âŹ±ď¸Ź' },
+        { label: 'Dystans',       value: fmtDist(trip.distance),                  emoji: 'đź›Łď¸Ź' },
+        { label: 'Max prÄ™dkoĹ›Ä‡',  value: `${Math.round(trip.maxSpeed)} km/h`,     emoji: 'đźš€' },
+        { label: 'Ĺšr. prÄ™dkoĹ›Ä‡',  value: `${Math.round(trip.avgSpeed)} km/h`,     emoji: 'đź“Š' },
       ]
     : [];
 
@@ -48,11 +48,11 @@ export default function TripSummaryModal({ show, trip, onClose, userName = 'Kier
         if (!blob) return;
         if (navigator.share && navigator.canShare({ files: [new File([blob], 'driveapp-trip.png', { type: 'image/png' })] })) {
           await navigator.share({
-            title: 'Moja podróż — DriveApp',
+            title: 'Moja podrĂłĹĽ â€” DriveApp',
             files: [new File([blob], 'driveapp-trip.png', { type: 'image/png' })],
           });
         } else {
-          // Fallback — download
+          // Fallback â€” download
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
@@ -88,9 +88,9 @@ export default function TripSummaryModal({ show, trip, onClose, userName = 'Kier
               <div className="rounded-3xl border border-card-border bg-card-bg p-6 shadow-2xl">
                 {/* Header */}
                 <div className="mb-5 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15 text-xl">🏁</div>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15 text-xl">đźŹ</div>
                   <div className="flex-1 min-w-0">
-                    <h2 className="text-base font-bold text-foreground">Podróż zakończona</h2>
+                    <h2 className="text-base font-bold text-foreground">PodrĂłĹĽ zakoĹ„czona</h2>
                     <p className="text-xs text-muted">
                       {new Date().toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}
                     </p>
@@ -127,11 +127,11 @@ export default function TripSummaryModal({ show, trip, onClose, userName = 'Kier
                     onClick={() => setActiveView('share')}
                     className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-card-border bg-card-bg py-2.5 text-sm font-semibold text-foreground transition hover:bg-input-bg"
                   >
-                    <span>📤</span> Udostępnij
+                    <span>đź“¤</span> UdostÄ™pnij
                   </button>
                   <button
                     onClick={onClose}
-                    className="flex flex-1 items-center justify-center rounded-xl bg-accent py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
+                    className="flex flex-1 items-center justify-center rounded-xl bg-accent py-2.5 text-sm font-semibold text-accent-fg transition hover:opacity-90"
                   >
                     Zamknij
                   </button>
@@ -149,7 +149,7 @@ export default function TripSummaryModal({ show, trip, onClose, userName = 'Kier
                       <path d="M19 12H5M12 19l-7-7 7-7" />
                     </svg>
                   </button>
-                  <p className="text-sm font-semibold text-foreground">Karta do udostępnienia</p>
+                  <p className="text-sm font-semibold text-foreground">Karta do udostÄ™pnienia</p>
                 </div>
 
                 {/* Shareable card preview */}
@@ -160,7 +160,7 @@ export default function TripSummaryModal({ show, trip, onClose, userName = 'Kier
                 >
                   {/* App logo line */}
                   <div className="flex items-center gap-2 mb-5">
-                    <div className="h-7 w-7 rounded-lg flex items-center justify-center text-base" style={{ background: '#f97316' }}>🛣️</div>
+                    <div className="h-7 w-7 rounded-lg flex items-center justify-center text-base" style={{ background: '#f97316' }}>đź›Łď¸Ź</div>
                     <span className="text-sm font-bold" style={{ color: '#f97316' }}>DriveApp</span>
                     <span className="ml-auto text-xs" style={{ color: '#71717a' }}>
                       {new Date().toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -187,15 +187,15 @@ export default function TripSummaryModal({ show, trip, onClose, userName = 'Kier
                 <button
                   onClick={handleShare}
                   disabled={copying}
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-2.5 text-sm font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-60"
                 >
                   {copying ? (
                     <>
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                      Generowanie…
+                      Generowanieâ€¦
                     </>
                   ) : (
-                    <>📤 Udostępnij podróż</>
+                    <>đź“¤ UdostÄ™pnij podrĂłĹĽ</>
                   )}
                 </button>
               </div>

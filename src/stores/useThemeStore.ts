@@ -23,7 +23,7 @@ export const useThemeStore = create<ThemeStore>()(
   persist(
     (set) => ({
       mode: 'dark',
-      accentColor: '#3b82f6',
+      accentColor: '#ffffff',
       mapTheme: 'auto',
 
       setMode: (mode) => set({ mode }),

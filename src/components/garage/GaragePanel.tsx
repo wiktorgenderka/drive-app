@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -42,11 +42,11 @@ const EMPTY_FORM: AddForm = {
 };
 
 const CAR_COLORS = [
-  { label: 'Czarny', hex: '#1a1a1a' }, { label: 'Biały', hex: '#f5f5f5' },
+  { label: 'Czarny', hex: '#1a1a1a' }, { label: 'BiaĹ‚y', hex: '#f5f5f5' },
   { label: 'Srebrny', hex: '#a0a0a0' }, { label: 'Szary', hex: '#6b7280' },
   { label: 'Czerwony', hex: '#ef4444' }, { label: 'Niebieski', hex: '#3b82f6' },
-  { label: 'Zielony', hex: '#22c55e' }, { label: 'Żółty', hex: '#eab308' },
-  { label: 'Pomarańczowy', hex: '#f97316' }, { label: 'Brązowy', hex: '#92400e' },
+  { label: 'Zielony', hex: '#22c55e' }, { label: 'Ĺ»ĂłĹ‚ty', hex: '#eab308' },
+  { label: 'PomaraĹ„czowy', hex: '#f97316' }, { label: 'BrÄ…zowy', hex: '#92400e' },
 ];
 
 export default function GaragePanel() {
@@ -95,13 +95,13 @@ export default function GaragePanel() {
       });
       if (!res.ok) {
         const json = await res.json();
-        throw new Error(json.error?.formErrors?.[0] ?? 'Błąd zapisu');
+        throw new Error(json.error?.formErrors?.[0] ?? 'BĹ‚Ä…d zapisu');
       }
       setForm(EMPTY_FORM);
       setShowForm(false);
       await fetchVehicles();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Błąd zapisu');
+      setError(err instanceof Error ? err.message : 'BĹ‚Ä…d zapisu');
     }
     setSaving(false);
   }
@@ -137,13 +137,13 @@ export default function GaragePanel() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-base font-bold text-foreground">Twój Garaż</h3>
+          <h3 className="text-base font-bold text-foreground">TwĂłj GaraĹĽ</h3>
           <p className="text-xs text-muted">{vehicles.length} {vehicles.length === 1 ? 'pojazd' : 'pojazdy'}</p>
         </div>
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => { setShowForm(!showForm); setError(null); }}
-          className="flex items-center gap-1.5 rounded-xl bg-accent px-3 py-2 text-xs font-semibold text-white shadow-lg transition hover:opacity-90"
+          className="flex items-center gap-1.5 rounded-xl bg-accent px-3 py-2 text-xs font-semibold text-accent-fg shadow-lg transition hover:opacity-90"
         >
           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
             <path d="M12 5v14M5 12h14" />
@@ -209,7 +209,7 @@ export default function GaragePanel() {
                     onChange={(e) => setForm({ ...form, color: e.target.value })}
                     className="w-full rounded-xl border border-input-border bg-input-bg px-3 py-2.5 text-sm text-foreground outline-none focus:border-accent"
                   >
-                    <option value="">Wybierz…</option>
+                    <option value="">Wybierzâ€¦</option>
                     {CAR_COLORS.map((c) => (
                       <option key={c.hex} value={c.label}>{c.label}</option>
                     ))}
@@ -255,7 +255,7 @@ export default function GaragePanel() {
                     rows={2}
                     value={form.mods}
                     onChange={(e) => setForm({ ...form, mods: e.target.value })}
-                    placeholder="Opisz modyfikacje…"
+                    placeholder="Opisz modyfikacjeâ€¦"
                     className="w-full resize-none rounded-xl border border-input-border bg-input-bg px-3 py-2.5 text-sm text-foreground outline-none focus:border-accent"
                   />
                 </div>
@@ -270,9 +270,9 @@ export default function GaragePanel() {
                   whileTap={{ scale: 0.97 }}
                   type="submit"
                   disabled={saving}
-                  className="flex-1 rounded-xl bg-accent py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+                  className="flex-1 rounded-xl bg-accent py-2.5 text-sm font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-50"
                 >
-                  {saving ? 'Zapisywanie…' : 'Dodaj do garażu'}
+                  {saving ? 'Zapisywanieâ€¦' : 'Dodaj do garaĹĽu'}
                 </motion.button>
                 <button
                   type="button"
@@ -294,10 +294,10 @@ export default function GaragePanel() {
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-card-border bg-card-bg/50 py-12 text-center"
         >
-          <span className="text-5xl">🚗</span>
+          <span className="text-5xl">đźš—</span>
           <div>
-            <p className="text-sm font-semibold text-foreground">Garaż jest pusty</p>
-            <p className="mt-1 text-xs text-muted">Dodaj swoje pierwsze auto żeby śledzić statystyki jazdy</p>
+            <p className="text-sm font-semibold text-foreground">GaraĹĽ jest pusty</p>
+            <p className="mt-1 text-xs text-muted">Dodaj swoje pierwsze auto ĹĽeby Ĺ›ledziÄ‡ statystyki jazdy</p>
           </div>
         </motion.div>
       ) : (
@@ -343,9 +343,9 @@ export default function GaragePanel() {
                       <span className="text-[11px] font-semibold text-emerald-400">Aktywne</span>
                     </div>
                   )}
-                  <div className="text-5xl mb-3">🚗</div>
-                  <h3 className="text-xl font-bold text-white">{selected.make} {selected.model}</h3>
-                  <p className="text-sm text-zinc-400">{selected.year}{selected.color ? ` · ${selected.color}` : ''}</p>
+                  <div className="text-5xl mb-3">đźš—</div>
+                  <h3 className="text-xl font-bold text-accent-fg">{selected.make} {selected.model}</h3>
+                  <p className="text-sm text-zinc-400">{selected.year}{selected.color ? ` Â· ${selected.color}` : ''}</p>
                   {selected.engine && (
                     <p className="mt-1 text-xs text-zinc-500">{selected.engine}</p>
                   )}
@@ -355,13 +355,13 @@ export default function GaragePanel() {
                 <div className="grid grid-cols-2 divide-x divide-card-border border-t border-card-border">
                   <div className="flex flex-col items-center py-4">
                     <span className="text-xl font-bold text-foreground tabular-nums">
-                      {selected.horsepower ?? '—'}
+                      {selected.horsepower ?? 'â€”'}
                     </span>
                     <span className="text-xs text-muted">KM</span>
                   </div>
                   <div className="flex flex-col items-center py-4">
                     <span className="text-xl font-bold text-foreground tabular-nums">
-                      {selected.torque ?? '—'}
+                      {selected.torque ?? 'â€”'}
                     </span>
                     <span className="text-xs text-muted">Nm</span>
                   </div>
@@ -380,11 +380,11 @@ export default function GaragePanel() {
                       <span className="text-sm font-bold text-foreground tabular-nums">
                         {selected.tripStats.tripCount}
                       </span>
-                      <span className="text-[10px] text-muted">podróży</span>
+                      <span className="text-[10px] text-muted">podrĂłĹĽy</span>
                     </div>
                     <div className="flex flex-col items-center py-3">
                       <span className="text-sm font-bold text-foreground tabular-nums">
-                        {selected.tripStats.maxSpeedKmh > 0 ? `${Math.round(selected.tripStats.maxSpeedKmh)}` : '—'}
+                        {selected.tripStats.maxSpeedKmh > 0 ? `${Math.round(selected.tripStats.maxSpeedKmh)}` : 'â€”'}
                       </span>
                       <span className="text-[10px] text-muted">maks. km/h</span>
                     </div>
@@ -413,13 +413,13 @@ export default function GaragePanel() {
                   <motion.button
                     whileTap={{ scale: 0.96 }}
                     onClick={() => {
-                      if (window.confirm(`Usunąć ${selected.make} ${selected.model}?`)) {
+                      if (window.confirm(`UsunÄ…Ä‡ ${selected.make} ${selected.model}?`)) {
                         deleteVehicle(selected.id);
                       }
                     }}
                     className="rounded-xl border border-red-500/30 px-4 py-2.5 text-sm font-semibold text-red-400 transition hover:bg-red-500/10"
                   >
-                    Usuń
+                    UsuĹ„
                   </motion.button>
                 </div>
               </motion.div>

@@ -114,11 +114,11 @@ const NAV_ITEMS: { id: Tab; icon: React.ReactNode; label: string }[] = [
 ];
 
 const SECTION_META: Record<Exclude<Tab, 'home' | 'map'>, { title: string; color: string }> = {
-  profile: { title: 'Profil', color: 'bg-violet-600' },
-  car:     { title: 'Konwój', color: 'bg-emerald-600' },
+  profile: { title: 'Profil', color: 'bg-accent' },
+  car:     { title: 'Konwój', color: 'bg-accent' },
   routes:  { title: 'Trasy',  color: 'bg-accent' },
-  friends: { title: 'Znajomi', color: 'bg-pink-600' },
-  feed:    { title: 'Społeczność', color: 'bg-rose-600' },
+  friends: { title: 'Znajomi', color: 'bg-accent' },
+  feed:    { title: 'Społeczność', color: 'bg-accent' },
 };
 
 const sectionVariants: Variants = {
@@ -398,7 +398,7 @@ function DashboardContent() {
                 <button
                   onClick={() => { setShowLayerMenu(!showLayerMenu); setShowAddReport(false); }}
                   className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition ${
-                    showLayerMenu ? 'bg-blue-600 text-white' : 'text-muted hover:text-foreground'
+                    showLayerMenu ? 'bg-accent text-accent-fg' : 'text-muted hover:text-foreground'
                   }`}
                   style={!showLayerMenu ? { backgroundColor: 'rgba(24,24,27,0.9)', border: '1px solid #3f3f46', backdropFilter: 'blur(8px)' } : {}}
                   title="Warstwy mapy"
@@ -444,7 +444,7 @@ function DashboardContent() {
                 <button
                   onClick={() => { setShowAddReport(!showAddReport); setShowLayerMenu(false); }}
                   className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition ${
-                    showAddReport ? 'bg-orange-600 text-white' : 'text-muted hover:text-foreground'
+                    showAddReport ? 'bg-accent text-accent-fg' : 'text-muted hover:text-foreground'
                   }`}
                   style={!showAddReport ? { backgroundColor: 'rgba(24,24,27,0.9)', border: '1px solid #3f3f46', backdropFilter: 'blur(8px)' } : {}}
                   title="Dodaj raport"
@@ -535,7 +535,7 @@ function DashboardContent() {
                     <path d="M19 12H5M12 19l-7-7 7-7" />
                   </svg>
                 </button>
-                <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${SECTION_META[activeTab as keyof typeof SECTION_META].color} text-white`}>
+                <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${SECTION_META[activeTab as keyof typeof SECTION_META].color} text-accent-fg`}>
                   {NAV_ITEMS.find((n) => n.id === activeTab)?.icon}
                 </div>
                 <h2 className="flex-1 text-lg font-bold text-foreground">
@@ -770,7 +770,7 @@ function DashboardContent() {
                         </button>
                         <button
                           onClick={() => setShowAddFriend(true)}
-                          className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
+                          className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accent-fg transition hover:opacity-90"
                         >
                           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                             <path d="M12 5v14M5 12h14" />
@@ -815,7 +815,7 @@ function DashboardContent() {
                     <path d="M19 12H5M12 19l-7-7 7-7" />
                   </svg>
                 </button>
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 text-white">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-accent-fg">
                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                     <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
                   </svg>
@@ -872,7 +872,7 @@ function DashboardContent() {
                       <span className={`relative transition-colors duration-200 ${isActive ? 'text-accent' : 'text-muted'}`}>
                         {item.icon}
                         {badge > 0 && (
-                          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-pink-600 px-0.5 text-[9px] font-black text-white">
+                          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-0.5 text-[9px] font-black text-accent-fg">
                             {badge > 9 ? '9+' : badge}
                           </span>
                         )}

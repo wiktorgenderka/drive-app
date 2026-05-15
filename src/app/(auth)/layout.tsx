@@ -14,9 +14,9 @@ export default function AuthLayout({
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
       <div className="mb-8 flex flex-col items-center gap-2">
         {/* App Logo */}
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent">
           <svg
-            className="h-8 w-8 text-white"
+            className="h-8 w-8 text-accent-fg"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"

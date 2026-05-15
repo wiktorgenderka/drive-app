@@ -64,7 +64,7 @@ function ResetPasswordForm() {
         </div>
         <h2 className="mb-2 text-lg font-semibold text-foreground">Hasło zmienione!</h2>
         <p className="text-sm text-muted">Zostaniesz przekierowany do logowania za chwilę...</p>
-        <Link href="/login" className="mt-4 inline-block text-sm font-medium text-blue-500 hover:text-blue-400">
+        <Link href="/login" className="mt-4 inline-block text-sm font-medium text-accent hover:opacity-80">
           Zaloguj się teraz
         </Link>
       </div>
@@ -101,7 +101,7 @@ function ResetPasswordForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Min 8 znaków, wielka litera, cyfra"
-              className="w-full rounded-lg border border-input-border bg-input-bg px-4 py-2.5 pr-10 text-sm text-foreground placeholder-muted-light outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-input-border bg-input-bg px-4 py-2.5 pr-10 text-sm text-foreground placeholder-muted-light outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
             />
             <button
               type="button"
@@ -137,7 +137,7 @@ function ResetPasswordForm() {
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               placeholder="Powtórz nowe hasło"
-              className="w-full rounded-lg border border-input-border bg-input-bg px-4 py-2.5 pr-10 text-sm text-foreground placeholder-muted-light outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-input-border bg-input-bg px-4 py-2.5 pr-10 text-sm text-foreground placeholder-muted-light outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
             />
             <button
               type="button"
@@ -164,7 +164,7 @@ function ResetPasswordForm() {
         <button
           type="submit"
           disabled={loading || !token}
-          className="mt-2 flex h-11 items-center justify-center rounded-lg bg-blue-600 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
+          className="mt-2 flex h-11 items-center justify-center rounded-lg bg-accent text-sm font-medium text-accent-fg transition hover:opacity-90 disabled:opacity-50"
         >
           {loading ? (
             <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { ButtonHTMLAttributes, ReactNode } from 'react';
 
@@ -10,7 +10,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles = {
-  primary: 'bg-accent text-white hover:bg-accent/90 shadow-sm',
+  primary: 'bg-accent text-accent-fg hover:bg-accent/90 shadow-sm',
   secondary: 'bg-gray-700 text-gray-100 hover:bg-gray-600 border border-gray-600',
   danger: 'bg-red-600 text-white hover:bg-red-700',
   ghost: 'bg-transparent text-gray-300 hover:bg-gray-700/50',

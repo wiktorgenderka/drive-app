@@ -50,7 +50,7 @@ export default function ForgotPasswordPage() {
         </p>
         <Link
           href="/login"
-          className="mt-6 inline-block text-sm font-medium text-blue-500 hover:text-blue-400"
+          className="mt-6 inline-block text-sm font-medium text-accent hover:opacity-80"
         >
           ← Wróć do logowania
         </Link>
@@ -89,14 +89,14 @@ export default function ForgotPasswordPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="twoj@email.com"
-            className="w-full rounded-lg border border-input-border bg-input-bg px-4 py-2.5 text-sm text-foreground placeholder-muted-light outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-input-border bg-input-bg px-4 py-2.5 text-sm text-foreground placeholder-muted-light outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="mt-2 flex h-11 items-center justify-center rounded-lg bg-blue-600 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
+          className="mt-2 flex h-11 items-center justify-center rounded-lg bg-accent text-sm font-medium text-accent-fg transition hover:opacity-90 disabled:opacity-50"
         >
           {loading ? (
             <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -110,7 +110,7 @@ export default function ForgotPasswordPage() {
       </form>
 
       <p className="mt-6 text-center text-sm text-muted">
-        <Link href="/login" className="font-medium text-blue-500 hover:text-blue-400">
+        <Link href="/login" className="font-medium text-accent hover:opacity-80">
           ← Wróć do logowania
         </Link>
       </p>

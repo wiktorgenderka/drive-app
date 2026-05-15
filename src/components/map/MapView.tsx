@@ -816,7 +816,7 @@ export default function MapView() {
             <button
               onClick={() => { setShowSearch(!showSearch); setIsPickingDestination(false); }}
               className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition-all ${
-                showSearch || isPickingDestination ? 'bg-blue-600 text-white' : 'text-muted hover:text-foreground'
+                showSearch || isPickingDestination ? 'bg-accent text-accent-fg' : 'text-muted hover:text-foreground'
               }`}
               style={!(showSearch || isPickingDestination) ? { backgroundColor: 'rgba(24,24,27,0.9)', border: '1px solid #3f3f46', backdropFilter: 'blur(8px)' } : {}}
               title="Nawiguj"
@@ -830,7 +830,7 @@ export default function MapView() {
           <button
             onClick={handleLocateUser}
             className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-lg transition-all ${
-              isFollowing ? 'bg-blue-600 text-white' : 'text-muted hover:text-foreground'
+              isFollowing ? 'bg-accent text-accent-fg' : 'text-muted hover:text-foreground'
             }`}
             style={!isFollowing ? { backgroundColor: 'rgba(24,24,27,0.9)', border: '1px solid #3f3f46', backdropFilter: 'blur(8px)' } : {}}
             title={isFollowing ? 'Mapa podąża za Tobą — kliknij by ponownie wycentrować' : 'Podążaj za moją lokalizacją'}

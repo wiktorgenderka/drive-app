@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
@@ -26,14 +26,14 @@ export default function ErrorPage({
         <div className="relative flex h-24 w-24 items-center justify-center">
           <div className="absolute inset-0 rounded-full bg-red-500/10" />
           <div className="absolute inset-2 rounded-full bg-red-500/10 animate-pulse" />
-          <span className="relative text-5xl">⚠️</span>
+          <span className="relative text-5xl">âš ď¸Ź</span>
         </div>
 
         {/* Text */}
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Coś poszło nie tak</h1>
+          <h1 className="text-2xl font-bold text-foreground">CoĹ› poszĹ‚o nie tak</h1>
           <p className="mt-2 text-sm text-muted max-w-xs">
-            Silnik driveApp napotkał błąd. Możesz spróbować ponownie lub wrócić na stronę główną.
+            Silnik driveApp napotkaĹ‚ bĹ‚Ä…d. MoĹĽesz sprĂłbowaÄ‡ ponownie lub wrĂłciÄ‡ na stronÄ™ gĹ‚ĂłwnÄ….
           </p>
           {error.digest && (
             <p className="mt-2 font-mono text-[11px] text-muted/60">#{error.digest}</p>
@@ -45,16 +45,16 @@ export default function ErrorPage({
           <motion.button
             whileTap={{ scale: 0.96 }}
             onClick={reset}
-            className="rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:opacity-90"
+            className="rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-accent-fg shadow-lg transition hover:opacity-90"
           >
-            Spróbuj ponownie
+            SprĂłbuj ponownie
           </motion.button>
           <motion.a
             whileTap={{ scale: 0.96 }}
             href="/dashboard"
             className="rounded-xl border border-card-border bg-card-bg px-5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-input-bg"
           >
-            Wróć do aplikacji
+            WrĂłÄ‡ do aplikacji
           </motion.a>
         </div>
       </motion.div>
