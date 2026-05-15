@@ -811,7 +811,7 @@ export default function MapView() {
         cursor={isPickingDestination ? 'crosshair' : undefined}
       >
         {/* Bottom-right controls */}
-        <div className="absolute bottom-8 right-2.5 z-10 flex flex-col items-center gap-2">
+        <div className="absolute bottom-8 right-4 z-10 flex flex-col items-center gap-2">
           {!isNavigating && (
             <button
               onClick={() => { setShowSearch(!showSearch); setIsPickingDestination(false); }}

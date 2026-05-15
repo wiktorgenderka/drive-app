@@ -132,9 +132,9 @@ export default function MapWalkieTalkie() {
   }, []);
 
   return (
-    <div className="relative flex items-center justify-end">
+    <div className="relative">
       {(err || speakerName) && (
-        <div className={`absolute right-full mr-2 whitespace-nowrap rounded-xl px-3 py-1.5 text-xs font-medium shadow-lg backdrop-blur-md ${
+        <div className={`absolute right-full top-0 mr-2 whitespace-nowrap rounded-xl px-3 py-1.5 text-xs font-medium shadow-lg backdrop-blur-md ${
           err
             ? 'bg-red-900/90 text-red-300'
             : 'border border-card-border bg-card-bg/95 text-foreground'
