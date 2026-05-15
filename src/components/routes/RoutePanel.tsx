@@ -135,6 +135,7 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
   const [publicLoaded, setPublicLoaded] = useState(false);
   const [publicQuery, setPublicQuery] = useState('');
   const [publicSort, setPublicSort] = useState<'top' | 'new'>('top');
+  const [nearbyOnly, setNearbyOnly] = useState(false);
   const [importingId, setImportingId] = useState<string | null>(null);
   const [expandedPublicId, setExpandedPublicId] = useState<string | null>(null);
   const [togglingPublicId, setTogglingPublicId] = useState<string | null>(null);
@@ -979,6 +980,24 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
             </button>
           </div>
 
+          {/* Near me filter */}
+          {userLocation && (
+            <button
+              onClick={() => setNearbyOnly((v) => !v)}
+              className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-semibold transition ${
+                nearbyOnly
+                  ? 'border-orange-500/50 bg-orange-500/10 text-orange-400'
+                  : 'border-card-border bg-card-bg text-muted hover:text-foreground'
+              }`}
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
+              Blisko mnie (20 km)
+            </button>
+          )}
+
           {publicLoading ? (
             <div className="flex items-center justify-center py-12">
               <svg className="h-6 w-6 animate-spin text-orange-500" viewBox="0 0 24 24" fill="none">
@@ -986,7 +1005,22 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
             </div>
-          ) : publicRoutes.length === 0 ? (
+          ) : (() => {
+            const NEARBY_KM = 20;
+            const filteredPublic = nearbyOnly && userLocation
+              ? publicRoutes.filter((r) => {
+                  const wps: { latitude: number; longitude: number }[] =
+                    typeof r.waypoints === 'string'
+                      ? (() => { try { return JSON.parse(r.waypoints as string); } catch { return []; } })()
+                      : (r.waypoints ?? []);
+                  if (wps.length === 0) return false;
+                  const first = wps[0];
+                  const dLat = (first.latitude - userLocation.latitude) * 111320;
+                  const dLng = (first.longitude - userLocation.longitude) * 111320 * Math.cos(userLocation.latitude * (Math.PI / 180));
+                  return Math.sqrt(dLat * dLat + dLng * dLng) / 1000 <= NEARBY_KM;
+                })
+              : publicRoutes;
+            return filteredPublic.length === 0 ? (
             <div className="flex flex-col items-center gap-3 rounded-2xl border border-card-border bg-card-bg py-12 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-600/15 text-orange-500">
                 <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
@@ -996,12 +1030,12 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
               </div>
               <div>
                 <p className="text-sm font-medium text-foreground">Brak publicznych tras</p>
-                <p className="mt-0.5 text-xs text-muted">Bądź pierwszym, który udostępni swoją trasę społeczności!</p>
+                <p className="mt-0.5 text-xs text-muted">{nearbyOnly ? 'Brak tras w pobliżu (20 km). Wyłącz filtr "Blisko mnie".' : 'Bądź pierwszym, który udostępni swoją trasę społeczności!'}</p>
               </div>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {publicRoutes.map((route) => {
+              {filteredPublic.map((route) => {
                 const wps: { latitude: number; longitude: number; label?: string }[] =
                   typeof route.waypoints === 'string'
                     ? (() => { try { return JSON.parse(route.waypoints as string); } catch { return []; } })()
@@ -1279,7 +1313,8 @@ export default function RoutePanel({ onShowOnMap, onShowProfile, onCreateRouteOp
                 );
               })}
             </div>
-          )}
+          );
+          })()}
         </>
       )}
 
